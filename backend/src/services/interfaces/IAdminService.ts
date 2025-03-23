@@ -1,13 +1,14 @@
 import { IUser } from "../../models/user.model";
-
+import { IService } from "../../models/service.model";
 export interface IAdminService {
   loginAdmin(
     email: string,
     password: string
   ): Promise<{ admin: IUser; token: string; message: string; status: number }>;
-  listAllUsers(
-    users:any[]
-  ):Promise<void>
+  
+  listAllUsers(): Promise<{ users: any[]; status: number }>;
+  listServices(): Promise<{ services: any[]; status: number }>;
+  addService(serviceData:Partial<IService>):Promise <{message:string}>;
 }
 
 

@@ -9,6 +9,5 @@ export interface IUserService {
   ): Promise<{ user: IUser; token: string }>;
   processGoogleAuth(
     profile: any
-  ): Promise<{ user: IUser; token: string; message: string; status: number }>;
-
+  ): Promise<{ user?: IUser; token?: string; message: string; status: number }>;
 }

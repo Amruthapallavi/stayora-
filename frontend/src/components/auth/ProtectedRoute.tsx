@@ -1,19 +1,34 @@
-import { ReactNode } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
 
 interface ProtectedRouteProps {
-  children?: ReactNode;
+  allowedTypes: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const token = localStorage.getItem("token");
+export const ProtectedRoute = ({ allowedTypes }: ProtectedRouteProps) => {
+  const { isAuthenticated, authType } = useAuthStore();
+  const location = useLocation();
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    const redirectPath = location.pathname.includes("/owner")
+      ? "/owner/login"
+      : location.pathname.includes("/admin")
+      ? "/admin/login"
+      : "/user/login";
+
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // If children exist, render them, else use Outlet for nested routes
-  return children ? children : <Outlet />;
-};
+  if (!allowedTypes.includes(authType ?? "")) {
+    const dashboardPath =
+      authType === "owner"
+        ? "/owner/dashboard"
+        : authType === "admin"
+        ? "/admin/dashboard"
+        : "/user/dashboard";
 
-export default ProtectedRoute;
+    return <Navigate to={dashboardPath} replace />;
+  }
+
+  return <Outlet />;
+};

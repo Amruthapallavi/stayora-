@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import userService from "../services/user.service";
-
+import adminService from "../services/admin.service";
 import IAdminController  from "./interfaces/IAdminController";
 import { STATUS_CODES } from "../utils/constants";
 import jwt from "jsonwebtoken";
+import { features } from "process";
 
 
 class AdminController implements IAdminController {
@@ -27,7 +28,206 @@ class AdminController implements IAdminController {
         });
       }
 }
+async listAllUsers(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await adminService.listAllUsers();
+    res.status(result.status).json({
+      users: result.users,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch users",
+    });
+  }
+}
 
+async listAllOwners(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await adminService.listAllOwners();
+    res.status(result.status).json({
+      owners: result.owners,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch owners",
+    });
+  }
+}
+
+async updateUserStatus(req:Request,res:Response):Promise<void>{
+  try {
+    const id = req.params.id;
+  const status= req.body.status;
+  console.log(req.body);
+  const result = await adminService.updateUserStatus(id,status)
+  console.log("Params:", req.params);
+  console.log("ID:", req.params.id);
+  console.log("Body:", req.body);
+  console.log(result,"resukt");
+  res.status(result.status).json({
+    message: result.message,
+  });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+    error: error instanceof Error ? error.message : "Failed to update users",
+    });
+  }
+}
+
+async updateOwnerStatus(req:Request,res:Response):Promise<void>{
+  try {
+    const id = req.params.id;
+  const status= req.body.status;
+  console.log(req.body);
+  const result = await adminService.updateOwnerStatus(id,status)
+  console.log("ID:", req.params.id);
+  
+  console.log(result,"result of owner status update");
+  res.status(result.status).json({
+    message: result.message,
+  });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+    error: error instanceof Error ? error.message : "Failed to update users",
+    });
+  }
+}
+
+async addService(req:Request, res:Response):Promise<void>{
+  try {
+    const serviceData= req.body;
+    console.log(serviceData);
+    console.log(req.body,"req.body");
+    const result = await adminService.addService(serviceData);
+    res.status(result.status).json({
+      users: result.message,
+    }); 
+   } catch (error) {
+    console.log(error)
+  }
+}
+
+ 
+async listServices(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await adminService.listServices();
+    console.log(result,"from admin controller");
+    res.status(result.status).json({
+      services: result.services,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch services",
+    });
+  }
+}
+
+async updateServiceStatus(req:Request,res:Response):Promise<void>{
+  const id = req.params.id;
+  const status= req.body.status;
+  console.log(req.body);
+  const result = await adminService.updateServiceStatus(id,status)
+  console.log("Params:", req.params);
+  console.log("ID:", req.params.id); // This should be a string
+  console.log("Body:", req.body);
+  res.status(result.status).json({
+    message: result.message,
+  });
+}
+
+async listFeatures(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await adminService.listFeatures();
+    console.log(result,"from admin controller");
+    res.status(result.status).json({
+      features: result.features,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch features",
+    });
+  }
+}
+
+async addFeature(req:Request,res:Response): Promise<void>{
+try {
+  const featureData = req.body;
+  console.log(featureData,"feature data from controller");
+  const result = await adminService.addFeature(featureData);
+  res.status(result.status).json({
+    message: result.message,
+  }); 
+ } catch (error) {
+  console.log(error)
+}
+}
+
+async deleteOwner(req:Request,res:Response): Promise<void>{
+  try {
+    const id = req.params.id;
+    const result = await adminService.deleteOwner(id);
+    res.status(result.status).json({
+      message: result.message,
+    }); 
+  } catch (error) {
+    
+  }
+}
+
+
+async approveOwner(req:Request,res:Response): Promise<void>{
+  try {
+    const id = req.params.id;
+    const result = await adminService.approveOwner(id);
+    res.status(result.status).json({
+      message: result.message,
+    }); 
+  } catch (error) {
+    
+  }
+}
+async rejectOwner(req:Request,res:Response): Promise<void>{
+  try {
+    const id = req.params.id;
+    const {reason}=req.body;
+    const result = await adminService.rejectOwner(id,reason);
+    res.status(result.status).json({
+      message: result.message,
+    }); 
+  } catch (error) {
+    
+  }
+}
+
+async removeFeature(req:Request,res:Response): Promise<void>{
+  try {
+    const id = req.params.id;
+    const result = await adminService.removeFeature(id);
+    res.status(result.status).json({
+      message: result.message,
+    }); 
+  } catch (error) {
+    
+  }
+}
+async logout(req: Request, res: Response): Promise<void> {
+  res.clearCookie("auth-token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+  });
+
+  res.status(STATUS_CODES.OK).json({
+    message: "Logged out successfully",
+  });
+}
 
 }
 

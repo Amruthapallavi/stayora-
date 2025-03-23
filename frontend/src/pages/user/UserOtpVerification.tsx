@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuthStore } from "../../api/api";
+import { useAuthStore } from "../../stores/authStore";
 import { useLocation, useNavigate } from "react-router-dom";
 import { notifySuccess, notifyError } from "../../utils/notifications";
 
@@ -7,12 +7,13 @@ const OtpVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { verifyOtp, resendOtp, isLoading } = useAuthStore();
+  const { verifyOtp, resendOtp } = useAuthStore();
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [email, setEmail] = useState<string>(""); 
   const [showOtp, setShowOtp] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60);
+  const [resendTimer, setResendTimer] = useState(10);
   
   useEffect(() => {
     if (location.state?.email) {
@@ -21,28 +22,26 @@ const OtpVerification = () => {
       const storedEmail = localStorage.getItem("email");
       if (storedEmail) {
         setEmail(storedEmail);
+        console.log(storedEmail,"from frontend")
       } else {
         alert("Email not found. Redirecting...");
-        navigate("/register");
+        navigate("/user/signup");
       }
     }
   }, [location, navigate]);
-  // Handle OTP input changes
   const handleChange = (index: number, value: string) => {
     if (isNaN(Number(value))) return; // Only allow numbers
     const updatedOtp = [...otp];
     updatedOtp[index] = value.slice(0, 1);
     setOtp(updatedOtp);
 
-    // Auto-focus on the next input
     if (value && index < otp.length - 1) {
       document.getElementById(`otp-input-${index + 1}`)?.focus();
     }
   };
 
-  // Handle OTP verification
   const handleSubmit = async () => {
-    console.log("Sending OTP verification for:", email); // Debug line
+    console.log("Sending OTP verification for:", email); 
 
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
@@ -50,8 +49,9 @@ const OtpVerification = () => {
         notifyError("Please enter OTP.");
       return;
     }
+    setIsLoading(true);
     try {
-      const response = await verifyOtp({ email, otp: otpValue });
+      const response = await verifyOtp( email, otpValue,"user");
       notifySuccess("OTP verification successful. Please Login to continue");
       console.log(response);
       navigate('/user/login')
@@ -59,13 +59,18 @@ const OtpVerification = () => {
       setError("OTP verification failed. Try again.");
       notifyError("OTP verification failed. Try again.");
       console.error(error);
+    }finally{
+      setIsLoading(false);
     }
   };
 
   const handleResend = async () => {
     if (resendTimer > 0) return;
     try {
-      await resendOtp({ email });
+      console.log(email)
+      console.log("Sending data:",  email );
+
+      await resendOtp(email,"user");
       alert("OTP resent successfully!");
       setResendTimer(60);
     } catch (error) {
@@ -102,7 +107,7 @@ const OtpVerification = () => {
               type={showOtp ? "text" : "password"}
               value={value}
               onChange={(e) => handleChange(index, e.target.value)}
-              className="w-12 h-12 border-2 rounded-lg text-center text-xl focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-12 h-12 border-2 rounded-lg text-center text-xl focus:outline-none  border-[#b8860b] focus:outline-none"
               maxLength={1}
               autoFocus={index === 0}
             />
@@ -126,14 +131,14 @@ const OtpVerification = () => {
           onClick={handleSubmit}
           disabled={isLoading}
           className={`w-full py-3 text-white font-semibold rounded-lg transition ${
-            isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:bg-gray-800"
+            isLoading ? "bg-[#b8860b] hover:bg-[#a6750a] cursor-not-allowed" : "bg-[#b8860b] hover:bg-[#a6750a] "
           }`}
         >
           {isLoading ? "Verifying..." : "Verify OTP"}
         </button>
 
         {/* Resend OTP */}
-        <div className="mt-6 text-center">
+         <div className="mt-6 text-center">
           {resendTimer > 0 ? (
             <span className="text-gray-600">
               Resend OTP in {resendTimer}s
@@ -146,7 +151,7 @@ const OtpVerification = () => {
               Resend OTP
             </button>
           )}
-        </div>
+        </div> 
       </div>
     </div>
   );

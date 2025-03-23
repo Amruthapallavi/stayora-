@@ -1,18 +1,18 @@
-import owner, { IOwner } from "../models/owner.model";
+import Owner, { IOwner } from "../models/owner.model";
 import { IOwnerRepository } from "./interfaces/IOwnerRepository";
 import BaseRepository from "./base.repository";
 
-class VendorRepository
+class OwnerRepository
   extends BaseRepository<IOwner>
   implements IOwnerRepository
 {
   constructor() {
-    super(owner);
+    super(Owner);
   }
 
   async findByEmail(email: string): Promise<IOwner | null> {
-    return await owner.findOne({ email: email });
+    return await Owner.findOne({ email: email });
   }
 }
 
-export default new VendorRepository();
+export default new OwnerRepository();

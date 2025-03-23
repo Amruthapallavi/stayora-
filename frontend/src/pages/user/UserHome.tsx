@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../api/api";
+import { useAuthStore } from "../../stores/authStore";
 interface FilterState {
   location: string;
   propertyType: string;

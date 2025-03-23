@@ -4,12 +4,16 @@ import { Menu, X, Home, Inbox, Settings, Users, BarChart2, ShoppingBag } from 'l
 const OwnerHome = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false); 
 
   // Animation on mount
   useEffect(() => {
     setVisible(true);
   }, []);
 
+  const handleSubscription = () => {
+    alert("Redirecting to subscription page...");
+  };
   useEffect(() => {
     const handleKeyDown = (e:any) => {
       if (e.key === 'Escape') {
@@ -64,7 +68,7 @@ const OwnerHome = () => {
       {/* Header */}
       <header className="relative z-10 p-5">
         <div className="container mx-auto flex justify-between items-center">
-          <a href="/" className="text-white text-2xl font-medium">Gravity</a>
+          <a href="/" className="text-white text-2xl font-medium">STAYORA</a>
           <button 
             onClick={() => setSidebarOpen(true)}
             className="p-2 text-white hover:bg-white/10 rounded-md transition-colors"
@@ -101,42 +105,96 @@ const OwnerHome = () => {
 
         {/* Product Section */}
         <section className="mt-auto">
-          <div className="container mx-auto px-4 pb-8">
-            <div className="max-w-md ml-auto">
-              {/* Product Card */}
-              <div 
-                className="overflow-hidden rounded-lg bg-white" 
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-                }}
+      <div className="container mx-auto px-4 pb-8">
+        <div className="max-w-md ml-auto">
+          {/* Subscription Status Card */}
+          <div 
+            className="overflow-hidden rounded-lg bg-white" 
+            style={{ 
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+            }}
+          >
+            <div className="relative aspect-video overflow-hidden">
+              <img 
+                src="https://images.unsplash.com/photo-1600210492493-0946911123ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80" 
+                alt="Subscription" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-5" style={{ backgroundColor: '#1A1A1A', color: 'white' }}>
+              <div className="text-xs uppercase tracking-wider text-[#767676] mb-2">OWNER SUBSCRIPTION</div>
+              <h3 className="text-lg font-serif font-medium mb-2">
+                {isSubscribed ? "Subscription Active" : "Subscription Required"}
+              </h3>
+              <p className="text-sm text-gray-300 mb-4">
+                {isSubscribed 
+                  ? "You can now list your properties for rent."
+                  : "You need an active subscription to add your house for rental."}
+              </p>
+              
+              {/* Subscribe or Manage Subscription Button */}
+              <button 
+                onClick={handleSubscription}
+                className={`w-full px-4 py-2 rounded-md font-medium transition ${
+                  isSubscribed 
+                    ? "bg-green-600 hover:bg-green-700 text-white" 
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
               >
-                <div className="relative aspect-video overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1600210492493-0946911123ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80" 
-                    alt="Poisson Blanc" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-5" style={{ backgroundColor: '#1A1A1A', color: 'white' }}>
-                  <div className="text-xs uppercase tracking-wider text-[#767676] mb-2">LATEST PRODUCT</div>
-                  <h3 className="text-lg font-serif font-medium mb-2">Poisson Blanc</h3>
-                  <p className="text-sm text-gray-300 line-clamp-2">
-                    Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarks.
-                  </p>
-                </div>
-              </div>
+                {isSubscribed ? "Manage Subscription" : "Subscribe Now"}
+              </button>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
+
+    <section className="bg-gray-900 text-white py-12">
+  <div className="container mx-auto px-4">
+    <div className="max-w-3xl mx-auto text-center">
+      <h2 className="text-3xl font-bold mb-4">Become a Verified Owner</h2>
+      <p className="text-gray-300 text-lg">
+        Here, you can rent out your properties to potential tenants. Get started with our **free trial** and list **one house** for free.  
+        To add more properties, you will need a subscription.
+      </p>
+    </div>
+
+    <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-6">
+      {/* Free Trial Card */}
+      <div className="bg-white text-gray-900 rounded-lg p-6 shadow-lg max-w-sm w-full">
+        <h3 className="text-xl font-semibold mb-2">Free Trial</h3>
+        <p className="text-gray-700 text-sm">
+          As a new owner, you can add **one property** for free to explore our platform.
+        </p>
+      </div>
+
+      {/* Subscription Card */}
+      <div className="bg-white text-gray-900 rounded-lg p-6 shadow-lg max-w-sm w-full">
+        <h3 className="text-xl font-semibold mb-2">Upgrade Anytime</h3>
+        <p className="text-gray-700 text-sm">
+          To add more properties, subscribe and unlock **unlimited listings** with premium support.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-8 text-center">
+      <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md text-lg font-medium transition">
+        Get Started as an Owner
+      </button>
+    </div>
+  </div>
+</section>
+
+
       </main>
 
       {/* Sidebar */}
@@ -166,7 +224,7 @@ const OwnerHome = () => {
                 <div className="h-8 w-8 rounded-lg bg-[#FF8A00] flex items-center justify-center">
                   <span className="text-white font-medium">G</span>
                 </div>
-                <h2 className="text-xl font-medium">Gravity</h2>
+                <h2 className="text-xl font-medium">STAYORA</h2>
               </div>
               <button 
                 onClick={() => setSidebarOpen(false)}

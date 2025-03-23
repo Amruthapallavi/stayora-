@@ -7,13 +7,14 @@ export interface IOwner extends Document {
   phone: string;
   password: string;
   govtId: string;
-  address:string;
+  govtIdStatus: "pending" | "approved" | "rejected";
+  rejectionReason?: string | null;
+  address: string;
   houses?: ObjectId;
-  status: "pending" | "blocked" | "active";
+  status: "Pending" | "Blocked" | "Active";
   isVerified: boolean;
-  otp?: string;
-  otpExpires:Date |undefined,
-
+  otp?: string | null;
+  otpExpires: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,14 +35,23 @@ const ownerSchema: Schema = new Schema(
     houses: { type: Schema.Types.ObjectId, ref: "houses", default: null },
     status: {
       type: String,
-      enum: ["pending", "blocked", "active"],
+      enum: ["Pending", "Blocked", "Active"],
+      default: "Pending",
+    },
+    govtId: { type: String, required: true }, // Stores uploaded file path
+    govtIdStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    rejectionReason: { type: String, default: null }, // Stores rejection reason
+
     isVerified: { type: Boolean, default: false },
-    otp: { type: String },
-    otpExpires: { type: Date },  },
+    otp: { type: String, default: null },
+    otpExpires: { type: Date, default: null },
+  },
   { timestamps: true }
 );
 
-const owners = mongoose.model<IOwner>("Owners", ownerSchema);
-export default owners;
+const Owners = mongoose.model<IOwner>("Owners", ownerSchema);
+export default Owners;

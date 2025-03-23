@@ -6,6 +6,7 @@ import userRepository from "../repositories/user.repository";
 import { IUser } from "../models/user.model";
 import { IUserService } from "./interfaces/IUserService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
+import { isValidEmail, isValidOTP, isValidPhone } from "../utils/validators";
 
 interface SignupData extends Partial<IUser> {
     confirmPassword?: string;
@@ -25,6 +26,12 @@ interface SignupData extends Partial<IUser> {
     if (!name || !email || !password || !confirmPassword ||!phone) {
       throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
+    if (!isValidEmail(email)) {
+      throw new Error("Invalid email format");
+    }
+    if (!isValidPhone(phone)) {
+              throw new Error("Invalid Phone number");
+     }
     if (password !== confirmPassword) {
       throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
     }
@@ -60,15 +67,26 @@ interface SignupData extends Partial<IUser> {
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
+    if (!isValidOTP(otp)) {
+      throw new Error("Invalid otp");
+    }
+    console.log('user otp',user.otp ,"and " ,otp)
+    console.log("Stored OTP Expires:", user.otpExpires?.getTime());
+console.log("Current Time:", Date.now());
+
     if (user.otp !== otp || (user.otpExpires?.getTime() ?? 0) < Date.now()) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
-    user.isVerified = true;
-    user.otp = undefined;
-    user.otpExpires = undefined;
+    // user.isVerified = true;
+    // user.otp = undefined;
+    // user.otpExpires = undefined;
 
-    await userRepository.update(user._id.toString(), user);
-
+    await userRepository.update(user._id.toString(), {
+      isVerified: true,
+      otp: null,
+      otpExpires: null,
+    });
+    
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED, status: STATUS_CODES.OK };
   }
 
@@ -78,17 +96,19 @@ interface SignupData extends Partial<IUser> {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
 
-    if (user.isVerified) {
-      throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
-    }
+    // if (user.isVerified) {
+    //   throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
+    // }
 
     const newOtp = OTPService.generateOTP();
 
     await OTPService.sendOTP(email, newOtp);
+    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
     console.log(newOtp);
 
     user.otp = newOtp;
+    user.otpExpires=otpExpires
     await userRepository.update(user._id.toString(), user);
 
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
@@ -128,32 +148,57 @@ interface SignupData extends Partial<IUser> {
       status: STATUS_CODES.OK,
     };
   }
+
+  async resetPassword(
+    email:string,
+    newPassword:string
+  ):Promise<{ message:string; status: number}> {
+    const user = await userRepository.findByEmail(email);
+    if(!user){
+      throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password and clear OTP fields
+    user.password = hashedPassword;
+    user.otp = null; // Ensure OTP cannot be reused
+    user.otpExpires = null;
+    user.isVerified = true; // Ensure user is marked as verified
+
+    // Save updated user
+    await userRepository.update(user._id.toString(), user);
+    return { message: MESSAGES.SUCCESS.PASSWORD_RESET, status: STATUS_CODES.OK };
+
+  }
+
   async processGoogleAuth(
     profile: any
-  ): Promise<{ user: IUser; token: string; message: string; status: number }> {
+  ): Promise<{ user?: IUser; token?: string; message: string; status: number }> {
     const email = profile.email;
+  console.log(email);
     let user = await userRepository.findByEmail(email);
-    if (user) {
-      if (!user.googleId) {
-        user.googleId = profile.id;
-        await userRepository.update(user._id.toString(), user);
-      }
-    } else {
-      user = await userRepository.create({
-        googleId: profile.id,
-        name: profile.displayName,
-        email,
-        password: "",
-        isVerified: true,
-      });
+    console.log(user,"user")
+    if (!user) {
+      return {
+        message: "User not found. Please sign up first.",
+        status: STATUS_CODES.UNAUTHORIZED, // 401
+      };
     }
+  
+    if (!user.googleId) {
+      user.googleId = profile.id;
+      await userRepository.update(user._id.toString(), user);
+    }
+  
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
     }
+  
     const token = jwt.sign({ userId: user._id, type: "user" }, jwtSecret, {
       expiresIn: "1h",
     });
+  
     return {
       user: this.sanitizeUser(user),
       token,
@@ -161,6 +206,7 @@ interface SignupData extends Partial<IUser> {
       status: STATUS_CODES.OK,
     };
   }
+  
     }
 
     export default new UserService();

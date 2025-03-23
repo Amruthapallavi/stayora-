@@ -6,30 +6,31 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
-    const [error,setError] = useState();
+    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const {ForgotPassword} = useAuthStore();
-    const handleSubmit = async (e:any) => {
+    const { forgotPassword } = useAuthStore();
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!email.trim()) {
-            alert('Please enter a valid email address.');
+            notifyError('Please enter a valid email address.');
             return;
         }
 
-        try {
-            await ForgotPassword(email, "user");
-             notifySuccess("Login successful!");
-                  navigate("/user/home");
+        setIsLoading(true);
 
-                } catch (err: any) {
-                    const errMsg =
-                      err.response?.data?.message || "Failed to login. Please try again.";
-                    setError(errMsg);
-                    notifyError(errMsg);
-                  } finally {
-                    setIsLoading(false);
-                  }
+        try {
+            await forgotPassword(email, "user");
+            notifySuccess("OTP sent successfully! Check your email.");
+            navigate("/user/confirm-password", { state: { email } });
+        } catch (err: any) {
+            const errMsg = err.response?.data?.message || "Failed to send OTP. Please try again.";
+            setError(errMsg);
+            notifyError(errMsg);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -51,8 +52,9 @@ const ForgotPassword = () => {
                     <button
                         type="submit"
                         className="w-full mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all"
+                        disabled={isLoading}
                     >
-                        Send OTP
+                        {isLoading ? "Sending..." : "Send OTP"}
                     </button>
                 </form>
             </div>

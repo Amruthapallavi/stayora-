@@ -124,17 +124,7 @@ const UserSignup = () => {
               </button>
 
               {/* Google Login */}
-              <button
-                type="button"
-                className="w-full mt-4 border flex items-center justify-center py-2 rounded-lg hover:bg-gray-100 transition duration-300 shadow-sm"
-              >
-                <img
-                  src="/google-icon.svg"
-                  alt="Google"
-                  className="w-5 h-5 mr-2"
-                />
-                Login with Google
-              </button>
+              
             </form>
           </div>
         </div>

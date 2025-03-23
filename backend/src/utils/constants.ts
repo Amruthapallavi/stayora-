@@ -23,6 +23,7 @@ export const ROLES = {
       OTP_SENT: "OTP sent to your email",
       OTP_VERIFIED: "OTP verified successfully",
       OTP_RESENT: "OTP resent successfully",
+      
       PASSWORD_RESET: "Password reset successful",
     },
     ERROR: {
@@ -40,5 +41,6 @@ export const ROLES = {
       MISSING_FIELDS: "Required fields are missing",
       INVALID_TOKEN: "Invalid or expired token",
       ALREADY_VERIFIED: "User is already verified",
+      NOT_VERIFIED:"You are not verified",
     },
   };

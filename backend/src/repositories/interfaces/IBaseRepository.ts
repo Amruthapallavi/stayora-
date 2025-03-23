@@ -6,5 +6,5 @@ export interface IBaseRepository<T> {
   findOne(filter: FilterQuery<T>): Promise<T | null>;
   find(filter: FilterQuery<T>): Promise<T[]>;
   update(id: string, data: Partial<T>): Promise<T | null>;
-  // countDocuments(filter: FilterQuery<T>): Promise<number>;
+  countDocuments(filter: FilterQuery<T>): Promise<number>;
 }

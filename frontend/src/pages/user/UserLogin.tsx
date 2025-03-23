@@ -1,11 +1,12 @@
 // import React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { notifySuccess, notifyError } from "../../utils/notifications";
+import { authService } from "../../api/api";
 
 const UserLogin = () => {
-  const navigate = useNavigate();;
+  const navigate = useNavigate();
   const {login} = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -13,6 +14,14 @@ const UserLogin = () => {
     email: "",
     password: "",
   });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
+
+    if (error === "google_auth_failed") {
+      alert("Google authentication failed. Please try again.");
+    }
+  }, []);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -36,8 +45,16 @@ const UserLogin = () => {
       setIsLoading(false);
     }
   };
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5173/auth/google";
+  const handleGoogleSignin = () => {
+    try {
+      const googleAuthUrl = authService.getGoogleAuthUrl();
+      // Redirect to the Google auth endpoint
+      console.log(googleAuthUrl);
+      window.location.href = googleAuthUrl;
+    } catch (error) {
+      console.error("Error retrieving Google auth URL:", error);
+      notifyError("Failed to initiate Google authentication.");
+    }
   };
   
   return (
@@ -92,7 +109,7 @@ const UserLogin = () => {
             <button
                 type="button"
                 className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-300 rounded-md transition-colors flex items-center justify-center cursor-pointer"
-                onClick={handleGoogleLogin}
+                onClick={handleGoogleSignin}
               >
                 <svg
                   className="w-4 h-4 mr-2"
