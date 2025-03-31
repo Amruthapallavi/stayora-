@@ -9,6 +9,7 @@ const OwnerSignup = () => {
   const { signup } = useAuthStore();
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -45,6 +46,8 @@ const OwnerSignup = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setIsLoading(true);
+
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
@@ -77,9 +80,12 @@ const OwnerSignup = () => {
         state: { email: formData.email, authType: "owner" },
       });
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || "Failed to sign up. Please try again.";
+      const errMsg = err.response?.data?.error || "Failed to sign up. Please try again.";
       setError(errMsg);
       notifyError(errMsg);
+    }finally{
+      setIsLoading(false);
+
     }
   };
 
@@ -189,9 +195,12 @@ const OwnerSignup = () => {
             </div>
           </div>
 
-          <button type="submit" className="w-full bg-[#b8860b] hover:bg-[#a6750a] text-white font-semibold py-3 rounded-lg transition duration-300">
-            Sign Up
-          </button>
+          <button
+              type="submit" disabled={isLoading}
+              className="w-full bg-[#a0815c] text-white py-2 rounded-lg hover:bg-[#8a6d4f] transition"
+            >
+              Signup
+            </button>
         </form>
       </div>
     </div>

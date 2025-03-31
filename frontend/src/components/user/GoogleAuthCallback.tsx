@@ -1,42 +1,34 @@
+
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
+import { notifySuccess, notifyError } from "../../utils/notifications";
 
 const GoogleAuthCallback = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const { setUserFromToken } = useAuthStore();
+  
   useEffect(() => {
-    const handleGoogleAuth = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      let token = urlParams.get("token");
+    const token = searchParams.get("token");
 
-      console.log("Extracted Token:", token);
-
-      if (token) {
-        // Store token properly before navigating
-        document.cookie = `auth-token=${token}; path=/; secure; samesite=strict`;
-        localStorage.setItem("auth-token", token);
-
-        console.log("Redirecting to /user/home");
-        setTimeout(() => {
-          navigate("/user/home"); // Give some time before redirecting
-        }, 500);
-      } else {
-        // If no token, try retrieving it from localStorage
-        token = localStorage.getItem("auth-token");
-        if (token) {
-          console.log("Token found in localStorage, redirecting to /user/home");
-          navigate("/user/home");
-        } else {
-          console.log("No token found, redirecting to /login");
-          navigate("/login");
-        }
+    if (token) {
+      try {
+        setUserFromToken(token, "user");
+        notifySuccess("Logged in successfully via Google!");
+        navigate("/user/home");
+      } catch (error) {
+        console.error("Error processing Google auth callback:", error);
+        notifyError("Google authentication failed.");
+        navigate("/user/login");
       }
-    };
+    } else {
+      notifyError("No token received from Google.");
+      navigate("/user/login");
+    }
+  }, [searchParams, navigate, setUserFromToken]);
 
-    handleGoogleAuth();
-  }, [navigate]);
-
-  return <p>Processing Google login...</p>;
+  return <div>Processing Google login...</div>;
 };
 
 export default GoogleAuthCallback;

@@ -5,7 +5,11 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { useNavigate } from "react-router-dom";
-
+import {
+  showConfirmAlert,
+  showErrorAlert,
+  showSuccessAlert,
+} from "../../components/ConfirmationAlert";
 const iconOptions = [
   { name: "Wifi", icon: <Wifi size={28} />, value: "Wifi" },
   { name: "Air Conditioning", icon: <AirVent size={28} />, value: "AirVent" },
@@ -27,7 +31,7 @@ type Feature = {
 
 
 const AdminFeatures = () => {
-  const { listAllFeatures, addFeature ,removeFeature} = useAuthStore();
+  const { listAllFeatures, addFeature ,removeFeature,editFeature} = useAuthStore();
   const [features, setFeatures] = useState<Feature[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +41,7 @@ const AdminFeatures = () => {
   const navigate = useNavigate();
 
   const [newFeature, setNewFeature] = useState({
+    _id:"",
     name: "",
     description: "",
     icon: "",
@@ -71,7 +76,7 @@ const AdminFeatures = () => {
     if (feature) {
       setIsEditing(true);
       setNewFeature({
-        id: feature._id,  // Ensure ID is included
+        _id: feature._id, 
         name: feature.name,
         description: feature.description,
         icon: feature.icon || "",
@@ -90,16 +95,15 @@ const AdminFeatures = () => {
   };
 
   const handleEditFeature = async (e: any) => {
-    e.preventDefault();
-    const { id, name, description, icon } = newFeature;
+    const { _id, name, description, icon } = newFeature;
   
-    if (!id || !name || !description) {
+    if (!_id || !name || !description) {
       notifyError("All fields are required.");
       return;
     }
   
     try {
-      const response = await editFeature(id, newFeature, "admin");
+      const response = await editFeature(_id, newFeature);
       notifySuccess("Feature updated successfully");
       window.location.reload();
       // setFeatures((prevFeatures) =>
@@ -117,37 +121,57 @@ const AdminFeatures = () => {
   };
 
   // Add Feature
-  const handleAddFeature = async (e:any) => {
-    e.preventDefault();
+  const handleAddFeature = async (e: React.FormEvent) => {
+  
     const { name, description, icon } = newFeature;
-
-    if (!name || !description) {
+  
+    if (!name || !description ) {
       notifyError("All fields are required.");
       return;
     }
-
+  
     try {
       const response = await addFeature(newFeature, "admin");
-      notifySuccess("Feature added successfully");
-      window.location.reload();
-      // setFeatures([...features, response.feature]); // Add newly created feature
-      // closeModal();
-    } catch (err) {
+        notifySuccess("New feature added successfully");
+        closeModal();
+      
+    } catch (err: any) {
       notifyError(err.response?.data?.message || "Failed to add feature.");
     }
   };
+  
 
-  // Remove Feature
-  const handleRemoveFeature = async (id:string) => {
-    try {
-      console.log(id)
-      await removeFeature(id);
-      notifySuccess("Feature removed successfully.");
-      setFeatures(features.filter((feature) => feature._id !== id));
-    } catch (error) {
-      notifyError("Failed to remove feature.");
-    }
+  const handleIconSelect = (iconValue: string) => {
+    setNewFeature((prev) => ({
+      ...prev,
+      icon: iconValue
+    }));
   };
+  
+  // Remove Feature
+  
+    const handleRemoveFeature = async (id: string) => {
+      const result = await showConfirmAlert(
+        "Confirm Deletion",
+        "Are you sure you want to remove this feature?",
+        "remove",
+        "Cancel"
+      );
+    
+      if (result.isConfirmed) {
+        try {
+          console.log("Deleting owner with ID:", id);
+          await removeFeature(id);
+    
+          // Remove the deleted owner from the list
+          setFeatures((prev) => prev.filter((feature) => feature._id !== id));
+    
+          showSuccessAlert("The feature has been removed.");
+        } catch (error) {
+          showErrorAlert("Failed to remove feature.");
+        }
+      }
+    };
 
   return (
     <div className="flex">
@@ -214,44 +238,145 @@ const AdminFeatures = () => {
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-2xl font-bold mb-4">{isEditing ? "Edit Feature" : "Add New Feature"}</h2>
-            <input
-              type="text"
-              name="name"
-              placeholder="Feature Name"
-              value={newFeature.name}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 mb-3 border rounded-lg"
-            />
-            <textarea
-              name="description"
-              placeholder="Feature Description"
-              value={newFeature.description}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 mb-3 border rounded-lg"
-            ></textarea>
+  {/* Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-2xl font-bold mb-4">{isEditing ? "Edit Feature" : "Add New Feature"}</h2>
+      
+      {/* Feature Name Input */}
+      <input
+        type="text"
+        name="name"
+        placeholder="Feature Name"
+        value={newFeature.name}
+        onChange={handleInputChange}
+        className="w-full px-3 py-2 mb-3 border rounded-lg"
+      />
+      
+      {/* Feature Description Input */}
+      <textarea
+        name="description"
+        placeholder="Feature Description"
+        value={newFeature.description}
+        onChange={handleInputChange}
+        className="w-full px-3 py-2 mb-3 border rounded-lg"
+      ></textarea>
 
-            <div className="flex justify-end gap-3">
-              <button className="px-4 py-2 bg-gray-400 text-white rounded-lg" onClick={closeModal}>
-                Cancel
-              </button>
-              <button
-  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-  onClick={() => (isEditing ? handleEditFeature(newFeature.id) : handleAddFeature())}
->
-  {isEditing ? "Update" : "Add"}
-</button>
+      {/* Icon Selection Dropdown */}
+      <div className="mb-3">
+        <label className="block text-gray-700 font-medium mb-2">Select Icon</label>
+        <div className="relative">
+          <select
+            name="icon"
+            value={newFeature.icon || ""}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border rounded-lg appearance-none"
+          >
+            <option value="">Choose an Icon</option>
+            {iconOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-
-
-            </div>
-          </div>
+      {/* Show Selected Icon Preview */}
+      {newFeature.icon && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-gray-700">Selected Icon:</span>
+          {
+            iconOptions.find((option) => option.value === newFeature.icon)?.icon
+          }
         </div>
       )}
+
+      {/* Modal Buttons */}
+      <div className="flex justify-end gap-3">
+        <button className="px-4 py-2 bg-gray-400 text-white rounded-lg" onClick={closeModal}>
+          Cancel
+        </button>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          onClick={() => (isEditing ? handleEditFeature(newFeature._id) : handleAddFeature())}
+        >
+          {isEditing ? "Update" : "Add"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+{/* Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-2xl font-bold mb-4">{isEditing ? "Edit Feature" : "Add New Feature"}</h2>
+
+      {/* Feature Name Input */}
+      <input
+        type="text"
+        name="name"
+        placeholder="Feature Name"
+        value={newFeature.name}
+        onChange={handleInputChange}
+        className="w-full px-3 py-2 mb-3 border rounded-lg"
+      />
+
+      {/* Feature Description Input */}
+      <textarea
+        name="description"
+        placeholder="Feature Description"
+        value={newFeature.description}
+        onChange={handleInputChange}
+        className="w-full px-3 py-2 mb-3 border rounded-lg"
+      ></textarea>
+
+      {/* Icon Selection */}
+      <div className="mb-3">
+        <label className="block text-gray-700 font-medium mb-2">Select Icon</label>
+        <div className="flex flex-wrap gap-3 p-2 border rounded-lg">
+          {iconOptions.map((option) => (
+            <div
+              key={option.value}
+              className={`cursor-pointer p-2 rounded-lg border ${
+                newFeature.icon === option.value ? "border-blue-500 bg-blue-100" : "border-gray-300"
+              }`}
+              onClick={() => handleIconSelect(option.value)}
+            >
+              {option.icon}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Show Selected Icon Preview */}
+      {newFeature.icon && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-gray-700">Selected Icon:</span>
+          {
+            iconOptions.find((option) => option.value === newFeature.icon)?.icon
+          }
+        </div>
+      )}
+
+      {/* Modal Buttons */}
+      <div className="flex justify-end gap-3">
+        <button className="px-4 py-2 bg-gray-400 text-white rounded-lg" onClick={closeModal}>
+          Cancel
+        </button>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          onClick={() => (isEditing ? handleEditFeature(newFeature._id) : handleAddFeature())}
+        >
+          {isEditing ? "Update" : "Add"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

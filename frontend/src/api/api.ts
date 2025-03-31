@@ -1,38 +1,38 @@
 import axios from "axios";
 
-// API URL from environment variable
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
-// Axios Instances for Different User Roles
-export const userApi = axios.create({
-  baseURL: `${API_URL}/api/user`,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
+const createApiInstance = (endpoint: string) => {
+  const instance = axios.create({
+    baseURL: `${API_URL}/api/${endpoint}`,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    withCredentials: true,
+  });
 
-export const ownerApi = axios.create({
-  baseURL: `${API_URL}/api/owner`,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
+  // Automatically attach token to requests
+  instance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem("token"); // Adjust based on your storage method
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
-export const adminApi = axios.create({
-  baseURL: `${API_URL}/api/admin`,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-});
+  return instance;
+};
+
+// Create instances for user, owner, and admin
+export const userApi = createApiInstance("user");
+export const ownerApi = createApiInstance("owner");
+export const adminApi = createApiInstance("admin");
 
 
 
-
-
-// Auth Service for API Calls
 export const authService = {
   // User API
   userSignup: async (userData: any) => {
@@ -47,10 +47,13 @@ export const authService = {
     const response = await userApi.post("/verify-otp", data);
     return response.data;
   },
-  userResendOtp: async ( email: string) => {
-    const response = await userApi.post("/resend-otp", email);
+  userResendOtp: async (email: string) => {
+    const response = await userApi.post("/resend-otp", { email }, {
+        headers: { "Content-Type": "application/json" },
+    });
     console.log(response);
     return response.data;
+
   },
   userLogout: async () => {
     const response = await userApi.post("/logout");
@@ -67,6 +70,7 @@ export const authService = {
   getGoogleAuthUrl: () => {
     return `${API_URL}/api/user/auth/google`;
   },
+ 
 
 // owner api is here to
   ownerSignup: async (ownerData: any) => {
@@ -80,7 +84,13 @@ export const authService = {
     const response = await ownerApi.post("/login", credentials);
     return response.data;
   },
-  ownerVerifyOtp: async (data: { email: string; otp: string }) => {
+  getOwnerData: async (id:string) => {
+    console.log("data passing")
+    const response = await ownerApi.get(`/profile/${id}`);
+    console.log(response);
+    return response.data;
+  },
+    ownerVerifyOtp: async (data: { email: string; otp: string }) => {
     const response = await ownerApi.post("/verify-otp", data);
     return response.data;
   },
@@ -88,9 +98,13 @@ export const authService = {
     const response = await ownerApi.post("/logout");
     return response.data;
   },
-  OwnerResendOtp: async ( email: string) => {
-    const response = await ownerApi.post("/resend-otp", email);
+  ownerResendOtp: async (email: string) => {
+    const response = await ownerApi.post("/resend-otp", { email }, {
+        headers: { "Content-Type": "application/json" },
+    });
+    console.log(response);
     return response.data;
+
   },
   OwnerForgotPassword:async(email:any)=>{
     const response = await ownerApi.post("/forgot-pass",email);
@@ -100,6 +114,7 @@ export const authService = {
     const response = await ownerApi.post("/reset-password",data);
     return response.data;
   },
+  
 
   // Admin API
   adminLogin: async (credentials: { email: string; password: string }) => {
@@ -125,6 +140,7 @@ export const adminService={
   const response = await adminApi.patch(`/users/status/${id}`, { status: currentStatus });
     return response.data;
   },
+
   listAllOwners: async () => {
     const response = await adminApi.get("/owners");
     return response.data;
@@ -142,6 +158,10 @@ export const adminService={
     const response = await adminApi.patch(`/services/status/${id}`, { status: currentStatus });
     return response.data;
   },
+  updateFeature:async(id:string,newFeature:string)=>{
+    const response = await adminApi.patch(`/features/${id}`, { data: newFeature });
+      return response.data;
+    },
   listFeatures:async()=>{
     const response = await adminApi.get("/features");
     return response.data;
@@ -183,3 +203,22 @@ export const adminService={
   },
 
 }
+export const ownerService = {
+
+
+  updateOwner:async(id:string,formData:string)=>{
+    console.log(formData,"fromapi")
+    const response = await ownerApi.patch(`/profile/${id}`, { data: formData });
+      return response.data;
+    },
+    listFeatures:async()=>{
+      const response = await ownerApi.get("/features");
+      return response.data;
+    },
+    addProperty:async(propertyData:any)=>{
+      console.log("adding property from api");
+      const response = await ownerApi.post("/add-property",{data:propertyData});
+      return response.data;
+    }
+}
+

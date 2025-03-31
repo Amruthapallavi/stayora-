@@ -71,10 +71,10 @@ const OwnerOTPverification = () => {
     if (resendTimer > 0) return;
     try {
       await resendOtp(email,"owner");
-      alert("OTP resent successfully!");
+      notifySuccess("OTP resent successfully!");
       setResendTimer(60);
     } catch (error) {
-      alert("Failed to resend OTP.");
+      notifyError("Failed to resend OTP.");
       console.error(error);
     }
   };

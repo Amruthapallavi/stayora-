@@ -76,17 +76,14 @@ const AdminUsers = () => {
             throw new Error(response?.message || "Failed to update status");
           }
   
-          // Uncomment this if you want to update the UI manually
-          // setUsers((prev) =>
-          //   prev.map((user) =>
-          //     user._id === id ? { ...user, status: newStatus } : user
-          //   )
-          // );
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user._id === id ? { ...user, status: newStatus } : user
+            )
+          );
   
           notifySuccess(`User ${newStatus} successfully`);
-          window.location.reload();
           console.log("Success notification should trigger");
-  
         } catch (error) {
           console.error("Error updating status:", error);
           notifyError("Error updating user status");
@@ -94,6 +91,7 @@ const AdminUsers = () => {
       }
     });
   };
+  
   
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 

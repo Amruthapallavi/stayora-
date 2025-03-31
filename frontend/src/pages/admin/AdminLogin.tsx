@@ -29,7 +29,7 @@ const AdminLogin = () => {
       navigate("/admin/dashboard");
     } catch (err:any) {
       const errMsg =
-        err.response?.data?.message || "Failed to login. Please try again.";
+        err.response?.data?.error || "Failed to login. Please try again.";
       setError(errMsg);
       notifyError(errMsg);
     } finally {

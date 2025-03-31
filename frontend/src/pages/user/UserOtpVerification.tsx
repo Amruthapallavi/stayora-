@@ -71,10 +71,10 @@ const OtpVerification = () => {
       console.log("Sending data:",  email );
 
       await resendOtp(email,"user");
-      alert("OTP resent successfully!");
-      setResendTimer(60);
+      notifySuccess("OTP resend successful!");
+      setResendTimer(10);
     } catch (error) {
-      alert("Failed to resend OTP.");
+      notifyError("Failed to resend OTP.");
       console.error(error);
     }
   };

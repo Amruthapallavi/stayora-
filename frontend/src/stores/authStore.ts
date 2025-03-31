@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { authService, adminService } from "../api/api";
+import { authService, adminService, ownerService } from "../api/api";
 
 type AuthType = "user" | "owner" | "admin";
 
@@ -20,7 +20,8 @@ interface AuthState {
     newPassword: string,
     authType: AuthType
   ) => Promise<void>;
-
+  getUserData:(id:any,authType:AuthType)=>Promise<void>;
+  updateUser:(id:any,formData:string,authType:AuthType)=>Promise<void>
   // forgotPassword:(email:string,authType:AuthType)=> Promise<void>;
   listAllUsers: () => Promise<any>;
   updateUserStatus: (id: any, currentStatus: string) => Promise<void>;
@@ -30,10 +31,14 @@ interface AuthState {
   addService: (serviceData: any, authType: AuthType) => Promise<void>;
   addFeature: (featureData: any, authType: AuthType) => Promise<void>;
   removeFeature:(id:any)=> Promise<void>;
+  editFeature:(id:any,newFeature:string)=> Promise<void>;
   listServices: () => Promise<any>;
   listAllFeatures: () => Promise<any>;
+  addProperty:(propertyData:any)=> Promise<void>
   updateServiceStatus: (id: any, currentStatus: string) => Promise<void>;
   listAllOwners: () => Promise<any>;
+  setUserFromToken: (token: string, authType: AuthType) => void;
+
   rejectOwner:(id:any,rejectionReason:string)=> Promise<any>;
   logout: () => void;
 }
@@ -62,7 +67,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           sessionStorage.setItem("auth-type", authType);
-
+          console.log(response);
           set({
             user: response.user,
             authType,
@@ -113,14 +118,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       resendOtp: async (email, authType) => {
-        try {
+        try {  
           switch (authType) {
             case "user":
               console.log("send function called")
               await authService.userResendOtp(email);
               break;
             case "owner":
-              await authService.OwnerResendOtp(email);
+              await authService.ownerResendOtp(email);
               break;
             default:
               throw new Error("Invalid auth type");
@@ -176,7 +181,38 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-
+       getUserData :async (id: string, authType: string) => {
+        try {
+          let response;
+      
+          switch (authType) {
+            case "user":
+              // response = await authService.getUserData(id);
+              break;
+            case "owner":
+              response = await authService.getOwnerData(id);
+              break;
+            case "admin":
+              // response = await authService.adminForgotPassword({ email });
+              break;
+            default:
+              console.error("Invalid authType provided:", authType);
+              return null;
+          }
+      
+          if (!response) {
+            console.error("No response received for authType:", authType);
+            return null;
+          }
+      
+          console.log("Fetched user data from auth:", response);
+          return response; // Ensure the function returns the response
+        } catch (error) {
+          console.error("Error in getUserData:", error);
+          throw error;
+        }
+      },
+      
       listAllUsers: async () => {
         try {
           const { authType } = get();
@@ -202,6 +238,46 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
+      updateUser: async (id,formData, authType) => {
+        try {
+          let response;
+          switch (authType) {
+            case "user":
+              // response = await userService.updateOwner(id,formData);
+              break;
+            case "owner":
+              response = await ownerService.updateOwner(id,formData);
+              break;
+            default:
+              throw new Error("Invalid auth type");
+          }
+
+          return response;
+        } catch (error) {
+          console.error("profile updation failed", error);
+          throw error;
+        }
+      },
+      // changePassword: async (data) => {
+      //   try {
+      //     const { user, authType } = get();
+      //     if (!user || !authType) throw new Error("Not authenticated");
+    
+      //     switch (authType) {
+      //       case "user":
+      //         // await userService.changePassword(data);
+      //         break;
+      //       case "owner":
+      //         await ownerService.changePassword(data);
+      //         break;
+      //       default:
+      //         throw new Error("Invalid auth type for password change");
+      //     }
+      //   } catch (error) {
+      //     console.error("Password change failed", error);
+      //     throw error;
+      //   }
+      // },
       listAllOwners: async () => {
         try {
           const { authType } = get();
@@ -212,6 +288,18 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error("Failed to list owners", error);
           throw error;
+        }
+      },
+      addProperty: async (propertyData) => {
+        try {
+
+        const { authType } = get();
+        console.log(authType,"for add");
+        if (!authType || authType !== "owner")
+          throw new Error("Not authorized as owner");
+           return await ownerService.addProperty(propertyData);
+        } catch (error) {
+          console.error('Error adding property:', error);
         }
       },
 
@@ -231,14 +319,23 @@ export const useAuthStore = create<AuthState>()(
       listAllFeatures: async () => {
         try {
           const { authType } = get();
-          if (!authType || authType !== "admin")
-            throw new Error("Not authorized as admin");
-          return await adminService.listFeatures();
+          if (!authType) {
+            throw new Error("Not authorized");
+          }
+      
+          if (authType === "admin") {
+            return await adminService.listFeatures();
+          } else if (authType === "owner") {
+            return await ownerService.listFeatures();
+          } else {
+            throw new Error("Invalid user type");
+          }
         } catch (error) {
-          console.error("failed to list services", error);
+          console.error("Failed to list features", error);
           throw error;
         }
       },
+      
 
       addFeature: async (featureData) => {
         try {
@@ -267,7 +364,17 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-
+      editFeature: async (id, newFeature) => {
+        try {
+          const { authType } = get();
+          if (!authType || authType !== "admin")
+            throw new Error("Not authorized as admin");
+          return await adminService.updateFeature(id, newFeature);
+        } catch (error) {
+          console.error("Failed to update users", error);
+          throw error;
+        }
+      },
       addService: async (serviceData) => {
         try {
           console.log(serviceData, "from authstore");
@@ -323,7 +430,7 @@ export const useAuthStore = create<AuthState>()(
       // },
       approveOwner: async (id) => {
         try {
-          console.log(id);
+          console.log(id,"from frontend for approval");
           const { authType } = get();
           if (!authType || authType !== "admin")
             throw new Error("Not authorized as admin");
@@ -367,10 +474,29 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-
+      setUserFromToken: (token, authType) => {
+        try {
+          const base64Url = token.split(".")[1];
+          
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const decodedPayload = JSON.parse(
+            decodeURIComponent(escape(window.atob(base64)))
+          );
+          set({
+            user: decodedPayload,
+            authType,
+            isAuthenticated: true,
+          });
+          sessionStorage.setItem("auth-type", authType);
+        } catch (error) {
+          console.error("Failed to decode token", error);
+          throw error;
+        }
+      },
       logout: async () => {
         try {
           const { authType } = get();
+          console.log(authType)
           if (!authType) throw new Error("No auth type found");
           console.log(authType)
           switch (authType) {

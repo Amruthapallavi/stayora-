@@ -9,7 +9,7 @@ export interface IUser extends Document {
   password?: string;
   phone?: string;
   bookings?: ObjectId;
-  status: "Active" | "Blocked";
+  status: "Active" | "Blocked" |"Pending";
   isVerified: boolean;
   role:"user" | "admin";
   googleId?: string;
@@ -36,8 +36,8 @@ const UserSchema: Schema = new Schema(
       },
     },
     phone: { type: String, trim: true, default: null },
-    bookings: { type: Schema.Types.ObjectId, ref: "Bookings", default: null },
-    status: { type: String, enum: ["Active", "Blocked"], default: "Active" },
+    bookings: { type: Schema.Types.ObjectId, ref: "Bookings", default: null }, //create seperate
+    status: { type: String, enum: ["Active", "Blocked","Pending"], default: "Active" },
     role: { type: String, enum: ["user", "admin"], default: "user" },
 
     isVerified: { type: Boolean, default: false },

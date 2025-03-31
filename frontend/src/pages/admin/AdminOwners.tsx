@@ -4,7 +4,8 @@ import { Search, Eye, CheckCircle, Unlock, X, Ban, Trash2 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { notifySuccess, notifyError, notifyWarn } from "../../utils/notifications";
 // import moment from "moment";
-import Swal from "sweetalert2";
+// import Swal from "sweetalert2";
+
 import {
   showConfirmAlert,
   showSuccessAlert,
@@ -13,6 +14,7 @@ import {
   showStatusChangeAlert,
   showErrorAlert,
 } from "../../components/alert/AlertService";
+import { useNavigate } from "react-router-dom";
 
 type Owner = {
   _id: string;
@@ -20,6 +22,8 @@ type Owner = {
   email: string;
   phone: string;
   govtId: string;
+  govtIdStatus:'pending'|'approved'|'rejected';
+
   status: "Pending" | "Active" | "Blocked";
   isVerified: boolean;
 };
@@ -27,6 +31,7 @@ type Owner = {
 const OwnerListing = () => {
   const { listAllOwners, approveOwner, updateOwnerStatus, deleteUser ,rejectOwner} =
     useAuthStore();
+    const navigate=useNavigate();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -70,7 +75,7 @@ const OwnerListing = () => {
 
   const totalOwners = owners.length;
   const activeOwners = owners.filter((o) => o.status === "Active").length;
-  const unapprovedOwners = owners.filter((o) => o.status === "Pending").length;
+  const unapprovedOwners = owners.filter((o) => o.govtIdStatus === "pending").length;
   const blockedOwners = owners.filter((o) => o.status === "Blocked").length;
 
   const handleViewIDProof = (owner: Owner) => {
@@ -81,7 +86,10 @@ const OwnerListing = () => {
     try {
       await approveOwner(id);
       notifySuccess("Owner approved successfully.");
+      setIsModalOpen(false);
+
       loadOwners();
+
     } catch (error) {
       notifyError("Failed to approve owner.");
     }
@@ -89,31 +97,37 @@ const OwnerListing = () => {
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     console.log("User ID:", id, "Current Status:", currentStatus);
-
+  
     const action = currentStatus === "Blocked" ? "Unblock" : "Block";
     const result = await showStatusChangeAlert(action);
-
+  
     if (result.isConfirmed) {
       try {
         const newStatus = currentStatus === "Active" ? "Blocked" : "Active";
         console.log("New Status:", newStatus);
-
+  
         const response = await updateOwnerStatus(id, newStatus);
-        console.log("Response from updateUserStatus:", response);
-
+        console.log("Response from updateOwnerStatus:", response);
+  
         if (!response || response.error) {
           throw new Error(response?.message || "Failed to update status");
         }
-
+  
+        // Update the owner list without refreshing
+        setOwners((prevOwners) =>
+          prevOwners.map((owner) =>
+            owner._id === id ? { ...owner, status: newStatus } : owner
+          )
+        );
+  
         showSuccessAlert(`User ${newStatus} successfully`);
-        window.location.reload();
       } catch (error) {
         console.error("Error updating status:", error);
         showErrorAlert("Error updating user status");
       }
     }
   };
-
+  
   const handleDelete = async (id: string) => {
     const result = await showConfirmAlert(
       "Confirm Deletion",
@@ -121,20 +135,22 @@ const OwnerListing = () => {
       "Delete",
       "Cancel"
     );
-
+  
     if (result.isConfirmed) {
       try {
         console.log("Deleting owner with ID:", id);
         await deleteUser(id, "owner");
-
+  
+        // Remove the deleted owner from the list
+        setOwners((prevOwners) => prevOwners.filter((owner) => owner._id !== id));
+  
         showSuccessAlert("The owner has been removed.");
-        loadOwners();
-        window.location.reload();
       } catch (error) {
         showErrorAlert("Failed to delete owner.");
       }
     }
   };
+  
 
   const handleReject= async (id: string,rejectionReason:string) => {
     if(!rejectionReason){
@@ -332,16 +348,18 @@ const OwnerListing = () => {
         </div>
       </div>
       {isModalOpen && selectedOwner && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center relative">
-            <h2 className="text-xl font-semibold mb-4">Owner ID Proof</h2>
-            <img
-              src={selectedOwner.govtId}
-              alt="ID Proof"
-              className="w-full h-64 object-cover rounded-lg mb-4 shadow-md"
-            />
-
-            {/* Conditionally show rejection reason field */}
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96 text-center relative">
+        <h2 className="text-xl font-semibold mb-4">Owner ID Proof</h2>
+        <img
+          src={selectedOwner.govtId}
+          alt="ID Proof"
+          className="w-full h-64 object-cover rounded-lg mb-4 shadow-md"
+        />
+  
+        {/* Show Approve & Reject buttons only if govtIdStatus is 'pending' */}
+        {selectedOwner.govtIdStatus === "pending" ? (
+          <>
             {isRejecting && (
               <div className="mb-4">
                 <textarea
@@ -352,7 +370,7 @@ const OwnerListing = () => {
                 />
               </div>
             )}
-
+  
             <div className="flex justify-between">
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -360,8 +378,7 @@ const OwnerListing = () => {
               >
                 Approve
               </button>
-
-              {/* Toggle rejection field on click */}
+  
               {!isRejecting ? (
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -380,15 +397,24 @@ const OwnerListing = () => {
                 </button>
               )}
             </div>
-
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-black"
-              onClick={() => setIsModalOpen(false)}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
+          </>
+        ) : (
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 mt-4"
+            onClick={() => setIsModalOpen(false)}
+          >
+            Back
+          </button>
+        )}
+  
+        <button
+          className="absolute top-2 right-2 text-gray-600 hover:text-black"
+          onClick={() => setIsModalOpen(false)}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
       )}
     </div>
   );

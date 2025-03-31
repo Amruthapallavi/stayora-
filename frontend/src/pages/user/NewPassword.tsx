@@ -109,10 +109,11 @@ const NewPassword = () => {
                 <input
                   key={index}
                   id={`otp-input-${index}`}
-                  type="text"
+                  type={showOtp?"text":"password"}
                   value={value}
                   onChange={(e) => handleChange(index, e.target.value)}
                   maxLength={1}
+                  autoFocus={index === 0} 
                   disabled={isOtpVerified}
                   className="w-12 h-12 text-center text-xl font-semibold text-[#b8860b] bg-[#e2d1c3] rounded-lg border border-[#b8860b] focus:outline-none"
                 />

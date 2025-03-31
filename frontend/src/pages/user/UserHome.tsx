@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import Navbar from "../../components/user/Navbar";
 interface FilterState {
   location: string;
   propertyType: string;
@@ -15,26 +16,26 @@ interface FilterState {
 const UserHomePage = () => {
 
   const navigate = useNavigate();
-  const {logout} = useAuthStore();
-    const [filters, setFilters] = useState<FilterState>({
-    location: "NewYork",
-    propertyType: "Apartment",
-    minPrice: 20000,
-    maxPrice: 200000,
-    bedrooms: 1,
-    bathrooms: 1,
-  });
+  // const {logout} = useAuthStore();
+  //   const [filters, setFilters] = useState<FilterState>({
+  //   location: "NewYork",
+  //   propertyType: "Apartment",
+  //   minPrice: 20000,
+  //   maxPrice: 200000,
+  //   bedrooms: 1,
+  //   bathrooms: 1,
+  // });
 
   // Handle changes in filters
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: name.includes("Price") ? Number(value) : value,
-    }));
-  };
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setFilters((prev) => ({
+  //     ...prev,
+  //     [name]: name.includes("Price") ? Number(value) : value,
+  //   }));
+  // };
   // useEffect(() => {
   //   const token = localStorage.getItem("token");
 
@@ -49,33 +50,15 @@ const UserHomePage = () => {
   // }, [navigate]);
 
 
-  const handleSubmit = () => {
-    console.log("Filters Applied: ", filters);
-  };
-  const handleLogout= async()=>{
-    try {
-      await logout();
-      navigate("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  }
+  // const handleSubmit = () => {
+  //   console.log("Filters Applied: ", filters);
+  // };
+ 
     return (
       <div className="bg-gray-100 text-gray-900">
         {/* Navbar */}
-        <nav className="bg-white shadow-md px-8 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-yellow-600">Stayora</h1>
-          <div className="flex items-center space-x-6 text-gray-700 font-medium">
-            <a href="#" className="hover:text-yellow-600">Home</a>
-            <a href="#" className="hover:text-yellow-600">Houses</a>
-            <a href="#" className="hover:text-yellow-600">Categories</a>
-            <a href="#" className="hover:text-yellow-600">My Account</a>
-            <a href="#" className="hover:text-yellow-600">About</a>
-            <a href="#" className="hover:text-yellow-600">Contact</a>
-           <button onClick={handleLogout} className="hover:text-yellow-600">Logout</button> 
-          </div>
-        </nav>
-      
+        
+      <Navbar/>
         {/* Hero Section */}
         <section
         

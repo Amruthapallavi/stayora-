@@ -35,8 +35,8 @@ class AdminRepository
     async findUser(id:string):Promise<IUser|null>{
       return await User.findOne({_id:id});
     }
-    async findOwner(id:string):Promise<IUser|null>{
-      return await Owners.findOne({_id:id});
+    async findOwner(id: string): Promise<IOwner | null> {
+      return await Owners.findById(id);
     }
     async deleteOwner(id: string): Promise<IOwner | null> {
       return await Owners.findOneAndDelete({ _id: id });

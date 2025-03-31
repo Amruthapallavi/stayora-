@@ -25,7 +25,7 @@ const OwnerForgotPassword = () => {
             notifySuccess("OTP sent successfully! Check your email.");
             navigate("/owner/confirm-password", { state: { email } });
         } catch (err: any) {
-            const errMsg = err.response?.data?.message || "Failed to send OTP. Please try again.";
+            const errMsg = err.response?.data?.error || "Failed to send OTP. Please try again.";
             setError(errMsg);
             notifyError(errMsg);
         } finally {

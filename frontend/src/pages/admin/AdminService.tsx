@@ -97,24 +97,24 @@ const AdminServices = () => {
 
     const { name, description, price, contactMail, contactNumber } = newService;
     if (!name || !description || !price || !contactMail || !contactNumber) {
-      alert("All fields are required.");
+      notifyError("All fields are required.");
       return;
     }
 
     if (isNaN(Number(price)) || Number(price) <= 0) {
-      alert("Enter a valid price.");
+      notifyError("Enter a valid price.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contactMail)) {
-      alert("Enter a valid email.");
+      notifyError("Enter a valid email.");
       return;
     }
 
     const phoneRegex = /^\d{10,15}$/;
     if (!phoneRegex.test(contactNumber)) {
-      alert("Enter a valid phone number (10-15 digits).");
+      notifyError("Enter a valid phone number (10 digits).");
       return;
     }
 
@@ -125,6 +125,7 @@ const AdminServices = () => {
       loadServices();
       setIsModalOpen(false);
     } catch (err: any) {
+      console.log(err);
       notifyError(err.response?.data?.message || "Failed to add service.");
     }
   };
@@ -159,7 +160,7 @@ const AdminServices = () => {
                 <tr key={service._id} className="border-b hover:bg-gray-100">
                   <td className="p-4 font-medium">{service.name}</td>
                   <td className="p-4">{service.description}</td>
-                  <td className="p-4">${service.price}</td>
+                  <td className="p-4">₹{service.price}</td>
                   <td className="p-4">
                     <img src={service.image} alt="Service" className="w-12 h-12 rounded" />
                   </td>

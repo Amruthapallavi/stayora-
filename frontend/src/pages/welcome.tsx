@@ -1,17 +1,29 @@
 import * as React from "react";
 import { useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa";
+import { useAuthStore } from "../stores/authStore";
 
 const Welcome: React.FC = () => {
-  const [showDropdown, setShowDropdown] = React.useState(false);
-
+  const  { user,isAuthenticated,authType,logout} =useAuthStore();
+   const [showDropdown, setShowDropdown] = React.useState(false);
+ const navigate=useNavigate();
   useEffect(() => {
     axios
       .get("http://localhost:5000/")
       .catch((error) => console.error("Error:", error));
   }, []);
+
+  const handleProfileClick = () => {
+    if (authType === "admin") {
+      navigate("/admin/dashboard");
+    } else if (authType === "owner") {
+      navigate("/owner/dashboard");
+    } else {
+      navigate("/user/home");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -24,30 +36,56 @@ const Welcome: React.FC = () => {
             <Link to="/about" className="hover:text-yellow-400 transition">About</Link>
             <Link to="/contact" className="hover:text-yellow-400 transition">Contact</Link>
             <div className="relative">
-            <button
-              className="flex items-center space-x-2 hover:text-yellow-600"
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <span>Login</span>
-              <FaChevronDown className="text-sm" />
-            </button>
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-40">
-                <Link
-                  to="/user/login"
-                  className="block px-4 py-2 text-gray-700 hover:bg-yellow-100"
-                >
-                  Login as User
-                </Link>
-                <Link
-                  to="/owner/login"
-                  className="block px-4 py-2 text-gray-700 hover:bg-yellow-100"
-                >
-                  Login as Owner
-                </Link>
-              </div>
-            )}
-            </div>
+      <button
+        className="flex items-center space-x-2 hover:text-yellow-600"
+        onClick={() => setShowDropdown(!showDropdown)}
+      >
+        {isAuthenticated ? <span>{user.name}</span> : <span>Login</span>}
+        <FaChevronDown className="text-sm" />
+      </button>
+
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-40">
+          {!isAuthenticated ? (
+            <>
+              <Link
+                to="/user/login"
+                className="block px-4 py-2 text-gray-700 hover:bg-yellow-100"
+              >
+                Login as User
+              </Link>
+              <Link
+                to="/owner/login"
+                className="block px-4 py-2 text-gray-700 hover:bg-yellow-100"
+              >
+                Login as Owner
+              </Link>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleProfileClick}
+                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-yellow-100"
+              >
+                Profile
+              </button>
+              <button
+                onClick={() => {
+                  logout(); // Call the logout function
+                  setShowDropdown(false);
+                  navigate("/"); // Redirect to homepage after logout
+                }}
+                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-yellow-100"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  
+
           </div>
         </div>
       </nav>

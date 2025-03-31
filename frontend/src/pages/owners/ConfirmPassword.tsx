@@ -108,7 +108,7 @@ console.log(email,newPassword)
                 <input
                   key={index}
                   id={`otp-input-${index}`}
-                  type="text"
+                  type={showOtp?"text":"password"}
                   value={value}
                   onChange={(e) => handleChange(index, e.target.value)}
                   maxLength={1}

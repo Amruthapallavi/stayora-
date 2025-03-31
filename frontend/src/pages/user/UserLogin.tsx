@@ -36,9 +36,12 @@ const UserLogin = () => {
       await login(formData.email, formData.password, "user");
       notifySuccess("Login successful!");
       navigate("/user/home");
+
     } catch (err: any) {
+console.log(err);
       const errMsg =
-        err.response?.data?.message || "Failed to login. Please try again.";
+        err.response?.data?.error || "Failed to login. Please try again.";
+
       setError(errMsg);
       notifyError(errMsg);
     } finally {

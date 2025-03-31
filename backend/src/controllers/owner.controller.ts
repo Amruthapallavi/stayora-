@@ -12,7 +12,7 @@ class OwnerController implements IOwnerController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const govtIdProof = req.file?.path; // Cloudinary uploaded URL
+      const govtIdProof = req.file?.path; 
 
       if (!govtIdProof) {
         res.status(STATUS_CODES.BAD_REQUEST).json({ error: "Govt ID proof is required" });
@@ -21,7 +21,7 @@ class OwnerController implements IOwnerController {
 
       const result = await ownerService.registerOwner({
         ...req.body,
-        govtId: govtIdProof, // Attach uploaded file URL
+        govtId: govtIdProof, 
       });
 
       res.status(result.status).json({ message: result.message });
@@ -59,7 +59,8 @@ class OwnerController implements IOwnerController {
         const { email, password } = req.body;
         console.log(req.body,"owner login data")
         const result = await ownerService.loginOwner(email, password);
-    console.log(result,"login result");
+        // req.session.user = result.owner;
+
         res.cookie("auth-token", result.token, {
           httpOnly: true,
           secure: Boolean(process.env.NODE_ENV === "production"),
@@ -67,10 +68,10 @@ class OwnerController implements IOwnerController {
           maxAge: 3600000, // 1 hour
           path: "/",
         });
-    
+
         res.status(result.status).json({
           message: result.message,
-          owner: {
+          user: {
             id: result.owner._id,
             name: result.owner.name,
             email: result.owner.email,
@@ -132,6 +133,108 @@ class OwnerController implements IOwnerController {
        
       
         }
+          async resendOTP(req: Request, res: Response): Promise<void> {
+            try {
+              const { email } = req.body;
+              console.log(req.body,"for resent otp")
+              if (!email) {
+               throw new Error("email is required");
+              }
+        
+              const result = await ownerService.resendOTP(email);
+              res.status(result.status).json({
+                message: result.message,
+              });
+            } catch (error) {
+              console.error("OTP resend error:", error);
+              res.status(STATUS_CODES.BAD_REQUEST).json({
+                error: error instanceof Error ? error.message : "Failed to resend OTP",
+              });
+            }
+          }
+        
+        async logout(req: Request, res: Response): Promise<void> {
+    
+          res.clearCookie("auth-token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+          });
+      
+          res.status(STATUS_CODES.OK).json({
+            message: "Logged out successfully",
+          });
+        }
+
+async getProfileData(req:Request, res:Response):Promise<void>{
+  try {
+    console.log("hiii")
+    const id=req.params.id;
+    console.log(id);
+    const result = await ownerService.getProfileData(id);
+    console.log(result,"from owner controller");
+    res.status(result.status).json({
+      user: result.user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch features",
+    });
+  }
+}
+async updateProfile(req:Request,res:Response):Promise<void>{
+  try {
+    const id= req.params.id;
+const formData= req.body;
+    if(!id || !formData ){
+        res.status(STATUS_CODES.BAD_REQUEST).json({
+          error: "owner not found",
+        });
+        return;
+      }
+      console.log(id,formData)
+      const result = await ownerService.updateProfile(id,formData);
+    res.status(result.status).json({
+      message:result.message,
+    })
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+async addProperty(req: Request, res: Response): Promise<void>{
+  try {
+    const data = req.body;
+    const selectedImages = req.file?.path;
+    const ownerId = (req as any).userId; // Will be the ownerId from token
+    console.log("Adding property for owner:", ownerId);
+    const result = await ownerService.addProperty({data,ownerId});
+
+    res.status(result.status).json({
+      message: result.message,
+    });
+  } catch (error) {
+    console.error("Error adding property:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+async listFeatures(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await ownerService.listFeatures();
+    console.log(result,"from owner controller");
+    res.status(result.status).json({
+      features: result.features,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch features",
+    });
+  }
+}
 }
 
 

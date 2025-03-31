@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ allowedTypes }: ProtectedRouteProps) => {
   const { isAuthenticated, authType } = useAuthStore();
   const location = useLocation();
-
+  console.log(isAuthenticated,authType)
   if (!isAuthenticated) {
     const redirectPath = location.pathname.includes("/owner")
       ? "/owner/login"

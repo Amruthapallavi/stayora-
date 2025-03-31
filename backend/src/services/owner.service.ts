@@ -6,7 +6,7 @@ import ownerRepository from "../repositories/owner.repository";
 import { IOwner } from "../models/owner.model";
 import { IOwnerService } from "./interfaces/IOwnerService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
-
+import Property ,{IProperty} from "../models/property.model"
 interface SignupData extends Partial<IOwner> {
     confirmPassword?: string;
   }
@@ -54,6 +54,7 @@ interface SignupData extends Partial<IOwner> {
       await ownerRepository.create({
         ...ownerData,
         govtIdStatus:'pending',
+        status:'Pending',
         password: hashedPassword,
         isVerified: false,
         otp,
@@ -118,7 +119,7 @@ interface SignupData extends Partial<IOwner> {
   async loginOwner(
     email: string,
     password: string
-  ): Promise<{ owner: IOwner; token: string; message: string; status: number }> {
+  ): Promise<{ owner: IOwner;user:IOwner; token: string; message: string; status: number }> {
     console.log(email,"email")
     const owner = await ownerRepository.findByEmail(email);
     console.log(owner,"login owner")
@@ -126,8 +127,8 @@ interface SignupData extends Partial<IOwner> {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
 
-    if (!owner.isVerified) {
-      throw new Error(MESSAGES.ERROR.NOT_VERIFIED);
+    if (owner.status==="Blocked") {
+      throw new Error(MESSAGES.ERROR.BLOCKED_USER);
     }
     if (!owner.password) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
@@ -147,6 +148,7 @@ interface SignupData extends Partial<IOwner> {
     return {
       owner: this.sanitizeUser(owner),
       token,
+      user:owner,
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
     };
@@ -174,6 +176,196 @@ interface SignupData extends Partial<IOwner> {
   
     }
 
+    async getProfileData(id: string): Promise<{ user: any; status: number; message: string }> {
+      try {
+        const user = await ownerRepository.findById(id);
+    
+        if (!user) {
+          return {
+            user: null,
+            status: STATUS_CODES.NOT_FOUND,
+            message: "User not found",
+          };
+        }
+    
+        return {
+          user,
+          status: STATUS_CODES.OK,
+          message: "Successfully fetched",
+        };
+      } catch (error) {
+        console.error("Error in getProfileData:", error);
+        return {
+          user: null,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+          message: MESSAGES.ERROR.SERVER_ERROR,
+        };
+      }
+    }
+    
+    async updateProfile(
+      id: string,
+      updatedData: Record<string, any>
+    ): Promise<{ message: string; status: number }> {
+      try {
+        if (!id) {
+          return {
+            message: "Invalid user ID",
+            status: STATUS_CODES.BAD_REQUEST,
+          };
+        }
+    
+        const user = await ownerRepository.findById(id);
+        if (!user) {
+          return {
+            message: "User not found",
+            status: STATUS_CODES.NOT_FOUND,
+          };
+        }
+    console.log(updatedData);
+        // Merge new data
+        user.name=updatedData.data.name;
+        user.phone=updatedData.data.phone;
+        user.address=updatedData.data.address;
+        await user.save();
+    
+        return {
+          message: "Profile updated successfully",
+          status: STATUS_CODES.OK,
+        };
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        return {
+          message: "Internal Server Error",
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        };
+      }
+    }
+
+    async addProperty(req: { 
+      data: { 
+        data: Partial<IProperty> & { 
+          selectedImages?: string[]; 
+          selectedFeatures?: string[]; 
+          addedOtherFeatures?: string[]; 
+        }; 
+      }; 
+      ownerId: string; 
+    }): Promise<{ status: number; message: string }> {
+      try {
+        const { data, ownerId } = req;
+    
+        console.log("Received Data:", data);
+    
+        if (!ownerId) {
+          return { status: 400, message: "Owner ID is missing" };
+        }
+    
+        const propertyData = data.data;
+    
+        // Required Fields Validation
+        if (
+          !propertyData || 
+          !propertyData.title || 
+          !propertyData.rentPerMonth || 
+          !propertyData.type || 
+          !propertyData.description || 
+          !propertyData.bedrooms || 
+          !propertyData.bathrooms || 
+          !propertyData.furnishing || 
+          !propertyData.minLeasePeriod || 
+          !propertyData.maxLeasePeriod || 
+          !propertyData.address  
+          // !propertyData.city || 
+          // !propertyData.district || 
+          // !propertyData.state || 
+          // !propertyData.pincode
+        ) {
+          return { status: 400, message: "Missing required fields" };
+        }
+    
+        console.log("Validation passed");
+    
+        // Validate Image URLs
+        const validImages = propertyData.selectedImages?.filter(img => img.startsWith("http")) || [];
+        console.log(validImages, "Valid Images");
+    
+        // Combine selected features and additional features
+        const features = [
+          ...(propertyData.selectedFeatures || []),
+          ...(propertyData.addedOtherFeatures || [])
+        ];
+    
+        // Construct new property object
+        const newProperty = new Property({
+          ownerId,
+          title: propertyData.title.trim(),
+          type: propertyData.type.trim(),
+          description: propertyData.description.trim(),
+          category: propertyData.category || null, // Assign category if provided
+    
+          location: propertyData.location || {
+            place: "",
+            coordinates: { latitude: null, longitude: null },
+          },
+    
+          // Properly save address structure
+          address: {
+            houseNo: propertyData.houseNumber.trim(),
+            street: propertyData.street.trim(),
+            city: propertyData.city.trim(),
+            district: propertyData.district.trim(),
+            state: propertyData.state.trim(),
+            pincode: Number(propertyData.pincode), // Convert to number
+          },
+    
+          bedrooms: Number(propertyData.bedrooms),
+          bathrooms: Number(propertyData.bathrooms),
+          furnishing: propertyData.furnishing,
+          rentPerMonth: Number(propertyData.rentPerMonth),
+    
+          images: validImages,
+          minLeasePeriod: Number(propertyData.minLeasePeriod),
+          maxLeasePeriod: Number(propertyData.maxLeasePeriod),
+          rules: propertyData.rules || "",
+          cancellationPolicy: propertyData.cancellationPolicy || "",
+          features
+        });
+    
+        // Save to database
+        await newProperty.save();
+    
+        return { status: 201, message: "Property added successfully" };
+      } catch (error) {
+        console.error("Error in ownerService.addProperty:", error);
+        return { status: 500, message: "Internal Server Error" };
+      }
+    }
+    
+    
+    
+    
+
+ async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
+    try {
+      const features = await ownerRepository.findFeatures();
+
+    console.log(features)
+    return {
+      features,
+      status: STATUS_CODES.OK,
+      message:"successfully fetched"
+    };
+    } catch (error) {
+      console.error("Error in listServices:", error);
+      return { 
+        features: [], 
+        message: MESSAGES.ERROR.SERVER_ERROR, 
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+    }
+  }
+
+  }
 //   async processGoogleAuth(
 //     profile: any
 //   ): Promise<{ user: IUser; token: string; message: string; status: number }> {
@@ -208,5 +400,5 @@ interface SignupData extends Partial<IOwner> {
 //     };
 //   }
     }
-
+  
     export default new OwnerService();

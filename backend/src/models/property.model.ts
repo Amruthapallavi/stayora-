@@ -1,52 +1,82 @@
-import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IProperty extends Document {
-  owner: mongoose.Types.ObjectId;
-  name: string;
-  address: string;
-  location: {
-    type: "Point";
-    coordinates: number[];
+  ownerId: mongoose.Types.ObjectId;
+  title: string;
+  type: string;
+  description: string;
+  category?: mongoose.Types.ObjectId;
+  location?: {
+    place?: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
   };
-  price: number;
+  address: {
+    houseNo: string;
+    street: string;
+    city: string;
+    district: string;
+    state: string;
+    pincode: number;
+  };
+  bedrooms: number;
+  bathrooms: number;
+  furnishing: "Fully-Furnished" | "Semi-Furnished" | "Not Furnished";
+  rentPerMonth: number;
   images: string[];
-  services: string[];
-  status: "active" | "disabled";
-  verificationStatus: "pending" | "approved" | "rejected";
+  minLeasePeriod: number;
+  maxLeasePeriod: number;
+  rules: string;
+  cancellationPolicy: string;
+  features: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 const propertySchema: Schema = new Schema(
   {
-    owner: { type: Schema.Types.ObjectId, ref: "Owner", required: true },
-    name: { type: String, required: true, trim: true },
-    address: { type: String, required: true, trim: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: "Owners", required: true },
+    title: { type: String, required: true, trim: true },
+    type: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
+    category: { type: Schema.Types.ObjectId, ref: "Category" },
+
     location: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-        required: true,
-      },
+      place: { type: String, }, // Name of the location
       coordinates: {
-        type: [Number],
-        required: true,
-        index: "2dsphere",
+        latitude: { type: Number, default: null },
+        longitude: { type: Number, default: null },
       },
     },
-    price: { type: Number, required: true },
-    images: { type: [String], default: [] },
-    services: { type: [String], default: [] },
-    status: { type: String, enum: ["active", "disabled"], default: "active" },
-    verificationStatus: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+
+    address: {
+      houseNo: { type: String, required: true },
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      district: { type: String, required: true },
+      state: { type: String, required: true },
+      pincode: { type: Number, required: true },
     },
+
+    bedrooms: { type: Number, required: true },
+    bathrooms: { type: Number, required: true },
+    furnishing: {
+      type: String,
+      enum: ["Fully-Furnished", "Semi-Furnished", "Not Furnished"],
+      required: true,
+    },
+    rentPerMonth: { type: Number, required: true },
+    images: { type: [String], default: [] },
+    minLeasePeriod: { type: Number, required: true },
+    maxLeasePeriod: { type: Number, required: true },
+    rules: { type: String, default: "" },
+    cancellationPolicy: { type: String, default: "" },
+    features: { type: [String], default: [] },
   },
   { timestamps: true }
 );
 
-const property = mongoose.model<IProperty>("Venue", propertySchema);
-export default property;
+const Property = mongoose.model<IProperty>("Property", propertySchema);
+export default Property;

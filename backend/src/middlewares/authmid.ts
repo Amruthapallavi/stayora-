@@ -9,15 +9,15 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction): vo
   const token = req.cookies.token;
   if (!token) {
     res.status(401).json({ error: "Unauthorized" });
-    return; // ✅ Ensure function returns void
+    return; 
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
-    (req as any).user = decoded; // ✅ Assign user ID to request object
-    next(); // ✅ Continue execution
+    (req as any).user = decoded; 
+    next();
   } catch (error) {
     res.status(403).json({ error: "Invalid token" });
-    return; // ✅ Ensure function returns void
+    return; 
   }
 };

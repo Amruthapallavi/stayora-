@@ -126,6 +126,9 @@ console.log("Current Time:", Date.now());
     if (!user.isVerified) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
+    if (user.status==="Blocked") {
+      throw new Error(MESSAGES.ERROR.BLOCKED_USER);
+    }
     if (!user.password) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -173,32 +176,41 @@ console.log("Current Time:", Date.now());
 
   async processGoogleAuth(
     profile: any
-  ): Promise<{ user?: IUser; token?: string; message: string; status: number }> {
+  ): Promise<{ user: IUser; token: string; message: string; status: number }> {
     const email = profile.email;
-  console.log(email);
     let user = await userRepository.findByEmail(email);
-    console.log(user,"user")
-    if (!user) {
-      return {
-        message: "User not found. Please sign up first.",
-        status: STATUS_CODES.UNAUTHORIZED, // 401
-      };
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = profile.id;
+        await userRepository.update(user._id.toString(), user);
+      }
+    } else {
+      user = await userRepository.create({
+        googleId: profile.id,
+        name: profile.displayName,
+        email,
+        password: "",
+        isVerified: true,
+      });
     }
-  
-    if (!user.googleId) {
-      user.googleId = profile.id;
-      await userRepository.update(user._id.toString(), user);
-    }
-  
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
     }
-  
-    const token = jwt.sign({ userId: user._id, type: "user" }, jwtSecret, {
-      expiresIn: "1h",
-    });
-  
+
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        type: "user",
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        // profileImage: user.profileImage,
+      },
+      jwtSecret,
+      { expiresIn: "1h" }
+    );
+
     return {
       user: this.sanitizeUser(user),
       token,
@@ -206,7 +218,6 @@ console.log("Current Time:", Date.now());
       status: STATUS_CODES.OK,
     };
   }
-  
     }
 
     export default new UserService();

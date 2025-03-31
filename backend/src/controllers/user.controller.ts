@@ -43,7 +43,7 @@ class UserController implements IUserController {
   async resendOTP(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.body;
-      console.log(email,"for resent otp")
+      console.log(req.body,"for resent otp")
       if (!email) {
        throw new Error("email is required");
       }
@@ -99,14 +99,13 @@ class UserController implements IUserController {
       console.log("Checking Google authentication...");
   
       const result = await userService.processGoogleAuth(user);
-  
+  // console.log(result);
       if (!result.token) {
         // If no token, redirect to signup page
         console.warn("No token found, redirecting to signup/login.");
         return res.redirect(`${process.env.FRONTEND_URL}/signup?message=${encodeURIComponent(result.message)}`);
       }
   
-      // Set authentication token in cookies
       res.cookie("auth-token", result.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -117,7 +116,6 @@ class UserController implements IUserController {
   
       console.log("Generated Token:", result.token);
   
-      // Redirect to frontend callback with token
       res.redirect(
         `${process.env.FRONTEND_URL}/auth/google/callback?token=${result.token}`
       );
@@ -201,6 +199,8 @@ class UserController implements IUserController {
       message: "Logged out successfully",
     });
   }
+
+  
 }
 
 export default new UserController();

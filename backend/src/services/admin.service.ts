@@ -7,6 +7,7 @@ import { IOwner } from "../models/owner.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import userRepository from "../repositories/user.repository";
 import ownerRepository from "../repositories/owner.repository";
+import Mail from "../utils/Mail";
 import { isValidEmail } from "../utils/validators";
 import Service from "../models/service.model";
 import Feature from "../models/features.model";
@@ -28,6 +29,7 @@ interface FeatureData {
   icon: string;
   
 }
+
 class AdminService implements IAdminService {
   private sanitizeAdmin(admin: IUser) {
     const { password, __v, ...sanitizedAdmin } = admin.toObject();
@@ -175,12 +177,12 @@ console.log(image,"image");
 
       const existingService = await Service.findOne({ name });
       if (existingService) {
-        return { message: "Service already exists.", status: STATUS_CODES.CONFLICT };
+        return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
       }
 
       // Create and save the service
-      const newService = new Service({ name, description, price, contactMail,contactNumber });
-      await newService.save();
+      const newService = new Service({ name, description, price, contactMail,contactNumber,image });
+      await newService.save(); 
         // await adminRepository.create({
         //     ...serviceData,
             
@@ -284,7 +286,7 @@ console.log(image,"image");
 
       const existingFeature = await Feature.findOne({ name });
       if (existingFeature) {
-        return { message: "Service already exists.", status: STATUS_CODES.CONFLICT };
+        return { message: "Feature already exists.", status: STATUS_CODES.CONFLICT };
       }
 
       // Create and save the service
@@ -321,6 +323,39 @@ console.log(image,"image");
       return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
     }
   }
+  
+  async updateFeature(
+    id: string,
+    updatedData: Record<string, any>
+  ): Promise<{ message: string; status: number }> {
+    try {
+      const feature = await adminRepository.findFeature(id);
+      if (!feature) {
+        return {
+          message: "Feature not found",
+          status: STATUS_CODES.NOT_FOUND,
+        };
+      }
+  
+      // Update feature properties
+      Object.assign(feature, updatedData);
+  
+      await feature.save();
+  
+      return {
+        message: "Update successful",
+        status: STATUS_CODES.OK,
+      };
+    } catch (error) {
+      console.error("Error in updateFeature:", error);
+      return {
+        message: MESSAGES.ERROR.SERVER_ERROR,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+  
+
 
   async deleteOwner(id: string): Promise<{ message: string; status: number }> {
     try {
@@ -357,13 +392,13 @@ console.log(image,"image");
       };
     }
     
-    if(owner.status==="Active"){
+    if(owner.govtIdStatus==="approved"){
       return {
-        message: "owner already verified",
+        message: "owner already approved",
         status: STATUS_CODES.NOT_FOUND, 
       };
     }
-    owner.status="Active";
+    owner.govtIdStatus="approved";
     await owner.save();
 
     return {
@@ -379,33 +414,38 @@ console.log(image,"image");
   }
 }
 
-async rejectOwner(id: string,reason:string): Promise<{ message: string; status: number }> {
+
+async rejectOwner(id: string, reason: string): Promise<{ message: string; status: number }> {
   try {
     const owner = await adminRepository.findOwner(id);
     if (!owner) {
       return {
-        message: "owner not found",
-        status: STATUS_CODES.NOT_FOUND, 
+        message: "Owner not found",
+        status: STATUS_CODES.NOT_FOUND,
       };
     }
-    const rejectedOwner = await ownerRepository.update(id, {
+
+    // Update owner status in DB
+    await ownerRepository.update(id, {
       govtIdStatus: "rejected",
-      rejectionReason:reason,
+      rejectionReason: reason,
     });
-   
+
+    await Mail.sendRejectionMail(owner.email, reason);
 
     return {
-      message: " Approved Successfully ",
+      message: "Rejected successfully & email sent",
       status: STATUS_CODES.OK,
     };
   } catch (error) {
-    console.error("Error in approving owner:", error);
-    return { 
-      message: MESSAGES.ERROR.SERVER_ERROR, 
-      status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+    console.error("Error rejecting owner:", error);
+    return {
+      message: "Internal Server Error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
     };
   }
 }
+
 async removeFeature(id: string): Promise<{ message: string; status: number }> {
   try {
     const feature = await adminRepository.findFeature(id);
