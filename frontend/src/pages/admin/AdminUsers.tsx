@@ -5,6 +5,7 @@ import Sidebar from "../../components/admin/Sidebar";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import Swal from "sweetalert2";
+import AdminLayout from "../../components/admin/AdminLayout";
 
 type User = {
   _id:string;
@@ -119,8 +120,8 @@ const AdminUsers = () => {
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   return (
+    <AdminLayout>
     <div className="flex transition-all max-h-screen">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex-1 p-6 transition-all ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
         {/* Summary Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -205,6 +206,7 @@ const AdminUsers = () => {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

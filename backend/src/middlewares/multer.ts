@@ -22,8 +22,19 @@ const serviceImageStorage = new CloudinaryStorage({
   }),
 });
 
+// Storage for Property Image Uploads
+const propertyImageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "stayora/propertyImages", // Different folder for property images
+    format: "png", // Ensure images are stored as PNG
+    resource_type: "image", // Only images
+  }),
+});
+
 // Middleware for uploading different files
 const uploadGovtId = multer({ storage: govtIdStorage });
 const uploadServiceImage = multer({ storage: serviceImageStorage });
+const uploadPropertyImage = multer({ storage: propertyImageStorage });
 
-export { uploadGovtId, uploadServiceImage };
+export { uploadGovtId, uploadServiceImage, uploadPropertyImage };

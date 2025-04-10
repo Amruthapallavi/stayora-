@@ -10,6 +10,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "../../components/ConfirmationAlert";
+import AdminLayout from "../../components/admin/AdminLayout";
 const iconOptions = [
   { name: "Wifi", icon: <Wifi size={28} />, value: "Wifi" },
   { name: "Air Conditioning", icon: <AirVent size={28} />, value: "AirVent" },
@@ -174,8 +175,8 @@ const AdminFeatures = () => {
     };
 
   return (
+    <AdminLayout>
     <div className="flex">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Main Content */}
       <div className="flex-1 min-h-screen bg-gray-100 py-12 px-6">
@@ -378,6 +379,7 @@ const AdminFeatures = () => {
 )}
 
     </div>
+    </AdminLayout>
   );
 };
 

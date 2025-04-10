@@ -11,6 +11,8 @@ import Mail from "../utils/Mail";
 import { isValidEmail } from "../utils/validators";
 import Service from "../models/service.model";
 import Feature from "../models/features.model";
+import { IProperty } from "../models/property.model";
+import { IBooking } from "../models/booking.model";
 
 
 interface ServiceData {
@@ -148,7 +150,7 @@ if (!isPasswordValid) {
   
     return {
       message: "Successful",
-      status: STATUS_CODES.OK, // Ensure STATUS_CODES.OK is defined
+      status: STATUS_CODES.OK, 
     };
     } catch (error) {
       console.error("Error in update User:", error);
@@ -170,7 +172,6 @@ console.log(image,"image");
         return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
       }
 
-      // Validate price (must be a positive number)
       if (price <= 0 || isNaN(price)) {
         return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
       }
@@ -180,7 +181,6 @@ console.log(image,"image");
         return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
       }
 
-      // Create and save the service
       const newService = new Service({ name, description, price, contactMail,contactNumber,image });
       await newService.save(); 
         // await adminRepository.create({
@@ -202,7 +202,7 @@ console.log(image,"image");
     try {
       const services = await adminRepository.findServices();
   
-      console.log("Fetched Services:", services); // Debugging log
+      console.log("Fetched Services:", services); 
       return {
         services,
         status: STATUS_CODES.OK,
@@ -220,18 +220,15 @@ console.log(image,"image");
   
   async updateServiceStatus(id: string, status: string): Promise<{ message: string; status: number }> {
    try {
-     // Find the service
      const service = await adminRepository.findService(id);
   
-     // Check if service exists
      if (!service) {
        return {
          message: "Service not found",
-         status: STATUS_CODES.NOT_FOUND, // Ensure STATUS_CODES.NOT_FOUND is defined
+         status: STATUS_CODES.NOT_FOUND, 
        };
      }
    
-     // Toggle status
      service.status = service.status === "active" ? "disabled" : "active";
    
      
@@ -240,7 +237,7 @@ console.log(image,"image");
    
      return {
        message: "Successful",
-       status: STATUS_CODES.OK, // Ensure STATUS_CODES.OK is defined
+       status: STATUS_CODES.OK, 
      };
    } catch (error) {
     
@@ -277,7 +274,6 @@ console.log(image,"image");
       console.log(icon,"icon");
       
 
-      // Validate required fields
       if (!name || !description ) {
         return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
       }
@@ -289,7 +285,6 @@ console.log(image,"image");
         return { message: "Feature already exists.", status: STATUS_CODES.CONFLICT };
       }
 
-      // Create and save the service
       const newFeature = new Feature({ name, description, icon });
       await newFeature.save();
       return { message: "Feature added successfully!", status: STATUS_CODES.CREATED };
@@ -337,7 +332,6 @@ console.log(image,"image");
         };
       }
   
-      // Update feature properties
       Object.assign(feature, updatedData);
   
       await feature.save();
@@ -425,7 +419,6 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
       };
     }
 
-    // Update owner status in DB
     await ownerRepository.update(id, {
       govtIdStatus: "rejected",
       rejectionReason: reason,
@@ -470,5 +463,93 @@ async removeFeature(id: string): Promise<{ message: string; status: number }> {
     };
   }
 }
+async getAllProperties(): Promise<{ properties: IProperty[]; status: number; message: string }> {
+    try {
+      const properties = await adminRepository.findProperties();
+  
+      return {
+        properties: properties || [], 
+        status: STATUS_CODES.OK,
+        message: "Successfully fetched",
+      };
+    } catch (error) {
+      console.error("Error in property listing:", error);
+      return {
+        properties: [], 
+        message: MESSAGES.ERROR.SERVER_ERROR,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  async approveProperty(id: string): Promise<{ status: number; message: string }> {
+    try {
+      await adminRepository.approveProperty(id);
+  
+      return {
+        status: STATUS_CODES.OK,
+        message: "Property approved successfully",
+      };
+    } catch (error) {
+      console.error("Error approving property:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+  async blockUnblockProperty(id: string, status: string): Promise<{ status: number; message: string }> {
+    try {
+      await adminRepository.blockUnblockProperty(id, status);
+  
+      return {
+        status: STATUS_CODES.OK,
+        message: `Property status updated to ${status}`,
+      };
+    } catch (error) {
+      console.error("Error updating property status:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+  async deleteProperty(id: string): Promise<{ status: number; message: string }> {
+    try {
+      await adminRepository.deleteProperty(id);
+  
+      return {
+        status: STATUS_CODES.OK,
+        message: "Property deleted successfully",
+      };
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+  async listAllBookings(): Promise<{ bookings: IBooking[]; status: number; message: string }> {
+    try {
+      const bookings = await adminRepository.findAllBookings();
+  
+      return {
+        bookings: bookings || [], 
+        status: STATUS_CODES.OK,
+        message: "Successfully fetched",
+      };
+    } catch (error) {
+      console.error("Error in property listing:", error);
+      return {
+        bookings: [], 
+        message: MESSAGES.ERROR.SERVER_ERROR,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+      
+
+
 }
 export default new AdminService();

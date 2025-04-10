@@ -47,7 +47,7 @@ const Navbar = () => {
   // Navigation items
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Houses", path: "/houses" },
+    { name: "Houses", path: "/user/properties" },
     { name: "Categories", path: "/categories" },
     { name: "About", path: "/about" }
   ];
@@ -133,7 +133,7 @@ const Navbar = () => {
                     
                     {[
                       { label: "Profile", path: "/user/profile" },
-                      { label: "My Bookings", path: "/bookings" },
+                      { label: "My Bookings", path: "/user/bookings" },
                       { label: "Favorites", path: "/favorites" }
                     ].map((item, index) => (
                       <motion.div

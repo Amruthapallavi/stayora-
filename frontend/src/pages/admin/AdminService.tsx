@@ -5,6 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AdminLayout from "../../components/admin/AdminLayout";
 
 type Service = {
   _id: string;
@@ -131,8 +132,8 @@ const AdminServices = () => {
   };
 
   return (
+    <AdminLayout>
     <div className="flex min-h-screen bg-gray-100">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Admin - Services</h1>
@@ -212,6 +213,7 @@ const AdminServices = () => {
         )}
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

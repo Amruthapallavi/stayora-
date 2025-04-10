@@ -15,6 +15,7 @@ import {
   showErrorAlert,
 } from "../../components/alert/AlertService";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "../../components/admin/AdminLayout";
 
 type Owner = {
   _id: string;
@@ -179,11 +180,9 @@ const OwnerListing = () => {
   };
 
   return (
+    <AdminLayout>
     <div className="flex">
-      <Sidebar
-        isOpen={isSidebarOpen}
-        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+     
       <div className="flex-1 min-h-screen bg-gray-100 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -417,6 +416,7 @@ const OwnerListing = () => {
     </div>
       )}
     </div>
+    </AdminLayout>
   );
 };
 

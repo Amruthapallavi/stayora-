@@ -1,6 +1,13 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose";
 
-
+interface Address {
+  houseNo: string;
+  street: string;
+  city: string;
+  district: string;
+  state: string;
+  pincode: string;
+}
 
 export interface IUser extends Document {
   _id: ObjectId;
@@ -8,16 +15,28 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   phone?: string;
-  bookings?: ObjectId;
-  status: "Active" | "Blocked" |"Pending";
+  status: "Active" | "Blocked" | "Pending";
   isVerified: boolean;
-  role:"user" | "admin";
+  role: "user" | "admin";
   googleId?: string;
-  otp?:string|null,
-  otpExpires:Date |null,
+  otp?: string | null;
+  otpExpires: Date | null;
+  address?: Address; // ✅ Include address field
   createdAt: Date;
   updatedAt: Date;
 }
+
+const addressSchema = new Schema(
+  {
+    houseNo: { type: String, default: "" },
+    street: { type: String, default: "" },
+    city: { type: String, default: "" },
+    district: { type: String, default: "" },
+    state: { type: String, default: "" },
+    pincode: { type: String, default: "" },
+  },
+  { _id: false } // Prevents creation of a separate _id for the address subdocument
+);
 
 const UserSchema: Schema = new Schema(
   {
@@ -36,14 +55,14 @@ const UserSchema: Schema = new Schema(
       },
     },
     phone: { type: String, trim: true, default: null },
-    bookings: { type: Schema.Types.ObjectId, ref: "Bookings", default: null }, //create seperate
-    status: { type: String, enum: ["Active", "Blocked","Pending"], default: "Active" },
+    status: { type: String, enum: ["Active", "Blocked", "Pending"], default: "Active" },
     role: { type: String, enum: ["user", "admin"], default: "user" },
-
     isVerified: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires: { type: Date },
     googleId: { type: String, default: null },
+
+    address: { type: addressSchema, default: {} },
   },
   { timestamps: true }
 );

@@ -104,3 +104,9 @@ export const validatePropertyForm = (formData: PropertyFormData) => {
 
   return errors;
 };
+
+
+export const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.(com|net|org|edu|gov|mil|in|co|io|ai|me|info|biz|us|uk)$/i;
+  return emailRegex.test(email.trim());
+};

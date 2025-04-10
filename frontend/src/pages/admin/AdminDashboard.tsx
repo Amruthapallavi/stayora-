@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../../components/admin/Sidebar";
 import { BarChart, Users, ShoppingBag, Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
+import AdminLayout from "../../components/admin/AdminLayout";
 
 const AdminDashboard = () => {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -35,8 +36,8 @@ const AdminDashboard = () => {
   }, [darkMode]);
 
   return (
+    <AdminLayout>
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-white">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
@@ -74,6 +75,7 @@ const AdminDashboard = () => {
         </motion.div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

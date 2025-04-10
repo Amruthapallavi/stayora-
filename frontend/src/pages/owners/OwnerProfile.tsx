@@ -1,33 +1,52 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../../components/owner/Sidebar";
+// import Sidebar from "../../components/owner/Sidebar";
 import { User, Lock, UploadCloud, ShieldAlert } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { BadgeCheck } from "lucide-react";
 import { notifyError, notifySuccess } from "../../utils/notifications";
+import OwnerLayout from "../../components/owner/OwnerLayout";
+import { IOwner, ProfileFormType } from "../../types/IOwner";
 
 export default function OwnerProfile() {
-  const [activeForm, setActiveForm] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [activeForm, setActiveForm] = useState<string | null>(null);
+  const [userData, setUserData] = useState<{ user: IOwner } | null>(null);
   
-  const { updateUser, changePassword, user, getUserData, isAuthenticated } =
+  const { updateOwner, changePassword, user, getUserData, isAuthenticated } =
     useAuthStore();
-    const [updatedUser, setUpdatedUser] = useState({
-        name: "",
-        phone: "",
-        address: "",
-      });
+    const [updatedUser, setUpdatedUser] = useState<ProfileFormType>({
+      name: "",
+      phone: "",
+      address: {
+        houseNo: "",
+        street: "",
+        city: "",
+        district: "",
+        state: "",
+        pincode: "",
+      },
+      email: "",
+    });
+    
+
       
-      useEffect(() => {
-        if (userData?.user) {
-          setUpdatedUser({
-            name: userData.user.name || "",
-            phone: userData.user.phone || "",
-            address: userData.user.address || "",
-          });
-        }
-      }, [userData?.user]);  // Update dependency to prevent unnecessary re-renders
-      
-      
+    useEffect(() => {
+      if (userData?.user) {
+        setUpdatedUser({
+          name: userData.user.name || "",
+          phone: userData.user.phone || "",
+          email: userData.user.email || "", 
+          address: userData.user.address || {
+            houseNo: "",
+            street: "",
+            city: "",
+            district: "",
+            state: "",
+            pincode: "",
+          },
+        });
+      }
+    }, [userData?.user]);
+    
       
 
   useEffect(() => {
@@ -66,7 +85,7 @@ export default function OwnerProfile() {
     }
   
     try {
-      await updateUser(userId, updatedUser, "owner");
+      await updateOwner(userId, updatedUser);
       notifySuccess("Profile updated successfully");
       window.location.reload();
     } catch (err) {
@@ -90,9 +109,10 @@ export default function OwnerProfile() {
  
 
   return (
+    <OwnerLayout>
     <div className="flex bg-[#fffff] text-white min-h-screen">
       {/* Sidebar */}
-      <Sidebar />
+      {/* <Sidebar /> */}
 
       <div className="flex-1 flex flex-col md:flex-row gap-6 p-6">
   {/* Left Side - Profile Box */}
@@ -167,8 +187,8 @@ export default function OwnerProfile() {
   {/* Right Side - Form Section */}
   <div className="w-full md:w-2/3 bg-white p-6 rounded-lg shadow-lg text-[#2D2D2D] border border-[#A98E60]">
     {activeForm === "editProfile" && (
-      <form onSubmit={(e) => handleUpdateProfile(e, userData?.user?._id)} className="flex flex-col gap-3 mb-4">
-        <h2 className="text-xl font-semibold mb-2 text-[#A98E60]">Edit Profile</h2>
+      <form onSubmit={(e) => handleUpdateProfile(e, userData!.user._id!)} className="flex flex-col gap-3 mb-4">
+      <h2 className="text-xl font-semibold mb-2 text-[#A98E60]">Edit Profile</h2>
         <input
           type="text"
           name="name"
@@ -188,7 +208,7 @@ export default function OwnerProfile() {
         <input
           type="text"
           name="address"
-          defaultValue={userData?.user?.address || ""}
+          defaultValue={userData?.user?.address.city || ""}
           onChange={handleInputChange}
           placeholder="Address"
           className="p-2 border border-[#A98E60] bg-gray-100 rounded"
@@ -250,5 +270,6 @@ export default function OwnerProfile() {
 
 
     </div>
+    </OwnerLayout>
   );
 }

@@ -183,6 +183,19 @@ async deleteOwner(req:Request,res:Response): Promise<void>{
     
   }
 }
+async listAllBookings(req:Request, res:Response):Promise<void>{
+  try {
+    const result = await adminService.listAllBookings();
+    res.status(result.status).json({
+      bookings: result.bookings,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch bookings",
+    });
+  }
+}
 
 
 async approveOwner(req:Request,res:Response): Promise<void>{
@@ -208,6 +221,22 @@ async rejectOwner(req:Request,res:Response): Promise<void>{
     
   }
 }
+async getAllProperties(req:Request,res:Response):Promise<void>{
+try {
+  // const ownerId = (req as any).userId; 
+
+const result = await adminService.getAllProperties();
+    console.log(result,"from admin controller");
+    res.status(result.status).json({
+      properties: result.properties,
+    });
+} catch (error) {
+  console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch properties",
+    });
+}
+}
 
 async removeFeature(req:Request,res:Response): Promise<void>{
   try {
@@ -232,6 +261,44 @@ async logout(req: Request, res: Response): Promise<void> {
     message: "Logged out successfully",
   });
 }
+
+ async approveProperty(req: Request, res: Response) :Promise<void> {
+  try {
+    const propertyId = req.params.id;
+    await adminService.approveProperty(propertyId);
+    res.status(200).json({ message: 'Property approved successfully' });
+  } catch (error) {
+    console.error('Error approving property:', error);
+    res.status(500).json({ message: 'Failed to approve property' });
+  }
+}
+
+ async blockUnblockProperty(req: Request, res: Response):Promise<void> {
+  try {
+    const propertyId = req.params.id;
+    const { status } = req.body;
+    await adminService.blockUnblockProperty(propertyId, status);
+    res.status(200).json({ message: `Property status updated to ${status}` });
+  } catch (error) {
+    console.error('Error updating property status:', error);
+    res.status(500).json({ message: 'Failed to update status' });
+  }
+}
+
+async deleteProperty(req: Request, res: Response):Promise<void> {
+  try {
+    const propertyId = req.params.id;
+    await adminService.deleteProperty(propertyId);
+    res.status(200).json({ message: 'Property deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting property:', error);
+    res.status(500).json({ message: 'Failed to delete property' });
+  }
+}
+
+
+
+
 
 }
 

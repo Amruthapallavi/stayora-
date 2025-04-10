@@ -45,5 +45,6 @@ export const ROLES = {
       INVALID_TOKEN: "Invalid or expired token",
       ALREADY_VERIFIED: "User is already verified",
       NOT_VERIFIED:"You are not verified",
+      INCORRECT_PASSWORD:"Current Password not Matching",
     },
   };

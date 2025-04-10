@@ -7,6 +7,8 @@ export interface IUserController {
   resendOTP(req: Request, res: Response): Promise<void>;
   forgotPassword(req:Request,res:Response): Promise <void>;
   resetPassword(req:Request,res:Response):Promise <void>;
-//   googleCallback(req: Request, res: Response): Promise<void>;
+  googleCallback(req: Request, res: Response): Promise<void>;
+  // updateUserProfile(req: Request, res: Response): Promise<void>;
   logout(req: Request, res: Response): Promise<void>;
 }
+

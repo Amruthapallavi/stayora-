@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import Navbar from "../../components/user/Navbar";
+import UserLayout from "../../components/user/UserLayout";
 interface FilterState {
   location: string;
   propertyType: string;
@@ -55,10 +56,10 @@ const UserHomePage = () => {
   // };
  
     return (
+      <UserLayout>
       <div className="bg-gray-100 text-gray-900">
         {/* Navbar */}
         
-      <Navbar/>
         {/* Hero Section */}
         <section
         
@@ -285,6 +286,7 @@ const UserHomePage = () => {
           </div>
         </footer>
       </div>
+      </UserLayout>
     );
   };
   

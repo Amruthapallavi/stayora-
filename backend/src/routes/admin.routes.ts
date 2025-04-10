@@ -19,6 +19,8 @@ adminRoutes.get("/owners",
 
 adminRoutes.post("/add-service",authMiddleware(["admin"]),uploadServiceImage.single("serviceImage"),adminController.addService);
 adminRoutes.get("/services",authMiddleware(["admin"]),adminController.listServices);
+adminRoutes.get("/all-Properties",authMiddleware(["admin"]),adminController.getAllProperties);
+
 adminRoutes.patch("/services/status/:id",authMiddleware(["admin"]),adminController.updateServiceStatus);
 adminRoutes.get("/features",authMiddleware(["admin"]),adminController.listFeatures);
 adminRoutes.post("/add-feature",authMiddleware(["admin"]),adminController.addFeature);
@@ -31,6 +33,11 @@ adminRoutes.patch("/features/:id",authMiddleware(["admin"]),adminController.upda
 adminRoutes.patch("/users/status/:id",authMiddleware(["admin"]),adminController.updateUserStatus);
 adminRoutes.post("/owners/delete/:id",authMiddleware(["admin"]),adminController.deleteOwner);
 adminRoutes.post("/features/delete/:id",authMiddleware(["admin"]),adminController.removeFeature);
+
+adminRoutes.patch("/properties/approve/:id", authMiddleware(["admin"]), adminController.approveProperty);
+adminRoutes.patch('/properties/status/:id', authMiddleware(["admin"]), adminController.blockUnblockProperty);
+adminRoutes.delete('/properties/:id', authMiddleware(['admin']), adminController.deleteProperty);
+adminRoutes.get("/bookings",authMiddleware(["admin"]),adminController.listAllBookings);
 adminRoutes.post("/logout", adminController.logout);
 
 export default adminRoutes;

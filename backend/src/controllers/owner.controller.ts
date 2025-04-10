@@ -3,6 +3,7 @@ import ownerService from "../services/owner.service";
 import { IOwnerController } from "./interfaces/IOwnerController";
 import { STATUS_CODES } from "../utils/constants";
 import jwt from "jsonwebtoken";
+import bookingService from "../services/bookingService";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -169,7 +170,6 @@ class OwnerController implements IOwnerController {
 
 async getProfileData(req:Request, res:Response):Promise<void>{
   try {
-    console.log("hiii")
     const id=req.params.id;
     console.log(id);
     const result = await ownerService.getProfileData(id);
@@ -180,7 +180,7 @@ async getProfileData(req:Request, res:Response):Promise<void>{
   } catch (error) {
     console.error(error);
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: error instanceof Error ? error.message : "Failed to fetch features",
+      error: error instanceof Error ? error.message : "Failed to fetch data",
     });
   }
 }
@@ -205,13 +205,23 @@ const formData= req.body;
   }
 }
 
-async addProperty(req: Request, res: Response): Promise<void>{
+async addProperty(req: Request, res: Response): Promise<void> {
   try {
+    console.log("from controller");
+
     const data = req.body;
-    const selectedImages = req.file?.path;
-    const ownerId = (req as any).userId; // Will be the ownerId from token
-    console.log("Adding property for owner:", ownerId);
-    const result = await ownerService.addProperty({data,ownerId});
+    const ownerId = (req as any).userId; // assuming set from middleware
+
+    // Handle multiple image uploads from Cloudinary
+    const uploadedImages = (req.files as Express.Multer.File[] | undefined) || [];
+
+    // Extract image URLs from Cloudinary uploads
+    const imageUrls = uploadedImages.map((file: any) => file.path); // 'file.path' holds Cloudinary URL
+
+    console.log("Image URLs:", imageUrls);
+
+    // Pass images along with other data to service
+    const result = await ownerService.addProperty({ data, ownerId, images: imageUrls });
 
     res.status(result.status).json({
       message: result.message,
@@ -220,7 +230,8 @@ async addProperty(req: Request, res: Response): Promise<void>{
     console.error("Error adding property:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-};
+}
+
 async listFeatures(req:Request, res:Response):Promise<void>{
   try {
     const result = await ownerService.listFeatures();
@@ -235,6 +246,86 @@ async listFeatures(req:Request, res:Response):Promise<void>{
     });
   }
 }
+
+async ownerProperties(req:Request,res:Response):Promise<void>{
+try {
+  const ownerId = (req as any).userId; 
+
+const result = await ownerService.ownerProperties(ownerId);
+    res.status(result.status).json({
+      properties: result.properties,
+    });
+} catch (error) {
+  console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch properties",
+    });
+}
+}
+
+async getOwnerStatus(req: Request, res: Response): Promise<any> {
+  try {
+    const result = await ownerService.getOwnerStatus(req.params.id);
+
+    if (!result.user) {
+      return res.status(result.status).json({ message: result.message });
+    }
+    res.status(result.status).json({
+      status: result.user.status, // e.g., "active", "blocked"
+      user: result.user._id,
+    });
+  } catch (err) {
+    console.error("Get user status failed:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+async listAllBookings(req:Request, res:Response):Promise<void>{
+  try {
+     
+    const id=req.params.id;
+    console.log(id)
+    const result = await bookingService.listBookings(id);
+    // console.log(result,"from owner controller");
+    res.status(result.status).json({
+      bookings: result.bookings,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch bookings",
+    });
+  }
+}
+async getPropertyById(req:Request,res:Response):Promise<void>{
+  try {
+    // const ownerId = (req as any).userId; 
+
+    const id=req.params.id;
+    console.log(id);
+    const result = await ownerService.getPropertyById(id);
+    res.status(result.status).json({
+      Property: result.property,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to fetch property",
+    });
+  }
+ }
+
+async deletePropertyById(req: Request, res: Response):Promise<void> {
+  try {
+    const propertyId = req.params.id;
+    await ownerService.deleteProperty(propertyId);
+    res.status(200).json({ message: 'Property deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting property:', error);
+    res.status(500).json({ message: 'Failed to delete property' });
+  }
+}
+
 }
 
 

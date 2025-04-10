@@ -1,82 +1,117 @@
-import  { useEffect, useRef, useState } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  useMap,
+} from "react-leaflet";
+import { useEffect, useState } from "react";
+import * as L from "leaflet";
+import axios from "axios";
 
-// This is a placeholder component - in a real app, you would use a library like Mapbox, Google Maps, or Leaflet
-const Map = ({ 
-  onLocationSelect, 
-  selectedLocation 
-}: { 
+interface MapProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
   selectedLocation?: { lat: number; lng: number };
+}
+
+const LocationMarker = ({
+  onSelect,
+}: {
+  onSelect: (location: { lat: number; lng: number }) => void;
 }) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [apiKey, setApiKey] = useState<string>('');
-  
-  // For demonstration purposes only
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mapRef.current) return;
-    
-    const rect = mapRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    // Convert pixel coordinates to "geo" coordinates (just for demo)
-    // In a real implementation, this would use the map API
-    const lat = 40.7 + ((y / rect.height) - 0.5) * 10;
-    const lng = -74 + ((x / rect.width) - 0.5) * 20;
-    
-    onLocationSelect({ lat, lng });
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      onSelect({ lat, lng });
+    },
+  });
+
+  return null;
+};
+
+const FlyToLocation = ({ location }: { location: { lat: number; lng: number } }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (location) {
+      map.flyTo([location.lat, location.lng], 13);
+    }
+  }, [location, map]);
+
+  return null;
+};
+
+const Map: React.FC<MapProps> = ({ onLocationSelect, selectedLocation }) => {
+  const defaultPosition = { lat: 20.5937, lng: 78.9629 };
+  const [searchInput, setSearchInput] = useState("");
+  const [flyLocation, setFlyLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleSearch = async () => {
+    if (!searchInput.trim()) return;
+    try {
+      const response = await axios.get("https://nominatim.openstreetmap.org/search", {
+        params: {
+          q: searchInput,
+          format: "json",
+        },
+      });
+
+      if (response.data && response.data.length > 0) {
+        const { lat, lon } = response.data[0];
+        const newLocation = { lat: parseFloat(lat), lng: parseFloat(lon) };
+        setFlyLocation(newLocation); // fly to this location
+      } else {
+        alert("Location not found");
+      }
+    } catch (err) {
+      console.error("Geocoding failed:", err);
+    }
   };
-  
+
   return (
-    <div className="mb-4">
-      <div className="flex flex-col gap-4 mb-4">
-        <label htmlFor="mapApiKey" className="block text-gray-700 font-semibold">
-          Map API Key (for demonstration - not stored)
-        </label>
+    <div>
+      <div className="mb-3 flex gap-2">
         <input
           type="text"
-          id="mapApiKey"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="Enter your map API key (this is for demonstration only)"
-          className="border w-full p-2 rounded-md focus:ring-2 focus:ring-golden"
+          placeholder="Enter location..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="border px-3 py-2 rounded w-full"
         />
+        <button
+          onClick={handleSearch}
+          className="bg-[#b68451]  text-white px-4 py-2 rounded"
+        >
+          Search
+        </button>
       </div>
-      
-      <div 
-        ref={mapRef}
-        onClick={handleClick}
-        className="w-full h-64 bg-gray-100 rounded-md border border-gray-300 relative overflow-hidden"
+
+      <MapContainer
+        center={selectedLocation || defaultPosition}
+        zoom={5}
+        style={{ height: "400px", width: "100%" }}
       >
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-          <div className="text-center p-4">
-            <p className="text-gray-600 mb-2">
-              This is a placeholder for the map. In a real app, integrate with Mapbox, Google Maps, or Leaflet.
-            </p>
-            <p className="text-gray-500 text-sm">
-              Click anywhere to select a location (for demonstration).
-            </p>
-          </div>
-        </div>
-        
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+
         {selectedLocation && (
-          <div 
-            className="absolute w-6 h-6 bg-red-500 rounded-full transform -translate-x-3 -translate-y-3 flex items-center justify-center"
-            style={{ 
-              left: `${((selectedLocation.lng + 74) / 20 + 0.5) * 100}%`, 
-              top: `${((selectedLocation.lat - 40.7) / 10 + 0.5) * 100}%`
-            }}
-          >
-            <div className="w-2 h-2 bg-white rounded-full" />
-          </div>
+          <Marker
+            position={selectedLocation}
+            icon={L.icon({
+              iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41],
+            })}
+          />
         )}
-      </div>
-      
-      {selectedLocation && (
-        <div className="mt-2 text-sm text-gray-600">
-          Selected: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-        </div>
-      )}
+
+        {flyLocation && <FlyToLocation location={flyLocation} />}
+        <LocationMarker onSelect={onLocationSelect} />
+      </MapContainer>
     </div>
   );
 };

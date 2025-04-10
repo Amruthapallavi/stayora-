@@ -1,113 +1,127 @@
-import { useState } from "react";
-import { Edit, Trash, Plus } from "lucide-react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/owner/Sidebar";
 
-const properties = [
-  {
-    id: 1,
-    name: "Luxury Ensuite Room",
-    price: "$450 / Night",
-    size: "35sqm",
-    view: "City",
-    status: "Occupied",
-    image: "https://via.placeholder.com/400",
-  },
-  {
-    id: 2,
-    name: "Deluxe Queen Room",
-    price: "$300 / Night",
-    size: "35sqm",
-    view: "City",
-    status: "Vacant",
-    image: "https://via.placeholder.com/400",
-  },
-  {
-    id: 3,
-    name: "King Suite",
-    price: "$500 / Night",
-    size: "40sqm",
-    view: "Ocean",
-    status: "Occupied",
-    image: "https://via.placeholder.com/400",
-  },
-];
 
-const OwnerPropertyListing = () => {
-  const [propertyList, setPropertyList] = useState(properties);
-  const navigate = useNavigate();
 
-  const handleDelete = (id: number) => {
-    setPropertyList(propertyList.filter((property) => property.id !== id));
+import  { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Search } from 'lucide-react';
+import PropertyCard from '../../components/owner/PropertyCard';
+import { useAuthStore } from '../../stores/authStore';
+import { notifyError } from '../../utils/notifications';
+// import Sidebar from '../../components/owner/Sidebar';
+import OwnerLayout from '../../components/owner/OwnerLayout';
+import { IProperty } from '../../types/IProperty';
+
+// interface Property {
+//   id: string;
+//   title: string;
+//   type: string;
+//   bedrooms: number;
+//   bathrooms: number;
+//   city: string;
+//   state: string;
+//   rentPerMonth: number;
+//   images: string[];
+// }
+
+
+const Properties = () => {
+  const { getProperties } = useAuthStore();
+  const [properties, setProperties] = useState<IProperty[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    loadProperties();
+  }, []);
+
+  const loadProperties = async () => {
+    try {
+      setLoading(true);
+      const response = await getProperties();
+      setProperties(response.properties);
+    } catch (error) {
+      notifyError('Failed to load properties');
+      console.error('Error loading properties:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+  const filteredProperties = properties.filter(property => 
+    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="flex-1 p-6 bg-gray-100 min-h-screen">
-        <div className="flex justify-between items-center mb-6">
-          <motion.h1
-            className="text-4xl font-bold text-gray-800"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            Explore Our Premium Properties
-          </motion.h1>
-          <button
-            onClick={() => navigate("/owner/add-property")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:bg-blue-700 transition"
-          >
-            <Plus size={20} /> Add Property
-          </button>
-        </div>
+    <OwnerLayout>
+<div className="flex">
+  {/* <Sidebar /> */}
+  <div className="flex-1 p-4 md:p-8">
+    {/* Main content here */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {propertyList.map((property) => (
-            <motion.div
-              key={property.id}
-              className="bg-white shadow-lg rounded-lg overflow-hidden relative"
-              whileHover={{ scale: 1.05 }}
-            >
-              <img
-                src={property.image}
-                alt={property.name}
-                className="w-full h-48 object-cover"
+      <div className="max-w-6xl mx-auto">
+        {/* Header with search and add button */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <h1 className="text-2xl font-bold text-golden-dark">My Properties</h1>
+          
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* Search bar */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search properties..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-golden focus:border-transparent"
               />
-              <span
-                className={`absolute top-2 left-2 px-3 py-1 rounded-full text-white text-xs font-bold ${
-                  property.status === "Vacant" ? "bg-green-500" : "bg-red-500"
-                }`}
-              >
-                {property.status}
-              </span>
-              <div className="p-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  {property.name}
-                </h2>
-                <p className="text-sm text-gray-600">Size: {property.size}</p>
-                <p className="text-sm text-gray-600">View: {property.view}</p>
-                <p className="text-lg font-bold text-gray-900 mt-2">
-                  {property.price}
-                </p>
-                <div className="flex justify-between items-center mt-4">
-                  <button className="text-blue-500 hover:text-blue-700">
-                    <Edit size={20} />
-                  </button>
-                  <button
-                    className="text-red-500 hover:text-red-700"
-                    onClick={() => handleDelete(property.id)}
-                  >
-                    <Trash size={20} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+            </div>
+            
+            {/* Add property button */}
+            <Link 
+              to="/owner/add-property"
+              className="bg-[#b68451] text-white px-4 py-2 rounded-md shadow-md hover:bg-[#92643f] transition inline-flex items-center justify-center"
+            >
+              <Plus size={18} className="mr-2" />
+              <span>Add Property</span>
+            </Link>
+          </div>
         </div>
+        
+        {/* Property listing */}
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-golden"></div>
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">No properties found</h2>
+            <p className="text-gray-600 mb-6">
+              {searchTerm ? 'No properties match your search criteria.' : 'You haven\'t added any properties yet.'}
+            </p>
+            <Link 
+              to="/owner/add-property"
+              className="bg-[#b68451] text-white px-6 py-3 rounded-md shadow-md hover:bg-[#92643f] transition inline-flex items-center justify-center"
+            >
+              <Plus size={18} className="mr-2" />
+              <span>Add Your First Property</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProperties.map((property) => (
+              <PropertyCard key={property._id} property={property} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
+    </div>
+    </OwnerLayout>
   );
 };
 
-export default OwnerPropertyListing;
+export default Properties;
+
+
+

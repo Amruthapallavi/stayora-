@@ -23,7 +23,6 @@ interface SignupData extends Partial<IOwner> {
     ): Promise<{ message: string; status: number }> {
       const { name, email, password, confirmPassword, phone, govtId } = ownerData;
     
-      // Ensure all required fields are provided
       if (!name || !email || !password || !confirmPassword || !phone || !govtId) {
         throw new Error(MESSAGES.ERROR.INVALID_INPUT);
       }
@@ -32,16 +31,13 @@ interface SignupData extends Partial<IOwner> {
         throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
       }
     
-      // Check if email is already registered
       const existingOwner = await ownerRepository.findByEmail(email);
       if (existingOwner) {
         throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
       }
     
-      // Hash the password
       const hashedPassword = await bcrypt.hash(password, 10);
     
-      // Generate OTP for email verification
       const otp = OTPService.generateOTP();
       console.log(otp, "owner otp");
     
@@ -50,7 +46,6 @@ interface SignupData extends Partial<IOwner> {
     
       const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // OTP valid for 5 mins
     
-      // Save the new owner in the database
       await ownerRepository.create({
         ...ownerData,
         govtIdStatus:'pending',
@@ -59,7 +54,7 @@ interface SignupData extends Partial<IOwner> {
         isVerified: false,
         otp,
         otpExpires,
-        govtId, // Save Cloudinary URL of Govt ID proof
+        govtId, 
       });
     
       return { message: MESSAGES.SUCCESS.SIGNUP, status: STATUS_CODES.CREATED };
@@ -165,11 +160,10 @@ interface SignupData extends Partial<IOwner> {
       }
       const hashedPassword = await bcrypt.hash(newPassword, 10);
   
-      // Update user password and clear OTP fields
       owner.password = hashedPassword;
-      owner.otp = null; // Ensure OTP cannot be reused
+      owner.otp = null; 
       owner.otpExpires = null;
-      owner.isVerified = true; // Ensure user is marked as verified
+      owner.isVerified = true; 
   
       await ownerRepository.update(owner._id.toString(), owner);
       return { message: MESSAGES.SUCCESS.PASSWORD_RESET, status: STATUS_CODES.OK };
@@ -223,7 +217,7 @@ interface SignupData extends Partial<IOwner> {
           };
         }
     console.log(updatedData);
-        // Merge new data
+        // Merging new data
         user.name=updatedData.data.name;
         user.phone=updatedData.data.phone;
         user.address=updatedData.data.address;
@@ -241,98 +235,106 @@ interface SignupData extends Partial<IOwner> {
         };
       }
     }
-
-    async addProperty(req: { 
-      data: { 
-        data: Partial<IProperty> & { 
-          selectedImages?: string[]; 
-          selectedFeatures?: string[]; 
-          addedOtherFeatures?: string[]; 
-        }; 
-      }; 
-      ownerId: string; 
+    async addProperty(req: {
+      data: Partial<IProperty> & {
+        selectedFeatures?: string[];
+        addedOtherFeatures?: string[];
+      };
+      ownerId: string;
+      images?: string[];
     }): Promise<{ status: number; message: string }> {
       try {
-        const { data, ownerId } = req;
-    
-        console.log("Received Data:", data);
-    
+        const { data, ownerId, images } = req;
+    console.log(data,"from service addproperty")
         if (!ownerId) {
           return { status: 400, message: "Owner ID is missing" };
         }
     
-        const propertyData = data.data;
-    
-        // Required Fields Validation
         if (
-          !propertyData || 
-          !propertyData.title || 
-          !propertyData.rentPerMonth || 
-          !propertyData.type || 
-          !propertyData.description || 
-          !propertyData.bedrooms || 
-          !propertyData.bathrooms || 
-          !propertyData.furnishing || 
-          !propertyData.minLeasePeriod || 
-          !propertyData.maxLeasePeriod || 
-          !propertyData.address  
-          // !propertyData.city || 
-          // !propertyData.district || 
-          // !propertyData.state || 
-          // !propertyData.pincode
+          !data.title || 
+          !data.rentPerMonth || 
+          !data.type || 
+          !data.description || 
+          !data.bedrooms || 
+          !data.bathrooms || 
+          !data.furnishing || 
+          !data.minLeasePeriod || 
+          !data.maxLeasePeriod || 
+          !data.address || 
+          !data.houseNumber || 
+          !data.street || 
+          !data.city || 
+          !data.district || 
+          !data.state || 
+          !data.pincode
         ) {
           return { status: 400, message: "Missing required fields" };
         }
-    
-        console.log("Validation passed");
-    
-        // Validate Image URLs
-        const validImages = propertyData.selectedImages?.filter(img => img.startsWith("http")) || [];
-        console.log(validImages, "Valid Images");
-    
-        // Combine selected features and additional features
+    console.log(data.mapLocation,"location");
+        // Merging selected and other features
         const features = [
-          ...(propertyData.selectedFeatures || []),
-          ...(propertyData.addedOtherFeatures || [])
+          ...(data.selectedFeatures || []),
+          ...(data.addedOtherFeatures || [])
         ];
-    
-        // Construct new property object
+        const selectedFeatureIds: string[] = Array.isArray(data.selectedFeatures)
+        ? data.selectedFeatures
+        : data.selectedFeatures
+        ? [data.selectedFeatures]
+        : [];
+
+        const featureDocs = await ownerRepository.getFeatureNamesByIds(selectedFeatureIds);
+        
+      const selectedFeatureNames = featureDocs.map((f: any) => f.name);
+  
+      const addedOtherFeatures = Array.isArray(data.addedOtherFeatures)
+        ? data.addedOtherFeatures
+        : data.addedOtherFeatures
+        ? [data.addedOtherFeatures]
+        : [];
+  
+      const allFeatures = [...selectedFeatureNames, ...addedOtherFeatures];
+      console.log(allFeatures);
+
+      const parsedMapLocation = typeof data.mapLocation === 'string'
+  ? JSON.parse(data.mapLocation)
+  : data.mapLocation;
+
+
         const newProperty = new Property({
           ownerId,
-          title: propertyData.title.trim(),
-          type: propertyData.type.trim(),
-          description: propertyData.description.trim(),
-          category: propertyData.category || null, // Assign category if provided
+          title: data.title.trim(),
+          type: data.type.trim(),
+          description: data.description.trim(),
+          category: data.category || null,
     
-          location: propertyData.location || {
-            place: "",
-            coordinates: { latitude: null, longitude: null },
-          },
+          location: {
+    coordinates: {
+      latitude: parsedMapLocation?.lat,
+      longitude: parsedMapLocation?.lng,
+    }
+  },
     
-          // Properly save address structure
-          address: {
-            houseNo: propertyData.houseNumber.trim(),
-            street: propertyData.street.trim(),
-            city: propertyData.city.trim(),
-            district: propertyData.district.trim(),
-            state: propertyData.state.trim(),
-            pincode: Number(propertyData.pincode), // Convert to number
-          },
+          address: data.address?.trim() || "",
+          houseNumber: data.houseNumber?.trim() || "",
+          street: data.street?.trim() || "",
+          city: data.city?.trim() || "",
+          district: data.district?.trim() || "",
+          state: data.state?.trim() || "",
+          pincode: Number(data.pincode),
     
-          bedrooms: Number(propertyData.bedrooms),
-          bathrooms: Number(propertyData.bathrooms),
-          furnishing: propertyData.furnishing,
-          rentPerMonth: Number(propertyData.rentPerMonth),
+          bedrooms: Number(data.bedrooms),
+          bathrooms: Number(data.bathrooms),
+          furnishing: data.furnishing,
+          rentPerMonth: Number(data.rentPerMonth),
+          minLeasePeriod: Number(data.minLeasePeriod),
+          maxLeasePeriod: Number(data.maxLeasePeriod),
+          rules: data.rules || "",
+          cancellationPolicy: data.cancellationPolicy || "",
+          features:allFeatures,
     
-          images: validImages,
-          minLeasePeriod: Number(propertyData.minLeasePeriod),
-          maxLeasePeriod: Number(propertyData.maxLeasePeriod),
-          rules: propertyData.rules || "",
-          cancellationPolicy: propertyData.cancellationPolicy || "",
-          features
+          images: images || []
         });
     
-        // Save to database
         await newProperty.save();
     
         return { status: 201, message: "Property added successfully" };
@@ -344,9 +346,31 @@ interface SignupData extends Partial<IOwner> {
     
     
     
-    
 
- async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
+  async ownerProperties(
+    ownerId: string
+  ): Promise<{ properties: any[]; status: number; message: string }> {
+    try {
+      const properties = await ownerRepository.findOwnerProperty(ownerId);
+  
+      return {
+        properties: properties || [], 
+        status: STATUS_CODES.OK,
+        message: "Successfully fetched",
+      };
+    } catch (error) {
+      console.error("Error in ownerProperties:", error);
+      return {
+        properties: [], 
+        message: MESSAGES.ERROR.SERVER_ERROR,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+  
+
+
+  async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
     try {
       const features = await ownerRepository.findFeatures();
 
@@ -366,6 +390,88 @@ interface SignupData extends Partial<IOwner> {
   }
 
   }
+
+
+
+   async getOwnerStatus(id: string): Promise<{
+      user: any | null;
+      status: number;
+      message: string;
+    }> {
+      try {
+        const user = await ownerRepository.findUserById(id);
+    
+        if (!user) {
+          return {
+            user: null,
+            status: STATUS_CODES.NOT_FOUND,
+            message: "User not found",
+          };
+        }
+    
+        return {
+          user,
+          status: STATUS_CODES.OK,
+          message: "User fetched successfully",
+        };
+      } catch (error) {
+        console.error("Error in fetching user:", error);
+        return {
+          user: null,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+          message: MESSAGES.ERROR.SERVER_ERROR,
+        };
+      }
+    }
+    
+      async getPropertyById(id: string): Promise<{ property: any;  status: number; message: string }> {
+        try {
+          const property = await ownerRepository.findPropertyById(id);
+    
+         
+          
+          if (!property) {
+            return {
+              property: null,
+              status: STATUS_CODES.NOT_FOUND,
+              message: "Property not found"
+            };
+          }
+    
+          return {
+            property,
+            status: STATUS_CODES.OK,
+            message: "Property fetched successfully"
+          };
+      
+        } catch (error) {
+          console.error("Error in getPropertyById:", error);
+          return {
+            property: null,
+            status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+            message: MESSAGES.ERROR.SERVER_ERROR,
+          };
+        }
+      }
+        async deleteProperty(id: string): Promise<{ status: number; message: string }> {
+          try {
+            console.log("delete")
+            await ownerRepository.deleteProperty(id);
+        
+            return {
+              status: STATUS_CODES.OK,
+              message: "Property deleted successfully",
+            };
+          } catch (error) {
+            console.error("Error deleting property:", error);
+            return {
+              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+              message: MESSAGES.ERROR.SERVER_ERROR,
+            };
+          }
+        }
+    
+
 //   async processGoogleAuth(
 //     profile: any
 //   ): Promise<{ user: IUser; token: string; message: string; status: number }> {

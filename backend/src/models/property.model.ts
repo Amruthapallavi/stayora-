@@ -6,21 +6,21 @@ export interface IProperty extends Document {
   type: string;
   description: string;
   category?: mongoose.Types.ObjectId;
-  location?: {
+  mapLocation?: {
     place?: string;
     coordinates: {
       latitude: number;
       longitude: number;
     };
   };
-  address: {
-    houseNo: string;
+  address: string;
+    houseNumber: string;
     street: string;
     city: string;
     district: string;
     state: string;
     pincode: number;
-  };
+  
   bedrooms: number;
   bathrooms: number;
   furnishing: "Fully-Furnished" | "Semi-Furnished" | "Not Furnished";
@@ -31,6 +31,8 @@ export interface IProperty extends Document {
   rules: string;
   cancellationPolicy: string;
   features: string[];
+  isBooked:boolean;
+  status:"pending" | "active" | "blocked" |"booked";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,14 +53,14 @@ const propertySchema: Schema = new Schema(
       },
     },
 
-    address: {
-      houseNo: { type: String, required: true },
+      address:{type:String},
+      houseNumber: { type: String, required: true },
       street: { type: String, required: true },
       city: { type: String, required: true },
       district: { type: String, required: true },
       state: { type: String, required: true },
       pincode: { type: Number, required: true },
-    },
+    
 
     bedrooms: { type: Number, required: true },
     bathrooms: { type: Number, required: true },
@@ -74,6 +76,12 @@ const propertySchema: Schema = new Schema(
     rules: { type: String, default: "" },
     cancellationPolicy: { type: String, default: "" },
     features: { type: [String], default: [] },
+    isBooked:{type:Boolean,default:false},
+    status: {
+      type: String,
+      enum: ["pending", "active", "blocked"], default:"pending",
+      required: true,
+    },
   },
   { timestamps: true }
 );
