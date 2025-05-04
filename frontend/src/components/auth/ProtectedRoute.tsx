@@ -34,10 +34,10 @@ export const ProtectedRoute = ({ allowedTypes }: ProtectedRouteProps) => {
 
         if (!isValid) {
           logout();
-          notifyError("Something went wrong");
+          notifyError("You are currently blocked ");
         }
       } catch (err) {
-        console.error("❌ Error checking user status:", err);
+        console.error(" Error checking user status:", err);
         setIsUserValid(false);
         logout();
       } finally {

@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/admin/Sidebar";
-import { Search, Eye, CheckCircle, Unlock, X, Ban, Trash2 } from "lucide-react";
+import { Search, Eye, CheckCircle, Unlock, X, Ban, Trash2, Clock } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { notifySuccess, notifyError, notifyWarn } from "../../utils/notifications";
-// import moment from "moment";
+import { motion, AnimatePresence } from "framer-motion";// import moment from "moment";
 // import Swal from "sweetalert2";
 
 import {
@@ -185,52 +184,69 @@ const OwnerListing = () => {
      
       <div className="flex-1 min-h-screen bg-gray-100 p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {[
-              { label: "Total Owners", value: totalOwners },
-              { label: "Active Owners", value: activeOwners },
-              { label: "Unapproved Owners", value: unapprovedOwners },
-              { label: "Blocked Owners", value: blockedOwners },
-            ].map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white p-4 rounded-lg shadow-md text-center"
-              >
-                <h2 className="text-2xl font-bold">{stat.value}</h2>
-                <p className="text-gray-600">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+        >
+          <StatCard 
+            title="Total Users" 
+            value={totalOwners} 
+            bgColor="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+            icon={<Eye className="text-blue-600" size={30} />}
+          />
+          <StatCard 
+            title="Active Users" 
+            value={activeOwners} 
+            bgColor="linear-gradient(135deg, #c1dfc4 0%, #deecdd 100%)"
+            icon={<CheckCircle className="text-green-500" size={30} />}
+          />
+          <StatCard 
+            title="Blocked Users" 
+            value={blockedOwners} 
+            bgColor="linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)"
+            icon={<Ban className="text-red-500" size={30} />}
+          />
+          <StatCard 
+            title="Unverified Users" 
+            value={unapprovedOwners} 
+            bgColor="linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%)"
+            icon={<CheckCircle className="text-yellow-500 opacity-80" size={30} />}
+          />
+        </motion.div>
 
-          <div className="flex items-center bg-white p-4 rounded-lg shadow-md mb-6">
-            <Search size={24} className="text-gray-600 mr-2" />
-            <input
-              type="text"
-              placeholder="Search owner by name, email, or phone..."
-              className="w-full p-2 border-none focus:outline-none"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl mb-8 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h2 className="text-xl font-bold text-gray-700 dark:text-white flex-shrink-0">
+            Owners List
+          </h2>
+          <div className="w-full sm:w-[340px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search owners..."
+                className="pl-10 pr-4 py-2 w-full rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm transition-all"
+                value={searchQuery}
+                onChange={handleSearch}
+              />
+            </div>
           </div>
+        </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
             <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-200 text-gray-700">
-                  {[
-                    "Name",
-                    "Email",
-                    "Phone",
-                    "ID Proof",
-                    "Status",
-                    "Actions",
-                  ].map((header) => (
-                    <th key={header} className="py-3 px-4 text-left border">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+            <thead>
+                    <tr className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:bg-gray-800/70 text-left">
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Name</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Email</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Phone</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">ID Proof</th>
+
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Status</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Actions</th>
+                    </tr>
+                  </thead>
               <tbody>
                 {currentOwners.length === 0 ? (
                   <tr>
@@ -252,19 +268,24 @@ const OwnerListing = () => {
                           View
                         </button>
                       </td>
-                      <td className="py-3 px-4 font-semibold">
-                        <span
-                          className={`px-2 py-1 text-white text-sm rounded ${
-                            owner.status === "Pending"
-                              ? "bg-yellow-500"
-                              : owner.status === "Active"
-                              ? "bg-green-500"
-                              : "bg-red-500"
-                          }`}
-                        >
-                          {owner.status}
-                        </span>
-                      </td>
+                      <td className="px-6 py-4">
+  <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold
+    ${owner.status === "Active"
+      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+      : owner.status === "Pending"
+      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+    }`}>
+    {owner.status === "Active" ? (
+      <CheckCircle size={14} className="text-green-400" />
+    ) : owner.status === "Pending" ? (
+      <Clock size={14} className="text-orange-400" />
+    ) : (
+      <Ban size={14} className="text-red-400" />
+    )}
+    {owner.status}
+  </span>
+</td>
                       <td className="py-3 px-4 flex items-center space-x-2">
                         <button
                           className="text-blue-500 p-1 hover:bg-gray-200 rounded"
@@ -421,3 +442,28 @@ const OwnerListing = () => {
 };
 
 export default OwnerListing;
+
+const StatCard = ({ title, value, bgColor, icon }: { 
+  title: string; 
+  value: number; 
+  bgColor: string;
+  icon: React.ReactNode;
+}) => {
+  return (
+    <motion.div 
+      className="rounded-2xl p-7 flex flex-col gap-1 shadow-lg text-gray-900 dark:text-white relative overflow-hidden"
+      style={{
+        background: bgColor,
+        boxShadow: "rgba(160, 161, 255, 0.12) 0px 12px 30px"
+      }}
+      whileHover={{ y: -8, boxShadow: "rgba(100, 100, 180, 0.22) 0px 28px 60px", scale: 1.04 }}
+      transition={{ duration: 0.16 }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-800/80 dark:text-white/70 font-semibold">{title}</div>
+        <div className="bg-white/30 shadow p-2 rounded-full">{icon}</div>
+      </div>
+      <div className="mt-2 text-4xl font-extrabold text-gray-900 dark:text-white">{value}</div>
+    </motion.div>
+  );
+};

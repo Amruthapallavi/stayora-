@@ -7,6 +7,7 @@ interface RazorpayPaymentButtonProps {
   amount: number; // in paise
   productId:string;
   onSuccess: (booking: IBooking) => void; // <-- update here
+  onFailure: () => void; 
 }
 
 interface RazorpayOrderResponse {
@@ -23,7 +24,7 @@ interface RazorpayResponse {
   bookingId?:string;
 }
 
-const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, productId,onSuccess }) => {
+const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, productId, onSuccess, onFailure }) => {
   const createRazorpayOrder = useAuthStore((state) => state.createRazorpayOrder);
   const verifyRazorpayOrder = useAuthStore((state) => state.verifyRazorpayOrder);
   const {user}= useAuthStore();
@@ -53,25 +54,30 @@ const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, p
         handler: async (response: RazorpayResponse) => {
           const verification = await verifyRazorpayOrder({
             ...response,
-            bookingId: order.bookingId, 
+            bookingId: order.bookingId,
           });
           if (verification?.success && verification?.booking) {
-            onSuccess(verification.booking); // pass booking to onSuccess
+            onSuccess(verification.booking);
           } else {
             alert("Payment verification failed.");
           }
         },
-        
         prefill: {
-            name: user?.name || "",
-            email: user?.email || "",
-            contact: user?.phone || "",
-          },
-          
+          name: user?.name || "",
+          email: user?.email || "",
+          contact: user?.phone || "",
+        },
         theme: {
           color: "#b38e5d",
         },
+        modal: {
+          ondismiss: () => {
+            console.log("Payment cancelled by user.");
+            onFailure(); // Call failure callback
+          },
+        },
       };
+      
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();

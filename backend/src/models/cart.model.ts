@@ -47,9 +47,9 @@ const propertySchema: Schema = new Schema(
   {
     propertyId: { type: Schema.Types.ObjectId, ref: "Property", required: true },
     propertyName: { type: String, required: true },
-    moveInDate: { type: Date, required: false },         // Optional now
-    rentalPeriod: { type: Number, required: false },     // Optional now
-    endDate: { type: Date, required: false },            // Optional now
+    moveInDate: { type: Date, required: false },         
+    rentalPeriod: { type: Number, required: false },     
+    endDate: { type: Date, required: false },            
     propertyImages: [{ type: String, required: true }],
     rentPerMonth: { type: Number, required: true },
     addOn: { type: [addOnSchema], default: [] },

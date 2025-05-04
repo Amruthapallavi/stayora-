@@ -6,7 +6,7 @@ export interface IService extends Document {
   price: number;
   availability: boolean;
   status: "active" | "disabled";
-  image: string; // URL to the image
+  image: string; 
   contactMail:string;
   contactNumber:string;
   createdAt: Date;
@@ -23,7 +23,7 @@ const serviceSchema: Schema = new Schema(
 
     availability: { type: Boolean, default: true }, 
     status: { type: String, enum: ["active", "disabled"], default: "active" },
-    image: { type: String }, // Storing image as URL
+    image: { type: String }, 
   },
   { timestamps: true }
 );

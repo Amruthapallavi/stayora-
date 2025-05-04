@@ -21,13 +21,11 @@ class UserRepository extends BaseRepository<IUser> implements IUserRepository {
   async findCart(id:string):Promise<ICart |null>{
     return await Cart.findOne({userId:id})
   }
-  async findPropertyById(id:string):Promise<IProperty |null>{
-    return await Property.findById(id);
-  }
+
   async findOwnerById(id:string):Promise<IOwner |null>{
     return await Owners.findById(id)
   }
-  async findServices(): Promise<IService[]> {
+  async findActiveServices(): Promise<IService[]> {
     return await Service.find({ status: "active" });
   }
   async getUserById(id: string): Promise<IUser | null> {

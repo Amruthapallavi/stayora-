@@ -121,11 +121,15 @@ const handleDeleteProperty = async (propertyId: string) => {
               {/* <Button variant="outline" onClick={handleShareProperty} className="flex items-center">
                 <Share2 className="mr-2 h-4 w-4" /> Share
               </Button> */}
-              <Link to={`/owner/edit-property/${property._id}`}>
-                <Button variant="outline" className="flex items-center">
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </Button>
-              </Link>
+              {property.status !== 'rejected' && (
+  <Link 
+    to={`/owner/edit-property/${property._id}`}
+    className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"
+  >
+    Edit
+  </Link>
+)}
+
               <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <DialogTrigger asChild>
                   <Button variant="destructive" className="flex items-center">

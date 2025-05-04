@@ -1,11 +1,22 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+
+export enum PropertyStatus {
+  Pending = "pending",
+  Active = "active",
+  Blocked = "blocked",
+  Booked = "booked",
+  Rejected = "rejected"
+}
+
+
+
 export interface IProperty extends Document {
   ownerId: mongoose.Types.ObjectId;
   title: string;
   type: string;
   description: string;
-  category?: mongoose.Types.ObjectId;
+  category?: mongoose.Types.ObjectId |null;
   mapLocation?: {
     place?: string;
     coordinates: {
@@ -31,11 +42,15 @@ export interface IProperty extends Document {
   rules: string;
   cancellationPolicy: string;
   features: string[];
+  otherFeatures?:string[];
+  isRejected:boolean;
+  rejectedReason:string;
   isBooked:boolean;
-  status:"pending" | "active" | "blocked" |"booked";
+  status:"pending" | "active" | "blocked" |"booked" |"rejected";
   createdAt: Date;
   updatedAt: Date;
 }
+
 
 const propertySchema: Schema = new Schema(
   {
@@ -46,7 +61,7 @@ const propertySchema: Schema = new Schema(
     category: { type: Schema.Types.ObjectId, ref: "Category" },
 
     location: {
-      place: { type: String, }, // Name of the location
+      place: { type: String, }, 
       coordinates: {
         latitude: { type: Number, default: null },
         longitude: { type: Number, default: null },
@@ -76,6 +91,9 @@ const propertySchema: Schema = new Schema(
     rules: { type: String, default: "" },
     cancellationPolicy: { type: String, default: "" },
     features: { type: [String], default: [] },
+    otherFeatures: { type: [String], default: [] },
+    isRejected:{type:Boolean,default:false},
+     rejectedReason:{type:String},
     isBooked:{type:Boolean,default:false},
     status: {
       type: String,

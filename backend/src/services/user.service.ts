@@ -13,11 +13,28 @@ import mongoose, { ObjectId, Types } from "mongoose";
 import Service from "../models/service.model";
 import bookingRepository from "../repositories/booking.repository";
 import { ChildProcess } from "child_process";
+import propertyRepository from "../repositories/property.repository";
+import { IBooking } from "../models/booking.model";
+import { IWallet } from "../models/wallet.model";
+import walletRepository from "../repositories/wallet.repository";
+import { Response } from "express";
 
 interface SignupData extends Partial<IUser> {
     confirmPassword?: string;
   }
   
+  interface IWalletWithTotals {
+    userId: mongoose.Types.ObjectId;
+    balance: number;
+    transactionDetails: {
+      paymentType: 'credit' | 'debit';
+      amount: number;
+      bookingId: string;
+      date: Date;
+    }[];
+    totalDebit: number;
+    totalCredit: number;
+  }
   class UserService implements IUserService {
     private sanitizeUser(user: IUser) {
         
@@ -122,8 +139,10 @@ console.log("Current Time:", Date.now());
   
   async loginUser(
     email: string,
-    password: string
-  ): Promise<{ user: IUser; token: string; message: string; status: number }> {
+    password: string,
+        res: Response
+    
+  ): Promise<{ user: IUser; token: string; message: string; refreshToken:string; status: number }> {
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
@@ -142,17 +161,33 @@ console.log("Current Time:", Date.now());
     if (!isPasswordValid) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
+    const accessToken = process.env.JWT_SECRET;
+    const refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (!accessToken || !refreshTokenSecret) {
       throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
     }
-    const token = jwt.sign({ userId: user._id, type: "user" }, jwtSecret, {
+    const token = jwt.sign({ userId: user._id, type: "user" }, accessToken, {
       expiresIn: "1h",
     });
-     console.log(token,"jwt token")
+     const refreshToken = jwt.sign(
+          { userId: user._id, type: "user" },
+          refreshTokenSecret,
+          { expiresIn: "7d" }
+        );
+     console.log(token,"jwt token");
+     res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/", 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     return {
       user: this.sanitizeUser(user),
       token,
+      refreshToken:refreshToken,
+
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
     };
@@ -266,7 +301,6 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
         };
       }
   console.log(existingCart,"cart")
-      // Convert date to ISO date only (ignore time)
       const toLocalDateString = (date: Date) => {
         const offset = date.getTimezoneOffset() * 60000;
         return new Date(date.getTime() - offset).toISOString().split("T")[0];
@@ -345,11 +379,14 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
 
   async getPropertyById(id: string): Promise<{ property: any; ownerData: any; status: number; message: string }> {
     try {
-      const property = await userRepository.findPropertyById(id);
+      const propertyId = id.toString(); 
 
-      if (!property || property.status !== "active") {
-        throw new Error("Property not available");
-      }
+      const property = await propertyRepository.findPropertyById(propertyId);
+       console.log(id,"property")
+       console.log(property)
+      // if (!property || property.status !== "active") {
+      //   throw new Error("Property not available");
+      // }
       
       if (!property) {
         return {
@@ -427,7 +464,7 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
     try {
 
       
-      const property = await userRepository.findPropertyById(propertyId);
+      const property = await propertyRepository.findPropertyById(propertyId);
   console.log(property)
       if (!property) {
         return {
@@ -541,7 +578,7 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
   
    async listServices(): Promise<{ services: any[]; status: number; message: string }> {
       try {
-        const services = await userRepository.findServices();
+        const services = await userRepository.findActiveServices();
         return {
           services:services,
           status: STATUS_CODES.OK,
@@ -668,7 +705,61 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           }
         }
 
+        async  fetchWalletData(id: string): Promise<{ message: string; status: number; data: IWalletWithTotals | null }> {
+          try {
+            if (!id) {
+              return {
+                message: "Invalid user ID",
+                data: null,
+                status: STATUS_CODES.BAD_REQUEST,
+              };
+            }
         
+            // Fetch wallet data for the given user ID
+            const data = await walletRepository.findOne({
+              userId: new mongoose.Types.ObjectId(id),
+            });
+        
+            if (!data) {
+              return {
+                message: "No wallet transactions found",
+                data: null,
+                status: STATUS_CODES.NOT_FOUND,
+              };
+            }
+        
+            let totalDebit = 0;
+            let totalCredit = 0;
+        
+            data.transactionDetails.forEach((txn) => {
+              if (txn.paymentType === 'debit') {
+                totalDebit += txn.amount;
+              } else if (txn.paymentType === 'credit') {
+                totalCredit += txn.amount;
+              }
+            });
+        
+            const responseData: IWalletWithTotals = {
+              ...data.toObject(),  
+              totalDebit,
+              totalCredit,
+            };
+        
+            return {
+              message: "Wallet data fetched successfully",
+              status: STATUS_CODES.OK,
+              data: responseData,
+            };
+          } catch (error) {
+            console.error("Error fetching wallet data:", error);
+            return {
+              message: "Internal Server Error",
+              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+              data: null,
+             
+            };
+          }
+        }
      async changePassword  (
           userId: string,
           oldPassword: string,
@@ -707,7 +798,97 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           }
         };
         
+        async cancelBooking(
+          id: string,
+          reason: string
+        ): Promise<{ status: number; message: string }> {
+          try {
+            const booking = await bookingRepository.findById(id);
+            if (!booking) {
+              return {
+                status: STATUS_CODES.NOT_FOUND,
+                message: MESSAGES.ERROR.BOOKING_NOT_FOUND,
+              };
+            }
+        
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);  // Reset the time to midnight
+        
+            const moveInDate = new Date(booking.moveInDate);
+            moveInDate.setHours(0, 0, 0, 0);  // Reset the time to midnight
+        
+            const fiveDaysBeforeMoveIn = new Date(moveInDate);
+            fiveDaysBeforeMoveIn.setDate(fiveDaysBeforeMoveIn.getDate() - 5);
+        
+            if (today > fiveDaysBeforeMoveIn) {
+              return {
+                status: STATUS_CODES.BAD_REQUEST,
+                message: MESSAGES.ERROR.BOOKING_CANCEL_NOT_ALLOWED, 
+              };
+            }
+        
+            const refundAmount =
+              booking.paymentMethod && booking.paymentMethod !== "COD"
+                ? booking.totalCost
+                : 0;
+        
+            const updateData: Partial<IBooking> = {
+              isCancelled: true,
+              cancellationReason: reason,
+              refundAmount: refundAmount,
+              bookingStatus: "cancelled",
+              paymentStatus: "refunded",
+            };
+        
+            console.log(reason);
+            console.log("updated data", updateData);
+        
+            const response = await bookingRepository.updateBookingDetails(id, updateData);
+            const propertyId = new mongoose.Types.ObjectId(booking.propertyId.toString());
+            const property = await propertyRepository.updatePropertyById(
+              propertyId,
+              { status: "active" }
+            );
+        
+            console.log(response);
+        
+            return {
+              status: STATUS_CODES.OK,
+              message: "Booking cancelled successfully",
+            };
+          } catch (error) {
+            console.error("Error while cancelling booking:", error);
+            return {
+              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+              message: MESSAGES.ERROR.SERVER_ERROR,
+            };
+          }
+        };
 
-  
+        async updateBookingAndPropertyStatus (): Promise<void>  {
+          const today = new Date();
+          const bookings = await bookingRepository.findBookingsToComplete(today);
+        
+          if (Array.isArray(bookings) && bookings.length > 0) {
+            for (const booking of bookings) {
+              const bookingId = booking._id as string;
+              const propertyId = new mongoose.Types.ObjectId((booking.propertyId ).toString());
+          
+              await bookingRepository.updateBookingDetails(bookingId, {
+                bookingStatus: 'completed',
+              });
+          
+              await propertyRepository.updatePropertyById(propertyId, {
+                status: 'active',
+              });
+            }
+          } else {
+            console.log("No bookings found to complete.");
+          }
+          
+          }
+        
+        
+        
 }
     export default new UserService();

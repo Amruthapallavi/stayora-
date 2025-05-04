@@ -12,7 +12,7 @@ const featureSchema: Schema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
-    icon: { type: String, trim: true }, // Optional field for icon URL
+    icon: { type: String, trim: true },
   },
   { timestamps: true }
 );

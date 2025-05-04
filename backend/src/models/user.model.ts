@@ -21,7 +21,7 @@ export interface IUser extends Document {
   googleId?: string;
   otp?: string | null;
   otpExpires: Date | null;
-  address?: Address; // ✅ Include address field
+  address?: Address; 
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,7 +35,7 @@ const addressSchema = new Schema(
     state: { type: String, default: "" },
     pincode: { type: String, default: "" },
   },
-  { _id: false } // Prevents creation of a separate _id for the address subdocument
+  { _id: false } 
 );
 
 const UserSchema: Schema = new Schema(

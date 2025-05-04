@@ -55,7 +55,7 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       {/* Sidebar Menu */}
       <nav className="mt-6 flex flex-col gap-4">
         {[
-          { label: "Home", icon: Home, path: "/admin/home" },
+          { label: "Home", icon: Home, path: "/admin/dashboard" },
           { label: "Users", icon: Users, path: "/admin/users" },
           { label: "Owners", icon: Users, path: "/admin/owners" },
           { label: "Properties", icon: Building, path: "/admin/properties" },

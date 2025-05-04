@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Home, User, Settings, LogOut, Menu, Building2, Plus, Calendar } from "lucide-react";
+import { Home, User, Settings, LogOut, Menu, Building2, Plus, Calendar, Wallet, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
@@ -23,6 +23,13 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
 
   return (
     <div className="flex">
+      <header className="flex justify-between items-center p-4 border-b">
+  <h1 className="text-xl font-semibold">Tick-Track</h1>
+  <div className="flex items-center gap-4">
+    {/* Add other icons/menus if any */}
+  </div>
+</header>
+
       {/* Sidebar */}
       <motion.aside
   animate={{ width: isOpen ? "250px" : "80px" }}
@@ -76,8 +83,11 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
 
           {/* Bookings */}
           <NavItem icon={<Calendar />} text="Bookings" path="/owner/bookings" isOpen={isOpen} />
+          <NavItem icon={<MessageCircle />} text="Chats & Notifications" path="/owner/chat" isOpen={isOpen} />
 
           {/* Settings & Logout */}
+          <NavItem icon={<Wallet />} text="Wallet & Transactions" path="/owner/wallet" isOpen={isOpen} />
+
           <NavItem icon={<Settings />} text="Settings" path="/settings" isOpen={isOpen} />
           <NavItem icon={<LogOut />} text="Logout" isOpen={isOpen} onClick={handleLogout} />
         </nav>

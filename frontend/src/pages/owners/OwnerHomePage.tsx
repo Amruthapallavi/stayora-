@@ -52,9 +52,13 @@ const StatCard = ({ title, value, description, icon, trend, trendValue }: StatCa
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getProperties } = useAuthStore();
+  const { getProperties,user, getDashboardData } = useAuthStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<{ name: string; bookings: number; revenue: number }[]>([]);
+
+  const [dashboardData, setDashboardData] = useState<any>(null);  // Change 'any' to the actual type if you know it
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProperties: 0,
     activeBookings: 0,
@@ -62,28 +66,33 @@ const Dashboard = () => {
     occupancyRate: 0,
   });
 
-  // Mock chart data - in a real app, this would come from an API
-  const chartData = [
-    { name: 'Jan', bookings: 4, revenue: 7000 },
-    { name: 'Feb', bookings: 6, revenue: 9500 },
-    { name: 'Mar', bookings: 5, revenue: 8000 },
-    { name: 'Apr', bookings: 8, revenue: 12000 },
-    { name: 'May', bookings: 7, revenue: 11000 },
-    { name: 'Jun', bookings: 9, revenue: 13500 },
-  ];
+ 
 
   useEffect(() => {
     loadProperties();
   }, []);
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await getDashboardData()  // Adjust the API URL as needed
+       
+        setDashboardData(response.data);  // Assuming the response structure is like { data: {...} }
+      setChartData(response.data?.bookingsByMonth);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      }
+    };
+
+    fetchDashboardData();
+  }, [user._id]); 
+  console.log(dashboardData,"dashboard")
   const loadProperties = async () => {
     try {
       setLoading(true);
       const response = await getProperties();
       setProperties(response.properties);
       
-      // In a real application, you would fetch these statistics from your backend
-      // Here we're just creating mock stats based on the properties
       setStats({
         totalProperties: response.properties.length,
         activeBookings: Math.floor(Math.random() * 10) + 5,
@@ -96,7 +105,12 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
+  const cleanedChartData = chartData.map((item) => ({
+    name: item.name,
+    bookings: item.bookings ?? 0,
+    revenue: item.revenue ?? 0,
+  }));
+  
   const addPropertyCard = (
     <div 
       onClick={() => navigate('/owner/add-property')}
@@ -132,7 +146,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
               title="Total Properties"
-              value={stats.totalProperties}
+              value={dashboardData?.totalActiveProperties}
               description="Properties listed on platform"
               icon={<Home className="h-5 w-5" />}
               trend="up" 
@@ -140,23 +154,24 @@ const Dashboard = () => {
             />
             <StatCard
               title="Active Bookings"
-              value={stats.activeBookings}
+              value={dashboardData?.totalBookings}
               description="Currently occupied properties"
               icon={<BookOpen className="h-5 w-5" />}
               trend="up"
               trendValue="15%"
             />
             <StatCard
-              title="Monthly Revenue"
-              value={`$${stats.monthlyRevenue}`}
+              title="Total Revenue"
+              value={`₹${dashboardData?.totalRevenue
+              }`}
               description="Total earnings this month"
               icon={<CheckCircle className="h-5 w-5" />}
               trend="up"
               trendValue="8%"
             />
             <StatCard
-              title="Occupancy Rate"
-              value={`${stats.occupancyRate}%`}
+              title="Completed Bookings"
+              value={`${dashboardData?.totalCompletedBookings}`}
               description="Average property occupancy"
               icon={<UserCheck className="h-5 w-5" />}
               trend={stats.occupancyRate > 70 ? "up" : "down"}
@@ -166,53 +181,66 @@ const Dashboard = () => {
 
           {/* Chart Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Trends</CardTitle>
-                <CardDescription>Number of bookings per month</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="bookings" fill="#b38e5d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Revenue Analysis</CardTitle>
-                <CardDescription>Monthly revenue in USD</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="revenue" fill="#8b6b3b" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Booking Trends */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Booking Trends</CardTitle>
+          <CardDescription>Number of bookings per month</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            {cleanedChartData?.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={cleanedChartData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="bookings" fill="#b38e5d" />
+                  {/* Optional: show revenue bar too */}
+                  <Bar dataKey="revenue" fill="#4CAF50" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-sm text-gray-500">No data available</p>
+            )}
           </div>
+        </CardContent>
+      </Card>
 
+      {/* Revenue Analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Analysis</CardTitle>
+          <CardDescription>Monthly revenue in ₹</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px]">
+            {cleanedChartData?.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={cleanedChartData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value: number) => `₹${value.toLocaleString()}`}
+                  />
+                  <Bar dataKey="revenue" fill="#8b6b3b" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-sm text-gray-500">No data available</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
           {/* Recent Properties Section */}
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">

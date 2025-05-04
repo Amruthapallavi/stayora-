@@ -5,7 +5,8 @@ import {
   ArrowLeft, BedDouble, Bath, Calendar, DollarSign, Home, 
   Star, Clock, Maximize, Check, MapPin,
   Phone,
-  Mail
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { notifyError } from '../../utils/notifications';
@@ -13,6 +14,7 @@ import { FaRupeeSign } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import UserLayout from '../../components/user/UserLayout';
+import PropertyMap from '../../components/user/PropertyMap';
 
 // const newProperty={
 //     id: '1',
@@ -120,6 +122,9 @@ const PropertyDetailedPage = () => {
 
   const handleBookNow = () => {
     navigate(`/user/checkout?propertyId=${id}&propertyName=${encodeURIComponent(property.title)}`);
+  };
+  const handleChatWithOwner = () => {
+    navigate(`/user/chat/${property?._id}/${property?.ownerId}`);
   };
   
   if (loading) {
@@ -272,7 +277,20 @@ const PropertyDetailedPage = () => {
                   </div>
                 </div>
               </motion.div>
-              
+              <motion.div 
+  className="bg-white p-6 rounded-xl shadow-sm"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: 0.1 }}
+>
+  <PropertyMap 
+    latitude={property.location.coordinates.latitude || 0} // Default to 0 if latitude is null
+    longitude={property.location.coordinates.longitude || 0} // Default to 0 if longitude is null
+    propertyTitle={property.title}
+  />
+</motion.div>
+
+
               {/* Description */}
               <motion.div 
                 className="bg-white p-6 rounded-xl shadow-sm"
@@ -285,6 +303,7 @@ const PropertyDetailedPage = () => {
                   {property.description}
                 </p>
               </motion.div>
+
               
               {/* Features */}
               <motion.div 
@@ -409,6 +428,13 @@ const PropertyDetailedPage = () => {
           </div>
         </div>
       </div>
+      <Button 
+        onClick={handleChatWithOwner}
+        className="flex items-center gap-2 bg-[#b68451] text-[#ffff]"
+      >
+        <MessageSquare className="h-4 w-4 " />
+        Chat with Owner
+      </Button>
     </div>
     </UserLayout>
   );

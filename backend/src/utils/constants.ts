@@ -23,8 +23,13 @@ export const ROLES = {
       OTP_SENT: "OTP sent to your email",
       OTP_VERIFIED: "OTP verified successfully",
       OTP_RESENT: "OTP resent successfully",
-      
+      CONVERSATION_FETCHED:"conversation successfully fetched",
       PASSWORD_RESET: "Password reset successful",
+      MESSAGE_SENT:" Message send successfully",
+      CONVERSATIONS_FETCHED:"Chat fetched Successfully",
+      NOTIFICATION_CREATED:"Notification created successfully",
+      NOTIFICATIONS_FETCHED:"Notification fetched successfully",
+      NOTIFICATION_UPDATED:"Notification updated successfully"
     },
     ERROR: {
       INVALID_CREDENTIALS: "Invalid credentials",
@@ -44,7 +49,12 @@ export const ROLES = {
       MISSING_FIELDS: "Required fields are missing",
       INVALID_TOKEN: "Invalid or expired token",
       ALREADY_VERIFIED: "User is already verified",
-      NOT_VERIFIED:"You are not verified",
+      NOT_VERIFIED:"You are not verified ",
       INCORRECT_PASSWORD:"Current Password not Matching",
+      BOOKING_NOT_FOUND:"The Booking not found",
+      TOKEN_EXPIRED:"Token expired",
+      REFRESH_TOKEN_INVALID:"Refresh token invalid",
+      REFRESH_TOKEN_MISSING:"Refresh token missing",
+      BOOKING_CANCEL_NOT_ALLOWED:'Cancellation only availble within 5 days of move-In-date'
     },
   };

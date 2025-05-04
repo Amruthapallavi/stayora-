@@ -8,7 +8,7 @@ declare global {
 
 export interface RazorpayOptions {
   key: string;
-  amount: number; 
+  amount: number;
   currency?: string;
   name: string;
   description?: string;
@@ -23,6 +23,9 @@ export interface RazorpayOptions {
   notes?: Record<string, any>;
   theme?: {
     color?: string;
+  };
+  modal?: {
+    ondismiss?: () => void;
   };
 }
 

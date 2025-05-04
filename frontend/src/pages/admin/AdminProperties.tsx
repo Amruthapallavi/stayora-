@@ -17,7 +17,8 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import TooltipWrapper from '../../components/ToolTip';
 import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '../../components/ConfirmationAlert';
 import { showStatusChangeAlert } from '../../components/alert/AlertService';
-
+import Swal from "sweetalert2";
+import { notifySuccess } from '../../utils/notifications';
 const AdminProperties: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,25 +26,30 @@ const AdminProperties: React.FC = () => {
   const [filteredProperties, setFilteredProperties] = useState<IProperty[]>([]);
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const { getAllProperties ,approveProperty,blockUnblockProperty,deleteProperty
+  const [currentPage, setCurrentPage] = useState(1);
+  // const [totalPages, setTotalPages] = useState(1);
+  const { getAllProperties ,rejectProperty,approveProperty,blockUnblockProperty,deleteProperty
   } = useAuthStore();
+  const propertyPerPage=5;
 
   useEffect(() => {
     const fetchProperties = async () => {
+      setIsLoading(true);
       try {
         const res = await getAllProperties();
-        setProperties(res);
+        setProperties(res.properties);
         setFilteredProperties(res.properties);
+        // setTotalPages(res.totalPages);
       } catch (error) {
         console.error('Failed to fetch properties:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchProperties();
-  }, [getAllProperties]);
+  }, [currentPage, getAllProperties]);
+  
 console.log(properties)
   const applyFilters = (query: string, status: string | null) => {
     let filtered = [...properties];
@@ -70,6 +76,10 @@ console.log(properties)
     applyFilters(query, statusFilter);
   };
 
+  const indexOfLastProperty = currentPage * propertyPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertyPerPage;
+  const currentProperty = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  const totalPages = Math.ceil(properties.length / propertyPerPage);
   const handleStatusFilter = (status: string | null) => {
     setStatusFilter(status);
     applyFilters(searchQuery, status);
@@ -91,13 +101,15 @@ console.log(properties)
       if (confirmed) {
         await approveProperty(propertyId);
         showSuccessAlert("Property approved successfully");
-        window.location.reload(); // Reload page after approval
+        setFilteredProperties(filteredProperties.filter(property => property._id !== propertyId));
       }
     } catch (error) {
       console.error("Approval failed", error);
       showErrorAlert("Something went wrong while approving");
     }
   };
+  
+
   
   const handleBlockUnblock = async (
     propertyId: string,
@@ -142,9 +154,68 @@ console.log(properties)
   
   
 
+const handleReject = async (propertyId:string) => {
+  try {
+    const { value: reason } = await Swal.fire({
+      title: "Reason for Rejection",
+      input: "textarea",
+      inputLabel: "Please enter a reason",
+      inputPlaceholder: "Type your reason here...",
+      inputAttributes: {
+        "aria-label": "Reason",
+      },
+      showCancelButton: true,
+    });
+
+    if (!reason) return;
+
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to reject this property.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, reject it!",
+    });
+
+    if (confirm.isConfirmed) {
+      console.log("Rejected property ID:", propertyId);
+      console.log("Reason:", reason);
+      const response= await rejectProperty(propertyId,reason);
+      console.log(response,"checking");
+      notifySuccess(response?.message);
+window.location.reload();
+      // Call your backend API here if needed
+      // await rejectProperty(propertyId, reason);
+    }
+  } catch (error) {
+    console.error("Error during rejection:", error);
+    Swal.fire("Error", "Something went wrong. Please try again.", "error");
+  }
+};
+
+
   const handleRowClick = (property: IProperty) => {
     navigate(`/admin/properties/${property._id}`);
   };
+  const handlePageChange = async (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+      try {
+        setIsLoading(true);
+        const res = await getAllProperties(page);
+        setProperties(res.properties);
+        setFilteredProperties(res.properties);
+        setTotalPages(res.totalPages);
+      } catch (error) {
+        console.error('Failed to fetch properties:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+  
 
   return (
     <AdminLayout>
@@ -217,7 +288,7 @@ console.log(properties)
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProperties.map((property, index) => (
+              {currentProperty.map((property, index) => (
                 <tr
                   key={index}
                   className={cn('hover:bg-gray-50', 'cursor-pointer')}
@@ -278,15 +349,16 @@ console.log(properties)
           />
         </TooltipWrapper>
         <TooltipWrapper content="Reject">
-          <X
-            size={18}
-            className="cursor-pointer text-red-500 hover:text-red-600"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log("Reject property", property._id);
-            }}
-          />
-        </TooltipWrapper>
+  <X
+    size={18}
+    className="cursor-pointer text-red-500 hover:text-red-600"
+    onClick={(e) => {
+      e.stopPropagation();
+      handleReject(property._id);
+    }}
+  />
+</TooltipWrapper>
+
       </>
     )}
 
@@ -351,6 +423,16 @@ console.log(properties)
           </table>
         </div>
       )}
+          <div className="flex justify-between items-center mt-6">
+          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+            Previous
+          </button>
+          <span className="text-gray-700 font-semibold">Page {currentPage} of {totalPages}</span>
+          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+            Next
+          </button>
+        </div>
+
     </div>
     </AdminLayout>
   );

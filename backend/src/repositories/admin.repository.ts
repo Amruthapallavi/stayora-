@@ -7,6 +7,7 @@ import User from "../models/user.model";
 import  Owners, { IOwner } from "../models/owner.model";
 import Property, { IProperty } from "../models/property.model";
 import Booking, { IBooking } from "../models/booking.model";
+import { Types } from "mongoose";
 class AdminRepository
   extends BaseRepository<IUser>
   implements IAdminRepository
@@ -22,12 +23,11 @@ class AdminRepository
   async findAllUsers(): Promise<IUser[]> {
     return await User.find({ role: 'user' });
   }
-  async findAllOwners():Promise<IOwner[]>{
-    return await Owners.find();
+  async findAllOwners(): Promise<IOwner[]> {
+    return await Owners.find().sort({ createdAt: -1 });
   }
-  async findServices():Promise<IService[]>{
-    return await Service.find()
-  }
+  
+  
    async findService(id:string): Promise<IService|null> {
       return await Service.findOne({_id:id});
     }
@@ -49,9 +49,7 @@ class AdminRepository
     async deleteFeature(id:string): Promise<IFeature | null>{
       return await Feature.findByIdAndDelete({_id:id});
     }
-    async findProperties() {
-      return await Property.find().populate("ownerId", "-password");
-    }
+  
     async approveProperty (id: string) {
       return await Property.findByIdAndUpdate(id, { status: 'active' });
     };
@@ -63,7 +61,7 @@ class AdminRepository
     async deleteProperty (id: string) {
       return await Property.findByIdAndDelete(id);
     };
-    async findAllBookings  (){
+    async findAllBookings(skip: number = 0, limit: number = 5) {
       return Booking.aggregate([
         {
           $lookup: {
@@ -71,7 +69,7 @@ class AdminRepository
             localField: "userId",
             foreignField: "_id",
             as: "user",
-          }
+          },
         },
         {
           $lookup: {
@@ -79,7 +77,7 @@ class AdminRepository
             localField: "ownerId",
             foreignField: "_id",
             as: "owner",
-          }
+          },
         },
         {
           $lookup: {
@@ -87,9 +85,8 @@ class AdminRepository
             localField: "propertyId",
             foreignField: "_id",
             as: "property",
-          }
+          },
         },
-        // Flatten arrays from lookups
         { $unwind: "$user" },
         { $unwind: "$owner" },
         { $unwind: "$property" },
@@ -98,21 +95,89 @@ class AdminRepository
             id: "$_id",
             userName: "$user.name",
             ownerName: "$owner.name",
-            propertyName: "$property.title", 
-            ownerEmail:"owner.email",
-            userEmail:"user.email",
+            propertyName: "$property.title",
+            ownerEmail: "$owner.email",
+            userEmail: "$user.email",
             moveInDate: 1,
             endDate: 1,
-            bookingId:1,
+            bookingId: 1,
             bookingStatus: 1,
             paymentStatus: 1,
             totalCost: 1,
-            createdAt: 1
+            createdAt: 1,
+          },
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+    };
+
+    async countAllBookings() {
+      return Booking.countDocuments();
+    }
+    async updateRefreshToken(adminId: string | Types.ObjectId, refreshToken: string): Promise<IUser | null> {
+      return await Admin.findByIdAndUpdate(adminId, { refreshToken }, { new: true });
+  }
+ 
+  
+    async getUserRegistrations() {
+      return User.aggregate([
+        {
+          $project: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }
+          }
+        },
+        {
+          $group: {
+            _id: { month: "$month", year: "$year" },
+            count: { $sum: 1 }
           }
         }
       ]);
-    };
-    
+    }
+  
+    async getOwnerRegistrations() {
+      return Owners.aggregate([
+        {
+          $project: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }
+          }
+        },
+        {
+          $group: {
+            _id: { month: "$month", year: "$year" },
+            count: { $sum: 1 }
+          }
+        }
+      ]);
+    }
+
+    async getBookingStats() {
+      return Booking.aggregate([
+        {
+          $match: { bookingStatus: 'completed' }
+        },
+        {
+          $project: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+            totalCost: 1
+          }
+        },
+        {
+          $group: {
+            _id: { month: "$month", year: "$year" },
+            count: { $sum: 1 },
+            revenue: { $sum: "$totalCost" }
+          }
+        }
+      ]);
+    }
+  
+  
     
     
     

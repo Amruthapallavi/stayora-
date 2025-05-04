@@ -43,27 +43,7 @@ import { IBooking } from "../../types/IBooking";
 
 interface CheckoutProps {}
 
-// interface BookingDetails {
-//     id?: string;
-//     moveInDate: Date | null;
-//     rentalPeriod: number;
-//     endDate: Date | null;
-//     selectedAddOns: string[];
-//     propertyId?: string;
-//     propertyName?: string;
-//     totalAmount?: number;
-//     status?: 'Draft' | 'Confirmed' | 'Pending';
-//   }
-// type Service = {
-//   _id: string;
-//   name: string;
-//   description: string;
-//   price: number;
-//   image: string;
-//   contactMail: string;
-//   contactNumber: string;
-//   status: "active" | "disabled";
-// };
+
 const CheckoutPage: React.FC<CheckoutProps> = () => {
   const {
     getCartDetails,
@@ -249,7 +229,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
       setIsLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setBookingData(booking);
-      localStorage.setItem("bookingCompleted", "true"); // ✅ persist
+      localStorage.setItem("bookingCompleted", "true"); 
       setIsLoading(false);
       handleStepChange(4);
     } catch (error) {
@@ -570,7 +550,9 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   amount={getAmountInPaise()}
   productId={bookingDetails?.property._id}
   onSuccess={handleCompleteBooking}
+  onFailure={() => setCurrentStep(6)} // set a state for failed view
 />
+
 
                         </div>
                       </TabsContent>
@@ -679,7 +661,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                         View Booking
                       </Link>
                       <Link
-                        to="/"
+                        to="/user/home"
                         className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
                       >
                         Return Home
@@ -687,6 +669,52 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                     </div>
                   </div>
                 )}
+
+{currentStep === 6 && (
+  <div className="border rounded-lg overflow-hidden p-6 text-center">
+    <div className="mb-6">
+      <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-10 w-10 text-red-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </div>
+      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+        Booking Failed
+      </h3>
+      <p className="text-gray-600">
+        Your payment was not completed. Please try again.
+      </p>
+    </div>
+
+    <div className="flex justify-center gap-4">
+    <Link
+  to={`/user/property/${propertyId}`}
+  className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
+>
+  Try Again
+</Link>
+
+      <Link
+        to="/user/home"
+        className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
+      >
+        Return Home
+      </Link>
+    </div>
+  </div>
+)}
+
               </div>
             </div>
 

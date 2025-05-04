@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { CookieOptions, Request, Response } from "express";
 import userService from "../services/user.service";
 import { IUserController } from "./interfaces/IUserController";
 import { STATUS_CODES } from "../utils/constants";
@@ -64,8 +64,8 @@ class UserController implements IUserController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const result = await userService.loginUser(email, password);
-  
+      const result = await userService.loginUser(email, password,res);
+  console.log(result.refreshToken,"refreshToken")
       res.cookie("auth-token", result.token, {
         httpOnly: true,
         secure: Boolean(process.env.NODE_ENV === "production"),
@@ -101,9 +101,7 @@ class UserController implements IUserController {
       console.log("Checking Google authentication...");
   
       const result = await userService.processGoogleAuth(user);
-  // console.log(result);
       if (!result.token) {
-        // If no token, redirect to signup page
         console.warn("No token found, redirecting to signup/login.");
         return res.redirect(`${process.env.FRONTEND_URL}/signup?message=${encodeURIComponent(result.message)}`);
       }
@@ -189,7 +187,6 @@ class UserController implements IUserController {
   }
 async getAllProperties(req:Request,res:Response):Promise<void>{
 try {
-  // const ownerId = (req as any).userId; 
 
 const result = await userService.getAllProperties();
     console.log(result,"from user controller");
@@ -203,19 +200,23 @@ const result = await userService.getAllProperties();
     });
 }
 }
-  async logout(req: Request, res: Response): Promise<void> {
-    
-    res.clearCookie("auth-token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-    });
+async logout(req: Request, res: Response): Promise<void> {
+  const options: CookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict", 
+    path: "/",
+  };
+  
+  res.clearCookie("refreshToken", options);
+  res.clearCookie("auth-token", options);
+  res.clearCookie("token", options); 
+console.log(req.cookies,"checking")
+  res.status(STATUS_CODES.OK).json({
+    message: "Logged out successfully",
+  });
+} 
 
-    res.status(STATUS_CODES.OK).json({
-      message: "Logged out successfully",
-    });
-  }
 
   async getProfileData(req:Request, res:Response):Promise<void>{
     try {
@@ -251,7 +252,7 @@ const result = await userService.getAllProperties();
       const moveInDateObj = new Date(moveInDate);
       const endDateObj = new Date(endDate);
   
-      const moveInDateOnly = toLocalDateString(moveInDateObj); // e.g., "2025-05-01"
+      const moveInDateOnly = toLocalDateString(moveInDateObj); 
       const endDateOnly = toLocalDateString(endDateObj);
   
       await userService.saveBookingDates(
@@ -289,7 +290,7 @@ const result = await userService.getAllProperties();
  }
  async getCartData(req:Request,res:Response):Promise<void>{
   try {
-    const userId = (req as any).userId; // assuming set from middleware
+    const userId = (req as any).userId;
 
     const propertyId= req.params.id;
     const result = await userService.getCartData(propertyId,userId);
@@ -327,12 +328,10 @@ const result = await userService.getAllProperties();
     const { addOns, propertyId } = req.body;
     const userId = (req as any).userId; 
 
-    // Basic validations
     if (!Array.isArray(addOns) || !propertyId || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Call service logic to save
     await userService.saveAddOnsForProperty(userId, propertyId, addOns);
 
     res.status(200).json({ message: "Add-on services saved successfully" });
@@ -345,59 +344,6 @@ const result = await userService.getAllProperties();
 };
 
 
-async createRazorpayOrder(req: Request, res: Response): Promise<any> {
-  try {
-    const { amount } = req.body;
-  const productId= req.params.id;
-  const userId = (req as any).userId; // assuming set from middleware
-
-  console.log(productId);
-    if (!amount || typeof amount !== "number") {
-      return res.status(400).json({ message: "Invalid amount" });
-    }
-
-    const order = await bookingService.createBookingOrder(amount,productId,userId);
-    res.status(200).json(order);
-  } catch (error) {
-    console.error("Error creating Razorpay order:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      message: error instanceof Error ? error.message : "Failed to create Razorpay order",
-    });
-  }
-}
-
-// Verify Razorpay Payment
-async verifyRazorpayPayment(req: Request, res: Response): Promise<any> {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ message: "Missing payment verification fields" });
-    }
-
-    const result = await bookingService.verifyBookingPayment({
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      bookingId,
-    });
-
-    if (!result.isValid) {
-      return res.status(400).json({ success: false, message: "Payment verification failed" });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Payment verified successfully",
-      booking: result.booking, 
-    });
-  } catch (error) {
-    console.error("Error verifying Razorpay payment:", error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      message: error instanceof Error ? error.message : "Payment verification failed",
-    });
-  }
-}
 
 async getUserStatus(req: Request, res: Response): Promise<any> {
   try {
@@ -407,7 +353,7 @@ async getUserStatus(req: Request, res: Response): Promise<any> {
       return res.status(result.status).json({ message: result.message });
     }
     res.status(result.status).json({
-      status: result.user.status, // e.g., "active", "blocked"
+      status: result.user.status, 
       user: result.user._id,
     });
   } catch (err) {
@@ -460,7 +406,47 @@ const formData= req.body;
     throw error;
   }
 }
-
+async cancelBooking(req:Request,res:Response):Promise<void>{
+  try {
+    const id= req.params.id;
+    const reason=req.body.reason;
+    if(!id  ){
+        res.status(STATUS_CODES.BAD_REQUEST).json({
+          error: "booking not found",
+        });
+        return;
+      }
+      console.log(id,"id")
+      const result = await userService.cancelBooking(id,reason);
+    res.status(result.status).json({
+      message:result.message,
+    })
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+async fetchWalletData(req:Request,res:Response):Promise<void>{
+  try {
+    const id= req.params.id;
+    if(!id  ){
+        res.status(STATUS_CODES.BAD_REQUEST).json({
+          error: "user not found",
+        });
+        return;
+      }
+      console.log(id,"id")
+      const result = await userService.fetchWalletData(id);
+    res.status(result.status).json({
+      message:result.message,
+      data:result.data,
+      
+    })
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
 async changePassword  (req: Request, res: Response): Promise<void> {
   try {
     const userId = req.params.id;

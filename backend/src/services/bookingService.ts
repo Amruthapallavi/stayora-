@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import { RazorpayVerifyPayload } from "./interfaces/IBooking";
+import { IBookingService, } from "./interfaces/IBookingService";
+import RazorpayVerifyPayload from "./interfaces/IBookingService";
 import dotenv from "dotenv";
 import userRepository from "../repositories/user.repository";
 import bookingRepository from "../repositories/booking.repository";
@@ -8,6 +9,10 @@ import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import Booking, { IBooking } from "../models/booking.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
+import ownerRepository from "../repositories/owner.repository";
+import { IOwner } from "../models/owner.model";
+import { IUser } from "../models/user.model";
+import walletRepository from "../repositories/wallet.repository";
 
 
 dotenv.config();
@@ -17,7 +22,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-export default {
+class BookingService implements IBookingService {
 
   async createBookingOrder(amount: number,productId:string,userId:string): Promise<{
     id: string;
@@ -45,7 +50,6 @@ if (!property) {
 }
 
 const ownerId = property.ownerId;
-console.log(ownerId,"owner");
       let booking: IBooking | null = null;
 
       if (cartProperty) {
@@ -69,15 +73,14 @@ console.log(ownerId,"owner");
       console.error("Razorpay order creation failed:", error);
       throw new Error("Failed to create Razorpay order");
     }
-  },
+  }
   
   async verifyBookingPayment(payload: RazorpayVerifyPayload): Promise<{
     isValid: boolean;
-    booking?: IBooking | null;
+    booking: IBooking | null;
   }> {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = payload;
-      console.log(bookingId, "fro");
   
       const keySecret = process.env.RAZORPAY_KEY_SECRET;
       if (!keySecret) {
@@ -110,19 +113,35 @@ console.log(ownerId,"owner");
         } else {
           console.warn("Property ID not found for booking");
         }
+        await walletRepository.updateUserWalletTransaction(
+          booking?.userId?.toString() ?? '',
+          bookingId,
+          booking?.totalCost ?? 0,
+          'debit'
+        );
+        await walletRepository.updateUserWalletTransaction(
+          booking?.ownerId?.toString() ?? '',
+          bookingId,
+          booking?.totalCost ?? 0,
+          'credit'
+        );
+        
+        
       }
   
       return {
         isValid,
-        booking,
+        booking: booking ?? null,
       };
+      
     } catch (error) {
       console.error("Razorpay payment verification error:", error);
       throw new Error("Failed to verify Razorpay payment");
     }
-  },
+  }
+
   
-    async listBookings(id:string): Promise<{ bookings: IBooking[], status: number; message: string }> {
+    async listBookingsByOwner(id:string): Promise<{ bookings: IBooking[], status: number; message: string }> {
       try {
         const bookings = await bookingRepository.findOwnerBookings(id);
   
@@ -140,9 +159,73 @@ console.log(ownerId,"owner");
       }
     }
     }
+    
+    async bookingDetails(id: string): Promise<{
+      bookingData: IBooking | null;
+      userData:IUser | null;
+      status: number;
+      message: string;
+    }> {
+      try {
+        const bookingData = await bookingRepository.findBookingData(id);
+        let userData: IUser | null = null;
+    
+        if (bookingData?.userId) {
+          userData = await userRepository.findById(bookingData.userId.toString());
+          console.log('Owner:', userData);
+        }
+            return {
+          bookingData,
+          userData,
+          status: STATUS_CODES.OK,
+          message: "Successfully fetched",
+        };
+      } catch (error) {
+        console.error("Error in bookingDetails:", error);
+        return {
+          bookingData: null,
+          userData:null,
+          message: MESSAGES.ERROR.SERVER_ERROR,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        };
+      }
+    }
+    async userBookingDetails(id: string): Promise<{
+      bookingData: IBooking | null;
+      ownerData: IOwner | null;
+      status: number;
+      message: string;
+    }> {
+      try {
+        const bookingData = await bookingRepository.findUserBookingData(id);
+    
+        let ownerData: IOwner | null = null;
+    
+        if (bookingData?.ownerId) {
+          ownerData = await ownerRepository.findById(bookingData.ownerId.toString());
+          console.log('Owner:', ownerData);
+        }
+    
+        return {
+          bookingData,
+          ownerData,
+          status: STATUS_CODES.OK,
+          message: "Successfully fetched",
+        };
+      } catch (error) {
+        console.error("Error in bookingDetails:", error);
+        return {
+          bookingData: null,
+          ownerData: null, 
+          message: MESSAGES.ERROR.SERVER_ERROR,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        };
+      }
+    }
+    
   
 
-
+  
 };
 
 
@@ -160,9 +243,9 @@ const saveBookingFromCart = async (userId: string, cartItem: any, paymentMethod:
     addOn: cartItem.addOn,
     addOnCost: cartItem.addOnCost,
     totalCost: cartItem.totalCost,
-    paymentMethod: paymentMethod, // e.g., "razorpay", "cash", etc.
-    paymentStatus: "pending",     // default
-    bookingStatus: "pending",     // default
+    paymentMethod: paymentMethod, 
+    paymentStatus: "pending",     
+    bookingStatus: "pending",     
     bookingId:generateBookingId(),
   };
 
@@ -172,6 +255,9 @@ const saveBookingFromCart = async (userId: string, cartItem: any, paymentMethod:
 
 export const generateBookingId = (): string => {
   const datePart = moment().format("YYYYMMDD");
-  const uniquePart = uuidv4().split("-")[0].toUpperCase(); // 8-char part
+  const uniquePart = uuidv4().split("-")[0].toUpperCase(); 
   return `BOOK-${datePart}-${uniquePart}`;
 };
+
+
+export default new BookingService();

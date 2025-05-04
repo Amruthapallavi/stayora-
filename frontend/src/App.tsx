@@ -40,6 +40,15 @@ import OwnerBookings from "./pages/owners/Bookings";
 import OwnerPropertyDetailedPage from "./pages/owners/PropertyDetail";
 import EditProperty from "./pages/owners/EditProperty";
 import AdminBookings from "./pages/admin/AdminBookings";
+import BookingDetails from "./pages/owners/BookingDetails";
+import UserBookingDetails from "./pages/user/UserBookingDetails";
+import BookingDetail from "./pages/admin/BookingDetailedPage";
+import PropertyDetail from "./pages/admin/PropertyDetailedPage";
+// import ChatPage from "./pages/user/chatPage";
+import UserWalletPage from "./pages/user/UserWallet";
+import OwnerWalletPage from "./pages/owners/OwnerWallet";
+import OwnerChatPage from "./pages/owners/Chat";
+import ChatPage from "./pages/user/ChatPage";
 const App = () => {
   return (
     <BrowserRouter>
@@ -84,9 +93,14 @@ const App = () => {
             <Route path="/user/profile" element={<UserProfile />}/>
             <Route path="/user/properties" element={<PropertyListing />}/>
             <Route path="/user/bookings" element={<Bookings />}/>
+            <Route path="/user/bookings/:id" element={<UserBookingDetails />}/>
 
             <Route path="/user/property/:id" element={<PropertyDetailedPage />} />
-            {/* <Route path="/user/houses" element={<PropertyListing />} /> */}
+            <Route path="/user/chat/:propertyId/:ownerId" element={<ChatPage />} />
+            <Route path="/user/chat" element={<ChatPage />} />
+
+            <Route path="/user/wallet" element={<UserWalletPage />} />
+
 
           </Route>
         </Route>
@@ -101,6 +115,10 @@ const App = () => {
             <Route path="/owner/edit-property/:id" element={<EditProperty />}/>
 
             <Route path="/owner/bookings" element={<OwnerBookings />} />
+            <Route path="/owner/bookings/:id" element={<BookingDetails />} />
+            <Route path="/owner/chat" element={<OwnerChatPage />} />
+            
+            <Route path="/owner/wallet" element={<OwnerWalletPage />} />
 
 
           </Route>
@@ -110,10 +128,13 @@ const App = () => {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/properties" element={<AdminProperties />}/>
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/properties/:id" element={<PropertyDetail />}/>
+
             <Route path="/admin/owners" element={<OwnerListing/>}/>
             <Route path="/admin/bookings" element={<AdminBookings/>}/>
           <Route path="/admin/services" element={<AdminServices />} />
           <Route path="/admin/features" element={<AdminFeatures/>}/>
+          <Route path="/admin/bookings/:id" element={<BookingDetail />} />
 
           </Route>
         </Route>

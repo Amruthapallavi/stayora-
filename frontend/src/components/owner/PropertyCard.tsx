@@ -21,13 +21,28 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           alt={property.title} 
           className="w-full h-full object-cover"
         />
-        <div className="absolute top-0 right-0 bg-[#b68451] text-white px-3 py-1 m-2 rounded-md text-sm font-semibold">
-          ${property.rentPerMonth}/month
-        </div>
+        <div className="absolute top-0 right-0 left-0 flex justify-between m-2">
+ 
+  <div className="bg-[#b68451] text-white px-3 py-1 rounded-md text-sm font-semibold">
+    ${property.rentPerMonth}/month
+  </div>
+</div>
+
       </div>
       <div className="p-5">
-        <h3 className="text-lg font-bold text-gray-800 mb-2 truncate">{property.title}</h3>
+      <div className="flex justify-between items-center mb-2">
+  <h3 className="text-lg font-bold text-gray-800 truncate">{property.title}</h3>
+  <div className={`
+    text-xs font-semibold px-2 py-1 rounded 
+    ${property.status === 'active' ? 'bg-green-100 text-green-700' : ''}
+    ${property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : ''}
+    ${property.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}
+  `}>
+    {property.status}
+  </div>
+</div>
         <div className="flex items-center text-gray-600 mb-3">
+          
           <MapPin size={16} className="text-[#b68451] mr-1" />
           <span className="text-sm truncate">{property.city}, {property.state}</span>
         </div>
@@ -52,12 +67,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 >
   View Details
 </Link>
-<Link 
-  to={`/owner/edit-property/${property._id}`}
-  className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"
->
-  Edit
-</Link>
+{property.status !== 'rejected' && (
+  <Link 
+    to={`/owner/edit-property/${property._id}`}
+    className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"
+  >
+    Edit
+  </Link>
+)}
+
 
         </div>
       </div>

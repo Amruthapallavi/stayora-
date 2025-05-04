@@ -4,6 +4,7 @@ import { IOwnerController } from "./interfaces/IOwnerController";
 import { STATUS_CODES } from "../utils/constants";
 import jwt from "jsonwebtoken";
 import bookingService from "../services/bookingService";
+import propertyService from "../services/property.service";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -59,9 +60,8 @@ class OwnerController implements IOwnerController {
       try {
         const { email, password } = req.body;
         console.log(req.body,"owner login data")
-        const result = await ownerService.loginOwner(email, password);
-        // req.session.user = result.owner;
-
+        const result = await ownerService.loginOwner(email, password,res);
+console.log(result.refreshToken,"refreshToken");
         res.cookie("auth-token", result.token, {
           httpOnly: true,
           secure: Boolean(process.env.NODE_ENV === "production"),
@@ -205,63 +205,37 @@ const formData= req.body;
   }
 }
 
-async addProperty(req: Request, res: Response): Promise<void> {
-  try {
-    console.log("from controller");
 
-    const data = req.body;
-    const ownerId = (req as any).userId; // assuming set from middleware
+// async listFeatures(req:Request, res:Response):Promise<void>{
+//   try {
+//     const result = await ownerService.listFeatures();
+//     console.log(result,"from owner controller");
+//     res.status(result.status).json({
+//       features: result.features,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+//       error: error instanceof Error ? error.message : "Failed to fetch features",
+//     });
+//   }
+// }
 
-    // Handle multiple image uploads from Cloudinary
-    const uploadedImages = (req.files as Express.Multer.File[] | undefined) || [];
+// async ownerProperties(req:Request,res:Response):Promise<void>{
+// try {
+//   const ownerId = (req as any).userId; 
 
-    // Extract image URLs from Cloudinary uploads
-    const imageUrls = uploadedImages.map((file: any) => file.path); // 'file.path' holds Cloudinary URL
-
-    console.log("Image URLs:", imageUrls);
-
-    // Pass images along with other data to service
-    const result = await ownerService.addProperty({ data, ownerId, images: imageUrls });
-
-    res.status(result.status).json({
-      message: result.message,
-    });
-  } catch (error) {
-    console.error("Error adding property:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-}
-
-async listFeatures(req:Request, res:Response):Promise<void>{
-  try {
-    const result = await ownerService.listFeatures();
-    console.log(result,"from owner controller");
-    res.status(result.status).json({
-      features: result.features,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: error instanceof Error ? error.message : "Failed to fetch features",
-    });
-  }
-}
-
-async ownerProperties(req:Request,res:Response):Promise<void>{
-try {
-  const ownerId = (req as any).userId; 
-
-const result = await ownerService.ownerProperties(ownerId);
-    res.status(result.status).json({
-      properties: result.properties,
-    });
-} catch (error) {
-  console.error(error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: error instanceof Error ? error.message : "Failed to fetch properties",
-    });
-}
-}
+// const result = await ownerService.ownerProperties(ownerId);
+//     res.status(result.status).json({
+//       properties: result.properties,
+//     });
+// } catch (error) {
+//   console.error(error);
+//     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+//       error: error instanceof Error ? error.message : "Failed to fetch properties",
+//     });
+// }
+// }
 
 async getOwnerStatus(req: Request, res: Response): Promise<any> {
   try {
@@ -280,23 +254,28 @@ async getOwnerStatus(req: Request, res: Response): Promise<any> {
   }
 }
 
-async listAllBookings(req:Request, res:Response):Promise<void>{
+async fetchWalletData(req:Request,res:Response):Promise<void>{
   try {
-     
-    const id=req.params.id;
-    console.log(id)
-    const result = await bookingService.listBookings(id);
-    // console.log(result,"from owner controller");
+    const id= req.params.id;
+    if(!id  ){
+        res.status(STATUS_CODES.BAD_REQUEST).json({
+          error: "user not found",
+        });
+        return;
+      }
+      const result = await ownerService.fetchWalletData(id);
+      console.log(result)
     res.status(result.status).json({
-      bookings: result.bookings,
-    });
+      message:result.message,
+      data:result.data,
+      
+    })
   } catch (error) {
-    console.error(error);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      error: error instanceof Error ? error.message : "Failed to fetch bookings",
-    });
+    console.log(error);
+    throw error;
   }
 }
+
 async getPropertyById(req:Request,res:Response):Promise<void>{
   try {
     // const ownerId = (req as any).userId; 
@@ -313,25 +292,89 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
       error: error instanceof Error ? error.message : "Failed to fetch property",
     });
   }
+ } 
+
+ async updateProperty(req:Request,res:Response):Promise<void>{
+  try {
+    const id= req.params.id;
+  const data = req.body;
+  console.log(id,"data to update", data);
+  const result = await propertyService.updateProperty(id,data);
+  res.status(result.status).json({
+    message:result.message,
+  })
+  } catch (error) {
+    console.error(error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to update property",
+    });
+  }
  }
 
-async deletePropertyById(req: Request, res: Response):Promise<void> {
+ async refreshToken(req: Request, res: Response){
   try {
-    const propertyId = req.params.id;
-    await ownerService.deleteProperty(propertyId);
-    res.status(200).json({ message: 'Property deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting property:', error);
-    res.status(500).json({ message: 'Failed to delete property' });
+    const token = req.cookies.refreshToken;
+    if (!token) return res.status(401).json({ message: "Refresh token missing" });
+
+    const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET as string);
+    const ownerId = (payload as any).ownerId;
+
+    const newAccessToken = generateAccessToken({ ownerId, type: "owner" });
+
+    res.cookie("auth-token", newAccessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: false, // true in production
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.json({ accessToken: newAccessToken });
+  } catch (err) {
+    res.status(403).json({ message: "Invalid refresh token" });
   }
 }
 
+async getDashboardData(req: Request, res: Response): Promise<void> {
+  try {
+  const ownerId = (req as any).userId; 
+    if (!ownerId) {
+       res.status(400).json({ error: 'Owner ID is missing' });
+    }
+    const result = await ownerService.getDashboardData(ownerId);
+console.log(result,"for dashborad")
+    res.status(result.status).json({
+      data: result.data,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error('Error in getDashboardData controller:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : 'Failed to fetch dashboard data',
+    });
+  }
 }
 
 
 
-export default new OwnerController();
+}
 
+const generateAccessToken = (user: { ownerId: string; type: string }) => {
+  const payload = {
+    ownerId: user.ownerId,  
+    type: user.type,
+  };
+
+  const secretKey = process.env.JWT_SECRET_KEY as string;
+
+  const expiresIn = '15m';  
+
+  return jwt.sign(payload, secretKey, { expiresIn });
+
+  
+};
+
+
+export default new OwnerController();
 
 
 

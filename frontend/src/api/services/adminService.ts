@@ -2,10 +2,10 @@ import { IProperty } from "../../types/IProperty";
 import { adminApi } from "../api";
 
 export const adminService={
-    getDashboardStats: async () => {
-      const response = await adminApi.get("/dashboard");
-      return response.data;
-    },
+     getDashboardData:async ()=>{
+        const response = await adminApi.get("/dashboard");
+        return response.data;
+         },
     listAllUsers: async () => {
       const response = await adminApi.get("/users");
       return response.data;
@@ -19,6 +19,10 @@ export const adminService={
     const response = await adminApi.patch(`/users/status/${id}`, { status: currentStatus });
       return response.data;
     },
+      bookingDetails:async(id:string):Promise<void>=>{
+                       const response = await adminApi(`/bookings/${id}`);
+                       return response.data;
+                   },
   
     listAllOwners: async () => {
       const response = await adminApi.get("/owners");
@@ -64,6 +68,12 @@ export const adminService={
       });
       return response.data;
     },
+    rejectProperty: async (id: string, reason: string) => {
+      const response = await adminApi.patch(`/properties/reject/${id}`, {
+        reason: reason, 
+      });
+      return response.data;
+    },
     
     deleteOwner:async(id:string)=>{
   
@@ -80,9 +90,13 @@ export const adminService={
       const response = await adminApi.post(`/features/delete/${id}`);
       return response.data;
     },
-     getAllProperties: async (): Promise<IProperty> => {
+     getPropertyById:async(id:string):Promise<void>=>{
+            const response = await adminApi(`/property/${id}`);
+            return response.data;
+        },
+     getAllProperties: async (page:number=1,limit:number=6): Promise<IProperty> => {
           console.log("from api");
-          const response = await adminApi.get("/all-Properties");
+          const response = await adminApi.get(`/all-Properties?page=${page}&limit=${limit}`);
           return response.data;
         },
 

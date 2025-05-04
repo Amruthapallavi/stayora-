@@ -40,7 +40,7 @@ const UserLogin = () => {
     } catch (err: any) {
 console.log(err);
       const errMsg =
-        err.response?.data?.error || "Failed to login. Please try again.";
+        err.response?.data?.error || "Invalid Credentials.";
 
       setError(errMsg);
       notifyError(errMsg);

@@ -1,5 +1,5 @@
 // import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Clock, User, Home, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/button';
@@ -15,11 +15,11 @@ const Bookings = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    
+    const navigate=useNavigate();
     useEffect(() => {
       const fetchBookings = async () => {
         try {
-          const response = await userBookings(currentPage); // send page
+          const response = await userBookings(currentPage); 
           setBookings(response.bookings);
           setTotalPages(response.totalPages);
         } catch (error) {
@@ -131,9 +131,12 @@ const Bookings = () => {
                         <Button variant="outline" className="border-[#b38e5d] text-[#b38e5d] hover:bg-[#f8f5f0]">
                           Contact Support
                         </Button>
-                        <Button className="bg-[#b38e5d] text-white hover:bg-[#8b6b3b]">
-                          View Details
-                        </Button>
+                        <button
+    onClick={() => navigate(`/user/bookings/${booking._id}`)}
+    className="text-[#4b5563] hover:text-[#111827] text-sm font-medium"
+  >
+    View Details
+  </button>
                       </div>
                     </div>
                   </div>

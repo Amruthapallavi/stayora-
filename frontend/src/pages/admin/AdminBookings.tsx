@@ -22,7 +22,9 @@ const AdminBookings = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [filteredBookings, setFilteredBookings] = useState<IBooking[]>(bookings);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const bookingsPerPage = 2;
+
   const applyFilters = (query: string, status: string | null) => {
     let filtered = bookings;
     
@@ -46,7 +48,7 @@ useEffect(() => {
     try {
     const response=  await listAllBookings();
     setBookings(response.bookings);
-    console.log(response,"fromdsdd")
+    // console.log(response,"fromdsdd")
     } catch (error) {
       console.error("Failed to fetch bookings:", error);
     }
@@ -68,12 +70,26 @@ useEffect(() => {
     setStatusFilter(status);
     applyFilters(searchQuery, status);
   };
-  
+
+  const indexOfLastBooking = currentPage * bookingsPerPage;
+const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
+
+const totalPages = Math.ceil(bookings.length / bookingsPerPage);
+const goToNextPage = () => {
+  if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+};
+
+const goToPrevPage = () => {
+  if (currentPage > 1) setCurrentPage(prev => prev - 1);
+};
+
   const handleClearFilters = () => {
     setSearchQuery('');
     setStatusFilter(null);
     setFilteredBookings(bookings);
   };
+  
   
   // Fix TypeScript errors by ensuring accessor is either a key of Booking or a function
   const columns = [
@@ -187,12 +203,36 @@ useEffect(() => {
       </div>
       
       <DataTable 
-        data={filteredBookings} 
+        data={currentBookings} 
         columns={columns} 
         onRowClick={handleRowClick}
         emptyMessage="No bookings found matching your search."
       />
+      
     </div>
+    <div>
+  <div className="flex justify-center items-center gap-2 mt-4">
+    <button 
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      disabled={currentPage === 1}
+      className="px-3 py-1 border rounded disabled:opacity-50"
+    >
+      Prev
+    </button>
+
+    <span className="px-2">{currentPage} / {totalPages}</span>
+
+    <button 
+      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      disabled={currentPage === totalPages}
+      className="px-3 py-1 border rounded disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+</div>
+
+
     </AdminLayout>
   );
 };

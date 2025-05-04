@@ -5,6 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import Navbar from "../../components/user/Navbar";
 import UserLayout from "../../components/user/UserLayout";
+import CTASection from "../../components/user/CTASection";
+import PopularLocations from "../../components/user/PopularLocations";
+import Property from "../../types/IProperty";
+import { FaBath, FaBed, FaMapMarkerAlt, FaRupeeSign } from "react-icons/fa";
 interface FilterState {
   location: string;
   propertyType: string;
@@ -17,7 +21,42 @@ interface FilterState {
 const UserHomePage = () => {
 
   const navigate = useNavigate();
-  // const {logout} = useAuthStore();
+  const {getAllProperties} = useAuthStore();
+    const [properties, setProperties] = useState<Property[]>([]);
+    
+    const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function fetchProperties() {
+      setLoading(true);
+      try {
+        const response = await getAllProperties();
+        console.log("Fetched data:", response); // Debug API response structure
+  
+        if (response && Array.isArray(response.properties)) {
+          // Sort by createdAt in descending order
+          const sortedProperties = response.properties.sort(
+            (a:any, b:any) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+  
+          // Select only the 3 most recent
+          const latestThree = sortedProperties.slice(0, 3);
+  
+          setProperties(latestThree);
+        } else {
+          console.warn("Invalid property data format:", response);
+          setProperties([]);
+        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+  
+    fetchProperties();
+  }, []);
+  
   //   const [filters, setFilters] = useState<FilterState>({
   //   location: "NewYork",
   //   propertyType: "Apartment",
@@ -65,9 +104,18 @@ const UserHomePage = () => {
         
          className="relative h-[500px] bg-cover bg-center" >
        
-          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center " style={{ backgroundImage: "url('/images/bg.jpg')" }}>
+       <div
+  className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center bg-cover bg-center"
+  style={{
+    backgroundImage:
+      "url('https://png.pngtree.com/background/20230617/original/pngtree-exterior-design-of-a-modern-house-in-the-city-a-3d-picture-image_3683269.jpg')",
+  }}
+>
             <div className="text-center text-white">
-              <h2 className="text-5xl font-extrabold mb-4">Find Your Dream Home</h2>
+            <h2 className="text-5xl font-extrabold mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+  Find Your Dream Home
+</h2>
+
               <p className="text-lg max-w-xl mx-auto mb-6">
                 Discover the best and most beautiful houses at affordable prices, loved by our users.
               </p>
@@ -78,157 +126,57 @@ const UserHomePage = () => {
           </div>
          
         </section>
-        {/* <div className="relative -mt-20 max-w-7xl mx-auto bg-[#1B263B] rounded-xl p-6 shadow-lg"> */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center"> */}
-          {/* Location */}
-          {/* <div>
-            <label className="text-sm uppercase tracking-wide">Location</label>
-            <select
-              name="location"
-              value={filters.location}
-              onChange={handleChange}
-              className="mt-2 w-full bg-transparent border border-gray-600 p-2 rounded-lg focus:ring-yellow-500"
-            >
-              <option value="NewYork">NewYork</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="Delhi">Delhi</option>
-            </select>
-          </div> */}
-
-          {/* Property Type */}
-          {/* <div>
-            <label className="text-sm uppercase tracking-wide">Property Type</label>
-            <select
-              name="propertyType"
-              value={filters.propertyType}
-              onChange={handleChange}
-              className="mt-2 w-full bg-transparent border border-gray-600 p-2 rounded-lg focus:ring-yellow-500"
-            >
-              <option value="Apartment">Apartment</option>
-              <option value="Villa">Villa</option>
-              <option value="Studio">Studio</option>
-              <option value="Penthouse">Penthouse</option>
-            </select>
-          </div> */}
-
-          {/* Price Range */}
-          {/* <div>
-            <label className="text-sm uppercase tracking-wide">Price ($)</label>
-            <div className="flex mt-2 space-x-2">
-              <input
-                type="number"
-                name="minPrice"
-                value={filters.minPrice}
-                onChange={handleChange}
-                placeholder="Min"
-                className="w-1/2 bg-transparent border border-gray-600 p-2 rounded-lg"
-              />
-              <input
-                type="number"
-                name="maxPrice"
-                value={filters.maxPrice}
-                onChange={handleChange}
-                placeholder="Max"
-                className="w-1/2 bg-transparent border border-gray-600 p-2 rounded-lg"
-              />
-            </div>
-          </div> */}
-
-          {/* Bedrooms */}
-          {/* <div>
-            <label className="text-sm uppercase tracking-wide">Bed Room</label>
-            <select
-              name="bedrooms"
-              value={filters.bedrooms}
-              onChange={handleChange}
-              className="mt-2 w-full bg-transparent border border-gray-600 p-2 rounded-lg"
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div> */}
-
-          {/* Bathrooms */}
-          {/* <div>
-            <label className="text-sm uppercase tracking-wide">Bath Room</label>
-            <select
-              name="bathrooms"
-              value={filters.bathrooms}
-              onChange={handleChange}
-              className="mt-2 w-full bg-transparent border border-gray-600 p-2 rounded-lg"
-            >
-              {[1, 2, 3, 4, 5].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div> */}
-
-          {/* Search Button */}
-          {/* <button
-            onClick={handleSubmit}
-            className="mt-6 md:mt-0 bg-[#F77F00] text-white p-3 rounded-lg hover:bg-[#FFA500] transition duration-300 flex items-center justify-center"
-          >
-            🔍
-          </button> */}
-        {/* </div> */}
-      {/* </div> */}
+       
+     
         {/* Top Rated Houses */}
         <section className="py-16 bg-white">
-          <h3 className="text-center text-4xl font-bold mb-4">Top Rated Houses</h3>
+          <h3 className="text-center text-4xl font-bold mb-4">Newly Added Houses</h3>
           <p className="text-center max-w-2xl mx-auto mb-12 text-gray-600">
             The best and most beautiful houses with high ratings and affordable prices.
           </p>
   
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
-            {[
-              {
-                id: 1,
-                title: "Dream Land 5 BHK Villa",
-                location: "Whitefield, Bangalore",
-                specs: "5 BHK | 3 Bath | 5000 sq.ft",
-                facilities: "Fully Furnished | 4 Parking",
-                price: "$5000/Month",
-                img: "/villa1.jpg",
-              },
-              {
-                id: 2,
-                title: "Dream Land 5 BHK Villa",
-                location: "Whitefield, Bangalore",
-                specs: "5 BHK | 3 Bath | 5000 sq.ft",
-                facilities: "Fully Furnished | 4 Parking",
-                price: "$5000/Month",
-                img: "/villa2.jpg",
-              },
-              {
-                id: 3,
-                title: "Dream Land 5 BHK Villa",
-                location: "Mysore, Bangalore",
-                specs: "5 BHK | 3 Bath | 5000 sq.ft",
-                facilities: "Fully Furnished | 4 Parking",
-                price: "$5000/Month",
-                img: "/villa3.jpg",
-              },
-            ].map((house) => (
-              <div key={house.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <img src={house.img} alt={house.title} className="w-full h-60 object-cover" />
-                <div className="p-6">
-                  <h4 className="text-xl font-semibold mb-2">{house.title}</h4>
-                  <p className="text-gray-600 mb-1">{house.location}</p>
-                  <p className="text-gray-600 mb-1">{house.specs}</p>
-                  <p className="text-gray-600 mb-4">{house.facilities}</p>
-                  <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg">
-                    {house.price}
-                  </button>
-                </div>
-              </div>
-            ))}
+
+<div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
+  {properties.map((house) => (
+    <div key={house._id} className="bg-white rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105">
+      <img
+        src={house.images[0]}
+        alt={house.title}
+        className="w-full h-60 object-cover"
+      />
+      <div className="p-6">
+        <h4 className="text-2xl font-bold mb-2 text-gray-800">{house.title}</h4>
+
+        <div className="flex items-center text-gray-600 mb-2 gap-2">
+          <FaMapMarkerAlt className="text-yellow-600" />
+          <span>{house?.city} , {house?.district}</span>
+        </div>
+
+        <div className="flex justify-between text-gray-600 my-3">
+          <div className="flex items-center gap-2">
+            <FaBed className="text-blue-600" />
+            <span>{house.bedrooms} Beds</span>
           </div>
+          <div className="flex items-center gap-2">
+            <FaBath className="text-purple-600" />
+            <span>{house.bathrooms} Baths</span>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mt-4">
+        <button
+  onClick={() => navigate(`/user/property/${house._id}`)}
+  className="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-700 transition"
+>
+  <FaRupeeSign /> {house.rentPerMonth}
+</button>
+
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
         </section>
   
         {/* Find The Best Section */}
@@ -261,7 +209,9 @@ const UserHomePage = () => {
             </div>
           </div>
         </section>
-  
+        <PopularLocations/>
+        <CTASection/>
+
         {/* Footer */}
         <footer className="bg-yellow-700 text-white py-8">
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">

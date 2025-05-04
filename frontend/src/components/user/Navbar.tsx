@@ -35,8 +35,12 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
+      
       await logout();
       notifySuccess("Logged out successfully!");
+      localStorage.removeItem("token");
+localStorage.removeItem("refreshToken");
+
       navigate("/");
       setUserMenuOpen(false);
     } catch (error) {
@@ -46,9 +50,9 @@ const Navbar = () => {
 
   // Navigation items
   const navItems = [
-    { name: "Home", path: "/" },
+    { name: "Home", path: "/user/home" },
     { name: "Houses", path: "/user/properties" },
-    { name: "Categories", path: "/categories" },
+    { name: "Categories", path: "/user/categories" },
     { name: "About", path: "/about" }
   ];
 
@@ -57,7 +61,7 @@ const Navbar = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.6, 0.05, 0.01, 0.9] }}
-      className={`fixed w-full z-50 transition-all duration-500 ${
+      className={`fixed w-full z-[1000] transition-all duration-500 ${
         isScrolled 
           ? "py-3 bg-white shadow-lg" 
           : "py-5 bg-white/95 backdrop-blur-lg"
@@ -134,7 +138,10 @@ const Navbar = () => {
                     {[
                       { label: "Profile", path: "/user/profile" },
                       { label: "My Bookings", path: "/user/bookings" },
-                      { label: "Favorites", path: "/favorites" }
+
+                      { label: "My Wallet", path: "/user/wallet" },
+                      { label: "Chat & Notifications", path: "/user/chat" },
+
                     ].map((item, index) => (
                       <motion.div
                         key={item.label}
@@ -269,9 +276,11 @@ const Navbar = () => {
                 </div>
                 
                 {[
-                  { label: "Profile", path: "/profile" },
-                  { label: "My Bookings", path: "/bookings" },
-                  { label: "Favorites", path: "/favorites" }
+                  { label: "Profile", path: "/user/profile" },
+                  { label: "My Bookings", path: "/user/bookings" },
+                  { label: "My Wallet", path: "/user/wallet" },
+                  { label: "Chat & Notifications", path: "/user/chat" }
+
                 ].map((item, index) => (
                   <Link 
                     key={item.label}

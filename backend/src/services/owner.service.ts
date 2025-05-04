@@ -1,12 +1,14 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import OTPService from "../utils/OTPService";
-
+  import { Response } from "express";
 import ownerRepository from "../repositories/owner.repository";
 import { IOwner } from "../models/owner.model";
 import { IOwnerService } from "./interfaces/IOwnerService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import Property ,{IProperty} from "../models/property.model"
+import walletRepository from "../repositories/wallet.repository";
+import mongoose, { Types } from "mongoose";
 interface SignupData extends Partial<IOwner> {
     confirmPassword?: string;
   }
@@ -44,7 +46,7 @@ interface SignupData extends Partial<IOwner> {
       await OTPService.sendOTP(email, otp);
       console.log("Sent OTP:", otp, "to email:", email);
     
-      const otpExpires = new Date(Date.now() + 5 * 60 * 1000); // OTP valid for 5 mins
+      const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
     
       await ownerRepository.create({
         ...ownerData,
@@ -78,7 +80,7 @@ interface SignupData extends Partial<IOwner> {
     }
     owner.isVerified = true;
     owner.otp = undefined;
-    owner.status='Active';
+    owner.status='Pending';
     owner.otpExpires = null;
 
     await ownerRepository.update(owner._id.toString(), owner);
@@ -111,43 +113,72 @@ interface SignupData extends Partial<IOwner> {
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
   }
   
+  
+  
   async loginOwner(
     email: string,
-    password: string
-  ): Promise<{ owner: IOwner;user:IOwner; token: string; message: string; status: number }> {
-    console.log(email,"email")
+    password: string,
+    res: Response
+  ): Promise<{ owner: IOwner; token: string; message: string; refreshToken:string,status: number }> {
     const owner = await ownerRepository.findByEmail(email);
-    console.log(owner,"login owner")
     if (!owner) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
-
-    if (owner.status==="Blocked") {
+  
+    if (owner.status === "Blocked") {
       throw new Error(MESSAGES.ERROR.BLOCKED_USER);
     }
+    if (owner.status === "Pending" && owner.govtIdStatus==="pending") {
+      throw new Error(MESSAGES.ERROR.NOT_VERIFIED);
+    }
+  
     if (!owner.password) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
+  
     const isPasswordValid = await bcrypt.compare(password, owner.password);
     if (!isPasswordValid) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
+  
+    const accessTokenSecret = process.env.JWT_SECRET;
+    const refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
+  
+    if (!accessTokenSecret || !refreshTokenSecret) {
+      throw new Error("JWT secrets are missing.");
     }
-    const token = jwt.sign({ ownerId: owner._id, type: "owner" }, jwtSecret, {
-      expiresIn: "1h",
+  
+    const accessToken = jwt.sign(
+      { ownerId: owner._id, type: "owner" },
+      accessTokenSecret,
+      { expiresIn: "15m" }
+    );
+  
+    const refreshToken = jwt.sign(
+      { ownerId: owner._id, type: "owner" },
+      refreshTokenSecret,
+      { expiresIn: "7d" }
+    );
+  
+    await ownerRepository.updateRefreshToken(owner._id.toString(), refreshToken);
+  
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/", 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
+  
     return {
       owner: this.sanitizeUser(owner),
-      token,
-      user:owner,
+      token: accessToken,
+      refreshToken:refreshToken,
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
     };
   }
+  
 
 
   async resetPassword(
@@ -197,6 +228,49 @@ interface SignupData extends Partial<IOwner> {
       }
     }
     
+    async getDashboardData(ownerId: string): Promise<{ data: any; status: number; message: string }> {
+      try {
+        const properties = await ownerRepository.getPropertiesByOwner(ownerId);
+        const propertyIds: string[] = properties.map((p) => String(p._id));
+  
+        const totalActiveProperties = properties.filter(p => p.status === 'active').length;
+        const totalRejectedProperties = properties.filter(p => p.status === 'rejected').length;
+  
+        const bookings = await ownerRepository.getBookingsByPropertyIds(propertyIds);
+    const bookingsByMonth = await ownerRepository.bookingsByMonth(ownerId);
+    console.log(bookingsByMonth,"checking")
+        const totalBookings = bookings.filter(b => b.bookingStatus === 'confirmed').length;
+        const completedBookings = bookings.filter(b => b.bookingStatus === 'completed');
+        const totalCompletedBookings = completedBookings.length;
+  
+        const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalCost, 0);
+  
+        const dashboardData = {
+          totalActiveProperties,
+          totalRejectedProperties,
+          totalBookings,
+          totalCompletedBookings,
+          totalRevenue,
+          allBookings: bookings, 
+          bookingsByMonth,
+        };
+        console.log(dashboardData,"dash")
+  
+        return {
+          data: dashboardData,
+          status: STATUS_CODES.OK,
+          message: "Successfully fetched",
+        };
+      } catch (error) {
+        console.error("Error in getDashboardData:", error);
+        return {
+          data: null,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+          message: MESSAGES.ERROR.SERVER_ERROR,
+        };
+      }
+    }
+
     async updateProfile(
       id: string,
       updatedData: Record<string, any>
@@ -217,7 +291,6 @@ interface SignupData extends Partial<IOwner> {
           };
         }
     console.log(updatedData);
-        // Merging new data
         user.name=updatedData.data.name;
         user.phone=updatedData.data.phone;
         user.address=updatedData.data.address;
@@ -271,7 +344,6 @@ interface SignupData extends Partial<IOwner> {
           return { status: 400, message: "Missing required fields" };
         }
     console.log(data.mapLocation,"location");
-        // Merging selected and other features
         const features = [
           ...(data.selectedFeatures || []),
           ...(data.addedOtherFeatures || [])
@@ -347,49 +419,49 @@ interface SignupData extends Partial<IOwner> {
     
     
 
-  async ownerProperties(
-    ownerId: string
-  ): Promise<{ properties: any[]; status: number; message: string }> {
-    try {
-      const properties = await ownerRepository.findOwnerProperty(ownerId);
+  // async ownerProperties(
+  //   ownerId: string
+  // ): Promise<{ properties: any[]; status: number; message: string }> {
+  //   try {
+  //     const properties = await ownerRepository.findOwnerProperty(ownerId);
   
-      return {
-        properties: properties || [], 
-        status: STATUS_CODES.OK,
-        message: "Successfully fetched",
-      };
-    } catch (error) {
-      console.error("Error in ownerProperties:", error);
-      return {
-        properties: [], 
-        message: MESSAGES.ERROR.SERVER_ERROR,
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-      };
-    }
-  }
+  //     return {
+  //       properties: properties || [], 
+  //       status: STATUS_CODES.OK,
+  //       message: "Successfully fetched",
+  //     };
+  //   } catch (error) {
+  //     console.error("Error in ownerProperties:", error);
+  //     return {
+  //       properties: [], 
+  //       message: MESSAGES.ERROR.SERVER_ERROR,
+  //       status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+  //     };
+  //   }
+  // }
   
 
 
-  async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
-    try {
-      const features = await ownerRepository.findFeatures();
+  // async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
+  //   try {
+  //     const features = await ownerRepository.findFeatures();
 
-    console.log(features)
-    return {
-      features,
-      status: STATUS_CODES.OK,
-      message:"successfully fetched"
-    };
-    } catch (error) {
-      console.error("Error in listServices:", error);
-      return { 
-        features: [], 
-        message: MESSAGES.ERROR.SERVER_ERROR, 
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-    }
-  }
+  //   console.log(features)
+  //   return {
+  //     features,
+  //     status: STATUS_CODES.OK,
+  //     message:"successfully fetched"
+  //   };
+  //   } catch (error) {
+  //     console.error("Error in listServices:", error);
+  //     return { 
+  //       features: [], 
+  //       message: MESSAGES.ERROR.SERVER_ERROR, 
+  //       status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+  //   }
+  // }
 
-  }
+  // }
 
 
 
@@ -429,7 +501,7 @@ interface SignupData extends Partial<IOwner> {
           const property = await ownerRepository.findPropertyById(id);
     
          
-          
+          console.log(property,"for checking")
           if (!property) {
             return {
               property: null,
@@ -453,23 +525,82 @@ interface SignupData extends Partial<IOwner> {
           };
         }
       }
-        async deleteProperty(id: string): Promise<{ status: number; message: string }> {
-          try {
-            console.log("delete")
-            await ownerRepository.deleteProperty(id);
+
+
+       async  fetchWalletData(id: string): Promise<{ message: string; status: number; data: IWalletWithTotals | null }> {
+                try {
+                  if (!id) {
+                    return {
+                      message: "Invalid user ID",
+                      data: null,
+                      status: STATUS_CODES.BAD_REQUEST,
+                    };
+                  }
+              
+                  const data = await walletRepository.findOne({
+                    userId: new mongoose.Types.ObjectId(id),
+                  });
+              
+                  if (!data) {
+                    return {
+                      message: "No wallet transactions found",
+                      data: null,
+                      status: STATUS_CODES.NOT_FOUND,
+                    };
+                  }
+              
+                  let totalDebit = 0;
+                  let totalCredit = 0;
+              
+                  data.transactionDetails.forEach((txn:any) => {
+                    if (txn.paymentType === 'debit') {
+                      totalDebit += txn.amount;
+                    } else if (txn.paymentType === 'credit') {
+                      totalCredit += txn.amount;
+                    }
+                  });
+              
+                  const responseData: IWalletWithTotals = {
+                    ...data.toObject(),  
+                    totalDebit,
+                    totalCredit,
+                  };
+              
+                  return {
+                    message: "Wallet data fetched successfully",
+                    status: STATUS_CODES.OK,
+                    data: responseData,
+                  };
+                } catch (error) {
+                  console.error("Error fetching wallet data:", error);
+                  return {
+                    message: "Internal Server Error",
+                    status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                    data: null,
+                   
+                  };
+                }
+              }
+
+
+
+        // async deleteProperty(id: string): Promise<{ status: number; message: string }> {
+        //   try {
+        //     console.log("delete")
+        //     await ownerRepository.deleteProperty(id);
         
-            return {
-              status: STATUS_CODES.OK,
-              message: "Property deleted successfully",
-            };
-          } catch (error) {
-            console.error("Error deleting property:", error);
-            return {
-              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-              message: MESSAGES.ERROR.SERVER_ERROR,
-            };
-          }
-        }
+        //     return {
+        //       status: STATUS_CODES.OK,
+        //       message: "Property deleted successfully",
+        //     };
+        //   } catch (error) {
+        //     console.error("Error deleting property:", error);
+        //     return {
+        //       status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        //       message: MESSAGES.ERROR.SERVER_ERROR,
+        //     };
+        //   }
+        // }
     
 
 //   async processGoogleAuth(
@@ -505,6 +636,27 @@ interface SignupData extends Partial<IOwner> {
 //       status: STATUS_CODES.OK,
 //     };
 //   }
+
     }
   
     export default new OwnerService();
+
+
+
+
+
+
+
+
+    interface IWalletWithTotals {
+        userId: mongoose.Types.ObjectId;
+        balance: number;
+        transactionDetails: {
+          paymentType: 'credit' | 'debit';
+          amount: number;
+          bookingId: string;
+          date: Date;
+        }[];
+        totalDebit: number;
+        totalCredit: number;
+      }

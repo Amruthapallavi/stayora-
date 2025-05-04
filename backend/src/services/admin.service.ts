@@ -10,9 +10,14 @@ import ownerRepository from "../repositories/owner.repository";
 import Mail from "../utils/Mail";
 import { isValidEmail } from "../utils/validators";
 import Service from "../models/service.model";
+import  { Types } from "mongoose";
+
 import Feature from "../models/features.model";
 import { IProperty } from "../models/property.model";
 import { IBooking } from "../models/booking.model";
+import propertyRepository from "../repositories/property.repository";
+import mongoose from "mongoose";
+import bookingRepository from "../repositories/booking.repository";
 
 
 interface ServiceData {
@@ -32,6 +37,7 @@ interface FeatureData {
   
 }
 
+
 class AdminService implements IAdminService {
   private sanitizeAdmin(admin: IUser) {
     const { password, __v, ...sanitizedAdmin } = admin.toObject();
@@ -42,9 +48,10 @@ class AdminService implements IAdminService {
     email: string,
     password: string
   ): Promise<{
-    admin: IUser;
+    admin: Partial<IUser>;
     token: string;
     message: string;
+    refreshToken:string;
     status: number;
   }> {
     if (!isValidEmail(email)) {
@@ -69,6 +76,19 @@ if (!isPasswordValid) {
 
 
     const jwtSecret = process.env.JWT_SECRET;
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (!jwtSecret || !jwtRefreshSecret) {
+      return {
+        admin: this.sanitizeAdmin(admin),
+        message:
+        MESSAGES.ERROR.JWT_SECRET_MISSING || "JWT secret missing",
+        status: STATUS_CODES.UNAUTHORIZED,
+
+        token: "",
+        refreshToken: "",
+      };
+    }
     if (!jwtSecret) {
       throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
     }
@@ -76,15 +96,56 @@ if (!isPasswordValid) {
     const token = jwt.sign({ userId: admin._id, type: "admin" }, jwtSecret, {
       expiresIn: "1h",
     });
+    const refreshToken = jwt.sign(
+      { adminId: admin._id, type: "admin" },
+      jwtRefreshSecret,
+      { expiresIn: "7d" }
+    );
+    // const adminId=admin._id;
+    await adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
 
     return {
-      admin: this.sanitizeAdmin(admin),
+      admin:{
+        id:admin._id,
+        name:admin.name,
+        email:admin.email,
+        role:"admin",
+      },
       token,
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
+      refreshToken:"",
     };
   }
 
+  async refreshToken(
+    refreshToken: string
+  ): Promise<{ success: boolean; token: string; message: string }> {
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret || !jwtRefreshSecret) {
+      throw new Error(MESSAGES.ERROR.JWT_SECRET_MISSING);
+    }
+    try {
+      const decoded = jwt.verify(refreshToken, jwtRefreshSecret) as {
+        adminId: string;
+        type: string;
+      };
+      const newAccessToken = jwt.sign(
+        { adminId: decoded.adminId, type: "admin" },
+        jwtSecret,
+        { expiresIn: "1h" }
+      );
+
+      return {
+        success: true,
+        token: newAccessToken,
+        message: "Access token refreshed successfully",
+      };
+    } catch (error) {
+      throw new Error("Invalid refresh token");
+    }
+  }
   // async getAdminDashboardStats(): Promise<{
   //   totalUsers: number;
   //   totalVendors: number;
@@ -158,65 +219,178 @@ if (!isPasswordValid) {
     }
   }
 
-  async addService(serviceData: ServiceData): Promise<{ message: string; status: number }> {
+
+  async getDashboardData(): Promise<{ data: any; status: number; message: string }> {
     try {
-      let { name, description,image, price, contactMail,contactNumber } = serviceData;
-console.log(image,"image");
-      // Trim values to remove unnecessary spaces
-      // name = name.trim();
-      // description = description.trim();
-      // duration = duration.trim();
+      const [
+        userStats,
+        ownerStats,
+        bookingStats,
+        allProperties,
+        allBookings,
+        allUsers,
+        allOwners,
+      ] = await Promise.all([
+        adminRepository.getUserRegistrations(),
+        adminRepository.getOwnerRegistrations(),
+        adminRepository.getBookingStats(),
+        propertyRepository.find(), // fetch all properties
+        bookingRepository.find(),    // fetch all bookings
+        userRepository.find(),
+        ownerRepository.find(),
+      ]);
+      console.log(userStats,"dta")
+      const totalUsers = allUsers.filter(p => p.role === "user").length;
+      const activeUsers=allUsers.filter(p => p.status === "Active").length;
+      const blockedUsers=allUsers.filter(p => p.status === "Blocked").length;
+      const verifiedUsers=allUsers.filter(p => p.isVerified ===true&&p.role !="admin").length;
 
-      // Validate required fields
-      if (!name || !description || !price || !contactMail || !contactNumber) {
-        return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
-      }
+            const totalOwners = ownerStats.reduce((sum, o) => sum + o.count, 0);
+            const activeOwner=allOwners.filter(p => p.status === "Active").length;
+            const blockedOwners=allOwners.filter(p => p.status === "Blocked").length;
 
-      if (price <= 0 || isNaN(price)) {
-        return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
-      }
+      const totalBookings = bookingStats.reduce((sum, b) => sum + b.count, 0);
 
-      const existingService = await Service.findOne({ name });
-      if (existingService) {
-        return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
-      }
+      const totalRevenue = bookingStats.reduce((sum, b) => sum + b.revenue, 0);
 
-      const newService = new Service({ name, description, price, contactMail,contactNumber,image });
-      await newService.save(); 
-        // await adminRepository.create({
-        //     ...serviceData,
-            
-        //     });
-      // Create and save the service
-      // const newService = new ServiceModel({ name, description, price, duration });
-      // await newService.save();
+      // Property stats
+      const totalProperties = allProperties.length;
+      const activeProperties = allProperties.filter(p => p.status === "active").length;
+      const pendingProperties = allProperties.filter(p => p.status === "pending").length;
 
-      return { message: "Service added successfully!", status: STATUS_CODES.CREATED };
-    } catch (error) {
-      console.error("Error in add Service:", error);
-      return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
-    }
-  }
+      const bookedProperties = allProperties.filter(p => p.status === "booked").length;
+      const rejectedProperties = allProperties.filter(p => p.status === "rejected").length;
 
-  async listServices(): Promise<{ services: any[]; status: number; message: string }> {
-    try {
-      const services = await adminRepository.findServices();
-  
-      console.log("Fetched Services:", services); 
+      // Booking stats
+      const activeBookings = allBookings.filter(b => b.bookingStatus === "confirmed").length;
+      const completedBookings = allBookings.filter(b => b.bookingStatus === "completed").length;
+      const cancelledBookings = allBookings.filter(b => b.bookingStatus === "cancelled").length;
+      const totalBookingCount = allBookings.length;
+      // Monthly analytics
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const resultMap = new Map<string, any>();
+
+      const mapData = (data: any[], key: string) => {
+        data.forEach(item => {
+          const month = `${monthNames[item._id.month - 1]} ${item._id.year}`;
+          if (!resultMap.has(month)) {
+            resultMap.set(month, { month, users: 0, owners: 0, bookings: 0 });
+          }
+          resultMap.get(month)[key] = item.count ?? item.revenue;
+        });
+      };
+
+      mapData(userStats, "users");
+      mapData(ownerStats, "owners");
+      mapData(bookingStats, "bookings");
+
+      const userActivityData = Array.from(resultMap.values());
+      const revenueData = bookingStats.map(item => ({
+        month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
+        revenue: item.revenue
+      }));
+
+      const dashboardData = {
+        totalUsers,
+        totalOwners,
+        totalBookings,
+        completedBookings,
+        activeBookings,
+        cancelledBookings,
+        totalRevenue,
+        totalProperties,
+        activeProperties,
+        bookedProperties,
+        rejectedProperties,
+        pendingProperties,
+        userActivityData,
+        revenueData,
+        activeUsers,
+        blockedUsers,
+        verifiedUsers,
+        activeOwner,
+        blockedOwners,
+        totalBookingCount
+
+      };
+
       return {
-        services,
+        data: dashboardData,
         status: STATUS_CODES.OK,
-        message: "successfully fetched", 
+        message: "Admin dashboard fetched successfully"
       };
+
     } catch (error) {
-      console.error("Error in listServices:", error);
-      return { 
-        services: [], 
-        message: MESSAGES.ERROR.SERVER_ERROR, 
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+      console.error("Error in getDashboardData (Admin):", error);
+      return {
+        data: null,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR
       };
     }
   }
+
+//   async addService(serviceData: ServiceData): Promise<{ message: string; status: number }> {
+//     try {
+//       let { name, description,image, price, contactMail,contactNumber } = serviceData;
+// console.log(image,"image");
+//       // Trim values to remove unnecessary spaces
+//       // name = name.trim();
+//       // description = description.trim();
+//       // duration = duration.trim();
+
+//       // Validate required fields
+//       if (!name || !description || !price || !contactMail || !contactNumber) {
+//         return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
+//       }
+
+//       if (price <= 0 || isNaN(price)) {
+//         return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
+//       }
+
+//       const existingService = await Service.findOne({ name });
+//       if (existingService) {
+//         return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
+//       }
+
+//       const newService = new Service({ name, description, price, contactMail,contactNumber,image });
+//       await newService.save(); 
+//         // await adminRepository.create({
+//         //     ...serviceData,
+            
+//         //     });
+//       // Create and save the service
+//       // const newService = new ServiceModel({ name, description, price, duration });
+//       // await newService.save();
+
+//       return { message: "Service added successfully!", status: STATUS_CODES.CREATED };
+//     } catch (error) {
+//       console.error("Error in add Service:", error);
+//       return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
+//     }
+//   }
+
+  // async listServices(): Promise<{ services: any[]; status: number; message: string }> {
+  //   try {
+  //     const services = await adminRepository.findServices();
+  
+  //     console.log("Fetched Services:", services); 
+  //     return {
+  //       services,
+  //       status: STATUS_CODES.OK,
+  //       message: "successfully fetched", 
+  //     };
+  //   } catch (error) {
+  //     console.error("Error in listServices:", error);
+  //     return { 
+  //       services: [], 
+  //       message: MESSAGES.ERROR.SERVER_ERROR, 
+  //       status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+  //     };
+  //   }
+  // }
+  
   
   async updateServiceStatus(id: string, status: string): Promise<{ message: string; status: number }> {
    try {
@@ -393,6 +567,7 @@ console.log(image,"image");
       };
     }
     owner.govtIdStatus="approved";
+    owner.status="Active";
     await owner.save();
 
     return {
@@ -463,24 +638,7 @@ async removeFeature(id: string): Promise<{ message: string; status: number }> {
     };
   }
 }
-async getAllProperties(): Promise<{ properties: IProperty[]; status: number; message: string }> {
-    try {
-      const properties = await adminRepository.findProperties();
-  
-      return {
-        properties: properties || [], 
-        status: STATUS_CODES.OK,
-        message: "Successfully fetched",
-      };
-    } catch (error) {
-      console.error("Error in property listing:", error);
-      return {
-        properties: [], 
-        message: MESSAGES.ERROR.SERVER_ERROR,
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-      };
-    }
-  }
+
 
   async approveProperty(id: string): Promise<{ status: number; message: string }> {
     try {
@@ -530,26 +688,165 @@ async getAllProperties(): Promise<{ properties: IProperty[]; status: number; mes
       };
     }
   }
-  async listAllBookings(): Promise<{ bookings: IBooking[]; status: number; message: string }> {
+  async listAllBookings(  page: number = 1,
+    limit: number = 5): Promise<{ bookings: IBooking[]; status: number; message: string;    totalPages: number;
+    }> {
     try {
-      const bookings = await adminRepository.findAllBookings();
-  
+      const skip = (page - 1) * limit;
+
+      const bookings = await adminRepository.findAllBookings(skip,limit);
+      const totalBookings = await adminRepository.countAllBookings();
+      const totalPages = Math.ceil(totalBookings / limit);
       return {
         bookings: bookings || [], 
         status: STATUS_CODES.OK,
+        totalPages,
         message: "Successfully fetched",
       };
     } catch (error) {
       console.error("Error in property listing:", error);
       return {
         bookings: [], 
+        totalPages:0,
         message: MESSAGES.ERROR.SERVER_ERROR,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
       };
     }
   }
-      
+    
+  
 
+async rejectProperty(id: string, reason: string): Promise<{ message: string; status: number }> {
+  try {
+    const property = await propertyRepository.findById(id);
+    if (!property) {
+      return {
+        message: "property not found",
+        status: STATUS_CODES.NOT_FOUND,
+      };
+    }
+
+    const updatedData:Partial<IProperty>={
+      isRejected:true,
+      rejectedReason:reason,
+      status:"rejected",
+    }
+    // const ownerId=new mongoose.Types.ObjectId(property.ownerId);
+    // const owner=await ownerRepository.findById(ownerId);
+
+    // await ownerRepository.update(id, {
+    //   govtIdStatus: "rejected",
+    //   rejectionReason: reason,
+    // });
+
+
+    // await Mail.sendRejectionMail(owner.email, reason);
+        const response=  await propertyRepository.update(id, updatedData);
+        console.log(response);
+
+    return {
+      message: "Rejected successfully & email sent",
+      status: STATUS_CODES.OK,
+    };
+  } catch (error) {
+    console.error("Error rejecting owner:", error);
+    return {
+      message: "Internal Server Error",
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
+  }
+}
+
+ async bookingDetails(id: string): Promise<{
+      bookingData: IBooking | null;
+      ownerData:IOwner |null;
+      userData:IUser | null;
+      status: number;
+      message: string;
+    }> {
+      try {
+        const bookingData = await bookingRepository.findBookingData(id);
+        let userData: IUser | null = null;
+        let ownerData:IOwner |null=null;
+        if (bookingData?.userId) {
+          userData = await userRepository.findById(bookingData.userId.toString());
+          console.log('user:', userData);
+        }
+        console.log(bookingData?.ownerId,"ownerId")
+        if (bookingData?.ownerId) {
+          ownerData = await ownerRepository.findById(bookingData.ownerId.toString());
+          console.log('Owner:', ownerData);
+        }
+            return {
+          bookingData,
+          userData,
+          ownerData,
+          status: STATUS_CODES.OK,
+          message: "Successfully fetched",
+        };
+      } catch (error) {
+        console.error("Error in bookingDetails:", error);
+        return {
+          bookingData: null,
+          userData:null,
+          ownerData:null,
+          message: MESSAGES.ERROR.SERVER_ERROR,
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        };
+      }
+    }
+
+    
+      async getPropertyById(id: string): Promise<{ property: any; ownerData: any;booking:any; status: number; message: string }> {
+        try {
+          const property = await propertyRepository.findPropertyById(id) as IProperty;
+    
+          if (!property) {
+            throw new Error("Property not available");
+          }
+          
+          if (!property) {
+            return {
+              property: null,
+              booking:null,
+              ownerData: null,
+              status: STATUS_CODES.NOT_FOUND,
+              message: "Property not found"
+            };
+          }
+      
+          const ownerId = property.ownerId.toString(); 
+          const owner = await userRepository.findOwnerById(ownerId);
+      
+          const ownerData = owner
+          ? {
+              name: owner.name,
+              phone: owner.phone,
+              email: owner.email
+            }
+          : null;
+          const booking = await bookingRepository.findPropertyBookings(id);
+          console.log(booking,"for admin pag")
+          return {
+            property,
+            booking,
+            ownerData,
+            status: STATUS_CODES.OK,
+            message: "Property fetched successfully"
+          };
+      
+        } catch (error) {
+          console.error("Error in getPropertyById:", error);
+          return {
+            property: null,
+            ownerData: null,
+            booking:null,
+            status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+            message: MESSAGES.ERROR.SERVER_ERROR,
+          };
+        }
+      }
+    
 
 }
 export default new AdminService();

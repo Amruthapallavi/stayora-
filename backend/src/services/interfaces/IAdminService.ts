@@ -1,14 +1,11 @@
 import { IUser } from "../../models/user.model";
 import { IService } from "../../models/service.model";
 export interface IAdminService {
-  loginAdmin(
-    email: string,
-    password: string
-  ): Promise<{ admin: IUser; token: string; message: string; status: number }>;
+  loginAdmin(email: string, password: string): Promise<{message: string;token: string;refreshToken: string;admin: Partial<IUser>; }>;
+  refreshToken(refreshToken: string): Promise<{ token: string; message: string }>;
+
   
   listAllUsers(): Promise<{ users: any[]; status: number }>;
-  listServices(): Promise<{ services: any[]; status: number }>;
-  addService(serviceData:Partial<IService>):Promise <{message:string}>;
 }
 
 

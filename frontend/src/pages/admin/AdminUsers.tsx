@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, Eye, Ban, CheckCircle, Sun, Moon } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, Eye, Ban, CheckCircle, Sun, Moon, ArrowRight, ArrowLeft } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "../../components/admin/Sidebar";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
@@ -26,7 +26,7 @@ const AdminUsers = () => {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 5;
+  const usersPerPage = 4;
 
   useEffect(() => {
     if (darkMode) {
@@ -121,91 +121,200 @@ const AdminUsers = () => {
 
   return (
     <AdminLayout>
-    <div className="flex transition-all max-h-screen">
-      <div className={`flex-1 p-6 transition-all ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-        {/* Summary Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-blue-500 text-white rounded-lg text-center shadow-md">
-            <h2 className="text-lg font-semibold">Total Users</h2>
-            <p className="text-2xl font-bold">{totalUsers}</p>
-          </div>
-          <div className="p-4 bg-green-500 text-white rounded-lg text-center shadow-md">
-            <h2 className="text-lg font-semibold">Active Users</h2>
-            <p className="text-2xl font-bold">{activeUsers}</p>
-          </div>
-          <div className="p-4 bg-red-500 text-white rounded-lg text-center shadow-md">
-            <h2 className="text-lg font-semibold">Blocked Users</h2>
-            <p className="text-2xl font-bold">{blockedUsers}</p>
-          </div>
-          <div className="p-4 bg-yellow-500 text-white rounded-lg text-center shadow-md">
-            <h2 className="text-lg font-semibold">Unverified Users</h2>
-            <p className="text-2xl font-bold">{unverifiedUsers}</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#e0e7ff] to-[#fdf6f0] dark:from-gray-900 dark:to-gray-800 transition-colors duration-300 font-sans">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-4xl font-extrabold text-gradient-primary bg-gradient-to-br from-purple-600 via-blue-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
+            User Management Dashboard
+          </h1>
+          {/* <button 
+            onClick={toggleDarkMode} 
+            className="p-2 rounded-full bg-white dark:bg-gray-700 shadow-lg hover:scale-110 transition-all duration-200 border border-gray-200 dark:border-gray-600"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun size={22} className="text-yellow-400" /> : <Moon size={22} className="text-purple-500" />}
+          </button> */}
         </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
+        >
+          <StatCard 
+            title="Total Users" 
+            value={totalUsers} 
+            bgColor="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
+            icon={<Eye className="text-blue-600" size={30} />}
+          />
+          <StatCard 
+            title="Active Users" 
+            value={activeUsers} 
+            bgColor="linear-gradient(135deg, #c1dfc4 0%, #deecdd 100%)"
+            icon={<CheckCircle className="text-green-500" size={30} />}
+          />
+          <StatCard 
+            title="Blocked Users" 
+            value={blockedUsers} 
+            bgColor="linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)"
+            icon={<Ban className="text-red-500" size={30} />}
+          />
+          <StatCard 
+            title="Unverified Users" 
+            value={unverifiedUsers} 
+            bgColor="linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%)"
+            icon={<CheckCircle className="text-yellow-500 opacity-80" size={30} />}
+          />
+        </motion.div>
         
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-gray-800"> User Management</h1>
-          <div className="flex items-center gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl mb-8 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h2 className="text-xl font-bold text-gray-700 dark:text-white flex-shrink-0">
+            Users List
+          </h2>
+          <div className="w-full sm:w-[340px]">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Search users..."
-                className="pl-10 pr-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
+                className="pl-10 pr-4 py-2 w-full rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-500 focus:ring-2 focus:ring-blue-400 focus:outline-none shadow-sm transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {/* <button onClick={toggleDarkMode} className="p-2 bg-gray-200 rounded-lg">
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button> */}
           </div>
         </div>
 
-        <div className="overflow-x-auto shadow-md rounded-lg">
-          <table className="w-full border-collapse bg-white rounded-lg overflow-hidden">
-            <thead className="bg-gray-800 text-white">
-              <tr>
-                <th className="p-4">Username</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Phone</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentUsers.map((user) => (
-                <tr key={user._id} className="border-b hover:bg-gray-100 text-gray-700">
-                  <td className="p-4 font-semibold">{user.name}</td>
-                  <td className="p-4">{user.email}</td>
-                  <td className="p-4">{user.phone}</td>
-                  <td className={`p-4 font-semibold ${user.status === "Active" ? "text-green-600" : "text-red-600"}`}>{user.status}</td>
-                  <td className="p-4 flex gap-3">
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">View</button>
-                    <button
-                      className={`px-4 py-2 rounded-lg ${user.status === "Active" ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"} text-white`}
-                      onClick={() => toggleStatus(user._id,user.status)}
-                    >
-                      {user.status === "Active" ? "Block" : "Unblock"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <div className="bg-white/90 dark:bg-gray-900/95 rounded-2xl shadow-2xl p-0 overflow-hidden">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-16">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500"></div>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto min-w-full">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 dark:bg-gray-800/70 text-left">
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Username</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Email</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Phone</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Status</th>
+                      <th className="px-6 py-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    <AnimatePresence>
+                      {currentUsers.map((user) => (
+                        <motion.tr 
+                          key={user._id}
+                          className="transition-all hover:bg-blue-50 dark:hover:bg-gray-800 duration-150"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                        >
+                          <td className="px-6 py-4 font-semibold text-md text-gray-900 dark:text-white flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center text-base text-white font-bold shadow-lg">{user.name[0]}</div>
+                            <div>
+                              {user.name}
+                              
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{user.email}</td>
+                          <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{user.phone}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold
+                              ${user.status === "Active"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              }`}>
+                              {user.status === "Active"
+                                ? <CheckCircle size={14} className="text-green-400" />
+                                : <Ban size={14} className="text-red-400" />}
+                              {user.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-2">
+                              <button 
+                                className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-blue-400 to-purple-500 text-white rounded-lg font-medium shadow-sm hover:scale-105 focus:ring-2 focus:ring-blue-400 transition-all"
+                              >
+                                <Eye size={16} className="mr-1" /> View
+                              </button>
+                              <button
+                                className={`inline-flex items-center px-3 py-1 rounded-lg font-medium shadow-sm transition-all
+                                  ${user.status === "Active"
+                                    ? "bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700"
+                                    : "bg-gradient-to-br from-green-400 to-green-600 hover:from-green-500 hover:to-green-700"}
+                                  text-white focus:ring-2 focus:ring-offset-2 focus:ring-blue-400`}
+                                onClick={() => toggleStatus(user._id, user.status)}
+                              >
+                                {user.status === "Active" ? (
+                                  <>
+                                    <Ban size={15} className="mr-1" /> Block
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle size={15} className="mr-1" /> Unblock
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
+              
+              {filteredUsers.length === 0 && (
+                <div className="flex flex-col items-center justify-center p-16 text-center">
+                  <Search size={56} className="text-gray-300 mb-6" />
+                  <h3 className="text-2xl font-bold text-gray-700 dark:text-white mb-2">No users found</h3>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">Try adjusting your search query.</p>
+                </div>
+              )}
 
-        <div className="flex justify-between items-center mt-6">
-          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-            Previous
-          </button>
-          <span className="text-gray-700 font-semibold">Page {currentPage} of {totalPages}</span>
-          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-            Next
-          </button>
-        </div>
+              <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-7 sm:px-6 bg-gradient-to-r from-white via-gray-100 to-white dark:from-gray-900 dark:to-gray-800">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center gap-2 px-5 py-2 text-base font-semibold rounded-lg 
+                  bg-gradient-to-r from-gray-300 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-700 dark:text-gray-200
+                  hover:bg-gradient-to-t hover:from-blue-100 hover:to-purple-100 dark:hover:from-gray-600 dark:hover:to-gray-700
+                  disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow"
+                >
+                  <ArrowLeft size={16} className="mr-1" />
+                  Previous
+                </button>
+                <span className="text-gray-600 dark:text-gray-400 font-medium text-lg">
+                  Page <b>{currentPage}</b> of <b>{totalPages ? totalPages : 1}</b>
+                </span>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="inline-flex items-center gap-2 px-5 py-2 text-base font-semibold rounded-lg 
+                  bg-gradient-to-r from-gray-300 to-gray-200 dark:from-gray-700 dark:to-gray-800 text-gray-700 dark:text-gray-200
+                  hover:bg-gradient-to-t hover:from-pink-100 hover:to-purple-100 dark:hover:from-gray-600 dark:hover:to-gray-700
+                  disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow"
+                >
+                  Next
+                  <ArrowRight size={16} className="ml-1" />
+                </button>
+              </div>
+            </>
+          )}
+        </div>  
       </div>
     </div>
+  
+
+
+
+
+
     </AdminLayout>
   );
 };
@@ -213,6 +322,29 @@ const AdminUsers = () => {
 export default AdminUsers;
 
 
-
+const StatCard = ({ title, value, bgColor, icon }: { 
+  title: string; 
+  value: number; 
+  bgColor: string;
+  icon: React.ReactNode;
+}) => {
+  return (
+    <motion.div 
+      className="rounded-2xl p-7 flex flex-col gap-1 shadow-lg text-gray-900 dark:text-white relative overflow-hidden"
+      style={{
+        background: bgColor,
+        boxShadow: "rgba(160, 161, 255, 0.12) 0px 12px 30px"
+      }}
+      whileHover={{ y: -8, boxShadow: "rgba(100, 100, 180, 0.22) 0px 28px 60px", scale: 1.04 }}
+      transition={{ duration: 0.16 }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-800/80 dark:text-white/70 font-semibold">{title}</div>
+        <div className="bg-white/30 shadow p-2 rounded-full">{icon}</div>
+      </div>
+      <div className="mt-2 text-4xl font-extrabold text-gray-900 dark:text-white">{value}</div>
+    </motion.div>
+  
+    )}
 
  

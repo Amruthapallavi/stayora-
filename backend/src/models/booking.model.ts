@@ -25,8 +25,11 @@ export interface IBooking extends Document {
   totalCost: number;
   paymentMethod: string;
   paymentId?: string;
-  paymentStatus: "pending" | "completed" | "failed";
-  bookingStatus: "pending" | "confirmed" | "cancelled";
+  paymentStatus: "pending" | "completed" | "failed"|"refunded";
+  bookingStatus: "pending" | "confirmed" | "cancelled"|"completed";
+  isCancelled:boolean,
+  cancellationReason?:string,
+  refundAmount:number,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,7 +63,12 @@ const bookingSchema = new Schema<IBooking>(
     addOn: { type: [addOnSchema], default: [] },
     addOnCost: { type: Number, default: 0 },
     totalCost: { type: Number, required: true },
-    paymentMethod: { type: String, required: true },
+    paymentMethod: { type: String, required: true },  
+      cancellationReason: { type: String },
+      refundAmount:{type:Number,default:0},
+      isCancelled:{type:Boolean,default:false},
+
+
     paymentId: { type: String },
     paymentStatus: {
       type: String,
@@ -69,7 +77,7 @@ const bookingSchema = new Schema<IBooking>(
     },
     bookingStatus: {
       type: String,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: ["pending", "confirmed", "cancelled","completed"],
       default: "pending",
     },
   },
