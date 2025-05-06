@@ -1,17 +1,28 @@
 import { Request, Response } from "express";
-import ownerService from "../services/owner.service";
+// import ownerService from "../services/owner.service";
 import { IOwnerController } from "./interfaces/IOwnerController";
 import { STATUS_CODES } from "../utils/constants";
 import jwt from "jsonwebtoken";
-import bookingService from "../services/bookingService";
+// import bookingService from "../services/bookingService";
 import propertyService from "../services/property.service";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import IOwnerService from "../services/interfaces/IOwnerService";
+import { IPropertyService } from "../services/interfaces/IPropertyService";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
 
-class OwnerController implements IOwnerController {
-
+@injectable()
+export class OwnerController implements IOwnerController {
+  constructor(
+    @inject(TYPES.OwnerService)
+      private ownerService: IOwnerService,
+      @inject(TYPES.PropertyService)
+      private propertyService: IPropertyService
+    
+  ){}
   async register(req: Request, res: Response): Promise<void> {
     try {
       const govtIdProof = req.file?.path; 
@@ -21,7 +32,7 @@ class OwnerController implements IOwnerController {
         return;
       }
 
-      const result = await ownerService.registerOwner({
+      const result = await this.ownerService.registerOwner({
         ...req.body,
         govtId: govtIdProof, 
       });
@@ -42,7 +53,7 @@ class OwnerController implements IOwnerController {
     try {
       const { email, otp } = req.body;
       console.log(req.body,"reqbody");
-      const result = await ownerService.verifyOTP(email, otp);
+      const result = await this.ownerService.verifyOTP(email, otp);
       console.log(result,"result owner")
       res.status(result.status).json({
         message: result.message,
@@ -60,7 +71,7 @@ class OwnerController implements IOwnerController {
       try {
         const { email, password } = req.body;
         console.log(req.body,"owner login data")
-        const result = await ownerService.loginOwner(email, password,res);
+        const result = await this.ownerService.loginOwner(email, password,res);
 console.log(result.refreshToken,"refreshToken");
         res.cookie("auth-token", result.token, {
           httpOnly: true,
@@ -101,7 +112,7 @@ console.log(result.refreshToken,"refreshToken");
             return;
           }
       
-          const result = await ownerService.resendOTP(email);
+          const result = await this.ownerService.resendOTP(email);
         console.log(result,"from")
           res.status(result.status).json({
             message: result.message,
@@ -123,7 +134,7 @@ console.log(result.refreshToken,"refreshToken");
                 });
                 return;
               }
-              const result = await ownerService.resetPassword(email,newPassword);
+              const result = await this.ownerService.resetPassword(email,newPassword);
             res.status(result.status).json({
               message:result.message,
             })
@@ -142,7 +153,7 @@ console.log(result.refreshToken,"refreshToken");
                throw new Error("email is required");
               }
         
-              const result = await ownerService.resendOTP(email);
+              const result = await this.ownerService.resendOTP(email);
               res.status(result.status).json({
                 message: result.message,
               });
@@ -172,7 +183,7 @@ async getProfileData(req:Request, res:Response):Promise<void>{
   try {
     const id=req.params.id;
     console.log(id);
-    const result = await ownerService.getProfileData(id);
+    const result = await this.ownerService.getProfileData(id);
     console.log(result,"from owner controller");
     res.status(result.status).json({
       user: result.user,
@@ -195,7 +206,7 @@ const formData= req.body;
         return;
       }
       console.log(id,formData)
-      const result = await ownerService.updateProfile(id,formData);
+      const result = await this.ownerService.updateProfile(id,formData);
     res.status(result.status).json({
       message:result.message,
     })
@@ -239,7 +250,7 @@ const formData= req.body;
 
 async getOwnerStatus(req: Request, res: Response): Promise<any> {
   try {
-    const result = await ownerService.getOwnerStatus(req.params.id);
+    const result = await this.ownerService.getOwnerStatus(req.params.id);
 
     if (!result.user) {
       return res.status(result.status).json({ message: result.message });
@@ -263,7 +274,7 @@ async fetchWalletData(req:Request,res:Response):Promise<void>{
         });
         return;
       }
-      const result = await ownerService.fetchWalletData(id);
+      const result = await this.ownerService.fetchWalletData(id);
       console.log(result)
     res.status(result.status).json({
       message:result.message,
@@ -282,7 +293,7 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
 
     const id=req.params.id;
     console.log(id);
-    const result = await ownerService.getPropertyById(id);
+    const result = await this.ownerService.getPropertyById(id);
     res.status(result.status).json({
       Property: result.property,
     });
@@ -299,7 +310,7 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
     const id= req.params.id;
   const data = req.body;
   console.log(id,"data to update", data);
-  const result = await propertyService.updateProperty(id,data);
+  const result = await this.propertyService.updateProperty(id,data);
   res.status(result.status).json({
     message:result.message,
   })
@@ -311,10 +322,11 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
   }
  }
 
- async refreshToken(req: Request, res: Response){
+ async refreshToken(req: Request, res: Response):Promise<void>{
   try {
     const token = req.cookies.refreshToken;
-    if (!token) return res.status(401).json({ message: "Refresh token missing" });
+    if (!token) 
+       res.status(401).json({ message: "Refresh token missing" });
 
     const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET as string);
     const ownerId = (payload as any).ownerId;
@@ -340,7 +352,7 @@ async getDashboardData(req: Request, res: Response): Promise<void> {
     if (!ownerId) {
        res.status(400).json({ error: 'Owner ID is missing' });
     }
-    const result = await ownerService.getDashboardData(ownerId);
+    const result = await this.ownerService.getDashboardData(ownerId);
 console.log(result,"for dashborad")
     res.status(result.status).json({
       data: result.data,
@@ -374,7 +386,7 @@ const generateAccessToken = (user: { ownerId: string; type: string }) => {
 };
 
 
-export default new OwnerController();
+export default OwnerController;
 
 
 

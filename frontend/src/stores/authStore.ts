@@ -397,10 +397,10 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-      fetchWalletData: async (id: string) => {
+      fetchWalletData: async (id: string): Promise<void> => {
         const { authType } = get();
-        if (!authType) return false;
-
+        if (!authType) return; 
+      
         try {
           let response;
           switch (authType) {
@@ -411,14 +411,14 @@ export const useAuthStore = create<AuthState>()(
               response = await ownerService.fetchWalletData(id);
               break;
             default:
-              return false;
+              return; 
           }
           return response;
         } catch (error) {
           console.error("Error checking user status", error);
-          return false;
         }
       },
+      
       filteredProperties: async (data: any) => {
         const { authType } = get();
         if (!authType) return false;
@@ -430,7 +430,6 @@ export const useAuthStore = create<AuthState>()(
               response = await userService.filteredProperties(data);
               break;
             case "owner":
-              // response = await ownerService.fetchWalletData(data);
               break;
             default:
               return false;
@@ -715,19 +714,7 @@ export const useAuthStore = create<AuthState>()(
           throw error;
         }
       },
-      // unblockOwner: async (id) => {
-      //   try {
-      //     console.log(id);
-      //     const { authType } = get();
-      //     if (!authType || authType !== "admin")
-      //       throw new Error("Not authorized as admin");
-      //     return await adminService.unblockOwner(id);
-
-      //   } catch (error) {
-      //     console.error("unblock owner failed", error);
-      //     throw error;
-      //   }
-      // },
+     
       sendMessage: async (data) => {
         try {
           const { authType } = get();

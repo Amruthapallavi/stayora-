@@ -15,7 +15,6 @@ class MailService {
 
   async sendRejectionMail(email: string, reason: string): Promise<void> {
     try {
-      console.log(`🚀 Sending rejection email to: ${email}`);
 
       await this.transporter.sendMail({
         from: `"STAYORA Support" <${process.env.EMAIL_USER}>`,

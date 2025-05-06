@@ -51,8 +51,6 @@ console.log(err);
   const handleGoogleSignin = () => {
     try {
       const googleAuthUrl = authService.getGoogleAuthUrl();
-      // Redirect to the Google auth endpoint
-      console.log(googleAuthUrl);
       window.location.href = googleAuthUrl;
     } catch (error) {
       console.error("Error retrieving Google auth URL:", error);

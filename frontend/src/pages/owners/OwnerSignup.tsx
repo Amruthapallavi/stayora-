@@ -72,7 +72,6 @@ const OwnerSignup = () => {
         formDataToSend.append(key, value);
       });
       formDataToSend.append("govtId", govtId);
-      console.log("Form Data Before Sending:", [...formDataToSend.entries()]);
 
       await signup(formDataToSend, "owner");
       notifySuccess("Signup successful. Please verify your email.");

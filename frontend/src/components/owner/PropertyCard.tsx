@@ -67,7 +67,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 >
   View Details
 </Link>
-{property.status !== 'rejected' && (
+{property.status !== 'rejected' && property.status !== 'booked' && (
   <Link 
     to={`/owner/edit-property/${property._id}`}
     className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"
@@ -75,6 +75,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     Edit
   </Link>
 )}
+
 
 
         </div>

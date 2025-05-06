@@ -3,6 +3,10 @@ import { IBaseRepository } from "./IBaseRepository";
 
 
 export interface IWalletRepository extends IBaseRepository<IWallet>{
-    // findAllServices(): Promise<IService[] | null>;
-    
+    updateUserWalletTransaction(
+        userId: string,
+        bookingId: string,
+        amount: number,
+        type: 'credit' | 'debit'
+      ): Promise<IWallet | null>;    
 }

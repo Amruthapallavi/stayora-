@@ -9,9 +9,24 @@ import userRepository from "../repositories/user.repository";
 import { IUser } from "../models/user.model";
 import ownerRepository from "../repositories/owner.repository";
 import { IOwner } from "../models/owner.model";
+import { IMessageReposiotry } from "../repositories/interfaces/IMessageRepository";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 
+@injectable()
+export class ChatService implements IChatService {
+  constructor(
+    @inject(TYPES.MessageRepository)
+      private messageRepository: IMessageReposiotry,
+      @inject(TYPES.UserRepository)
+      private userRepository: IUserRepository,
+      @inject(TYPES.OwnerRepository)
+      private ownerRepository: IOwnerRepository
+    
+  ){}  
 
-class chatService implements IChatService {
   async sendMessage(
     input: SendMessageInput
   ): Promise<{ message: string; status: number; data: IMessage }> {
@@ -20,7 +35,7 @@ class chatService implements IChatService {
     const receiverObj = new mongoose.Types.ObjectId(input.receiver);
     const propertyObj = new mongoose.Types.ObjectId(input.propertyId );
 
-    const message = await messageRepository.create({
+    const message = await this.messageRepository.create({
       sender: senderObj,
       senderModel: input.senderModel,
       receiver: receiverObj,
@@ -39,11 +54,10 @@ class chatService implements IChatService {
     sender: string,
     receiver: string
   ): Promise<{ message: string; status: number; data: IMessage[] ; chatPartner:IUser |IOwner}> {
-    console.log(sender,receiver,"get conversation")
-    const messages = await messageRepository.findConversation(sender, receiver);
+    const messages = await this.messageRepository.findConversation(sender, receiver);
     const chatPartner: IUser | IOwner | null = 
-    await userRepository.findOne({ _id: receiver }) || 
-    await ownerRepository.findOne({ _id: receiver });
+    await this.userRepository.findOne({ _id: receiver }) || 
+    await this.ownerRepository.findOne({ _id: receiver });
       if (!chatPartner) {
       throw new Error("Chat partner not found");
     }
@@ -58,10 +72,9 @@ class chatService implements IChatService {
   async listConversations(
     userId: string
   ): Promise<{ message: string; status: number; data: any[] }> {
-    const conversations = await messageRepository.aggregateConversations(
+    const conversations = await this.messageRepository.aggregateConversations(
       userId
     );
-    console.log(conversations,"all conversations")
     return {
       message: MESSAGES.SUCCESS.CONVERSATIONS_FETCHED,
       status: STATUS_CODES.OK,
@@ -72,8 +85,7 @@ class chatService implements IChatService {
     convId: string,
     userId: string
   ): Promise<{ message: string; status: number; data: any }> {
-    const updatedCount = await messageRepository.markMessagesAsRead(convId, userId);
-  console.log(updatedCount,"updated count")
+    const updatedCount = await this.messageRepository.markMessagesAsRead(convId, userId);
     return {
       message: "Messages marked as read",
       status: 200,
@@ -85,4 +97,4 @@ class chatService implements IChatService {
 }
 
 
-export default new chatService();
+export default ChatService;

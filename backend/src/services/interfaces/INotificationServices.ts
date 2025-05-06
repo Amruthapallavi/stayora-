@@ -5,7 +5,8 @@ export interface INotificationService {
     recipient: string,
     recipientModel: string,
     type: string,
-    message: string
+    message: string,
+    otherId:string | null,
   ): Promise<{ message: string; status: number; data: INotification }>;
   getNotifications(
     recipientId: string

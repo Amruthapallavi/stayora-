@@ -41,7 +41,10 @@ class UserRepository extends BaseRepository<IUser> implements IUserRepository {
  async updateUserPassword (id: string, newHashedPassword: string): Promise<void> {
     await User.findByIdAndUpdate(id, { password: newHashedPassword });
   };
+  async getAllUsersExcept(userId: string): Promise<IUser[]> {
+    return User.find({ _id: { $ne: userId } });
+  }
   
 }
 
-export default new UserRepository();
+export default  UserRepository;

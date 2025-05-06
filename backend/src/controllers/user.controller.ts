@@ -4,15 +4,25 @@ import { IUserController } from "./interfaces/IUserController";
 import { STATUS_CODES } from "../utils/constants";
 import dotenv from "dotenv";
 dotenv.config();
-
+import { injectable,inject } from "inversify";
+import TYPES from "../config/DI/types";
 import jwt from "jsonwebtoken";
 import Property from "../models/property.model";
 import bookingService from "../services/bookingService";
+import { IUserService } from "../services/interfaces/IUserService";
 
-class UserController implements IUserController {
+@injectable()
+export class UserController implements IUserController {
+  constructor(
+    @inject(TYPES.UserService)
+      private userService: IUserService
+    
+  ){}
+
+
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const result = await userService.registerUser(req.body);
+      const result = await this.userService.registerUser(req.body);
       console.log(req.body)
       res.status(result.status).json({
         message: result.message,
@@ -29,7 +39,7 @@ class UserController implements IUserController {
     try {
       const { email, otp } = req.body;
       console.log(req.body,"reqbody")
-      const result = await userService.verifyOTP(email, otp);
+      const result = await this.userService.verifyOTP(email, otp);
       res.status(result.status).json({
         message: result.message,
       });
@@ -50,7 +60,7 @@ class UserController implements IUserController {
        throw new Error("email is required");
       }
 
-      const result = await userService.resendOTP(email);
+      const result = await this.userService.resendOTP(email);
       res.status(result.status).json({
         message: result.message,
       });
@@ -64,7 +74,7 @@ class UserController implements IUserController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const result = await userService.loginUser(email, password,res);
+      const result = await this.userService.loginUser(email, password,res);
   console.log(result.refreshToken,"refreshToken")
       res.cookie("auth-token", result.token, {
         httpOnly: true,
@@ -100,7 +110,7 @@ class UserController implements IUserController {
       console.log(user)
       console.log("Checking Google authentication...");
   
-      const result = await userService.processGoogleAuth(user);
+      const result = await this.userService.processGoogleAuth(user);
       if (!result.token) {
         console.warn("No token found, redirecting to signup/login.");
         return res.redirect(`${process.env.FRONTEND_URL}/signup?message=${encodeURIComponent(result.message)}`);
@@ -144,7 +154,7 @@ class UserController implements IUserController {
         return;
       }
   
-      const result = await userService.resendOTP(email);
+      const result = await this.userService.resendOTP(email);
     console.log(result,"from")
       res.status(result.status).json({
         message: result.message,
@@ -166,7 +176,7 @@ class UserController implements IUserController {
           });
           return;
         }
-        const result = await userService.resetPassword(email,newPassword);
+        const result = await this.userService.resetPassword(email,newPassword);
       res.status(result.status).json({
         message:result.message,
       })
@@ -188,7 +198,7 @@ class UserController implements IUserController {
 async getAllProperties(req:Request,res:Response):Promise<void>{
 try {
 
-const result = await userService.getAllProperties();
+const result = await this.userService.getAllProperties();
     console.log(result,"from user controller");
     res.status(result.status).json({
       properties: result.properties,
@@ -222,7 +232,7 @@ console.log(req.cookies,"checking")
     try {
       const id=req.params.id;
       console.log(id);
-      const result = await userService.getProfileData(id);
+      const result = await this.userService.getProfileData(id);
       console.log(result,"from user controller");
       res.status(result.status).json({
         user: result.user,
@@ -255,7 +265,7 @@ console.log(req.cookies,"checking")
       const moveInDateOnly = toLocalDateString(moveInDateObj); 
       const endDateOnly = toLocalDateString(endDateObj);
   
-      await userService.saveBookingDates(
+      await this.userService.saveBookingDates(
         new Date(moveInDateOnly),
         rentalPeriod,
         new Date(endDateOnly),
@@ -276,7 +286,7 @@ console.log(req.cookies,"checking")
   try {
     const id=req.params.id;
     console.log(id);
-    const result = await userService.getPropertyById(id);
+    const result = await this.userService.getPropertyById(id);
     res.status(result.status).json({
       Property: result.property,
       ownerData:result.ownerData,
@@ -293,7 +303,7 @@ console.log(req.cookies,"checking")
     const userId = (req as any).userId;
 
     const propertyId= req.params.id;
-    const result = await userService.getCartData(propertyId,userId);
+    const result = await this.userService.getCartData(propertyId,userId);
     res.status(result.status).json({
       cartData: result.cartData,
       property:result.property,
@@ -309,7 +319,7 @@ console.log(req.cookies,"checking")
 
  async listServices(req:Request, res:Response):Promise<void>{
    try {
-     const result = await userService.listServices();
+     const result = await this.userService.listServices();
      res.status(result.status).json({
        services: result.services,
      });
@@ -332,7 +342,7 @@ console.log(req.cookies,"checking")
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    await userService.saveAddOnsForProperty(userId, propertyId, addOns);
+    await this.userService.saveAddOnsForProperty(userId, propertyId, addOns);
 
     res.status(200).json({ message: "Add-on services saved successfully" });
   } catch (error) {
@@ -347,7 +357,7 @@ console.log(req.cookies,"checking")
 
 async getUserStatus(req: Request, res: Response): Promise<any> {
   try {
-    const result = await userService.getUserStatus(req.params.id);
+    const result = await this.userService.getUserStatus(req.params.id);
 
     if (!result.user) {
       return res.status(result.status).json({ message: result.message });
@@ -368,7 +378,7 @@ async getUserBookings(req: Request, res: Response): Promise<any> {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 5;
 
-    const result = await userService.getUserBookings(userId, page, limit);
+    const result = await this.userService.getUserBookings(userId, page, limit);
 
     if (!result.bookings || result.bookings.length === 0) {
       return res.status(404).json({ message: "No bookings found" });
@@ -397,7 +407,7 @@ const formData= req.body;
         return;
       }
       console.log(id,"id")
-      const result = await userService.updateProfile(id,formData);
+      const result = await this.userService.updateProfile(id,formData);
     res.status(result.status).json({
       message:result.message,
     })
@@ -417,7 +427,7 @@ async cancelBooking(req:Request,res:Response):Promise<void>{
         return;
       }
       console.log(id,"id")
-      const result = await userService.cancelBooking(id,reason);
+      const result = await this.userService.cancelBooking(id,reason);
     res.status(result.status).json({
       message:result.message,
     })
@@ -436,7 +446,7 @@ async fetchWalletData(req:Request,res:Response):Promise<void>{
         return;
       }
       console.log(id,"id")
-      const result = await userService.fetchWalletData(id);
+      const result = await this.userService.fetchWalletData(id);
     res.status(result.status).json({
       message:result.message,
       data:result.data,
@@ -457,7 +467,7 @@ console.log(userId);
       return;
     }
 
-    const result = await userService.changePassword(userId, oldPassword, newPassword);
+    const result = await this.userService.changePassword(userId, oldPassword, newPassword);
 
     res.status(result.status).json({ message: result.message });
   } catch (error: any) {
@@ -468,4 +478,4 @@ console.log(userId);
   }
 }
 }
-export default new UserController();
+export default  UserController;

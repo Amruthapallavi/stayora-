@@ -3,13 +3,22 @@ import IServiceController from "./interfaces/IServiceController";
 import { STATUS_CODES } from "../utils/constants";
 import adminService from "../services/admin.service";
 import serviceService from "../services/service.service";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { IServiceService } from "../services/interfaces/IServiceService";
 
 
-class serviceController implements IServiceController {
 
+@injectable()
+export class ServiceController implements IServiceController {
+  constructor(
+    @inject(TYPES.ServiceService)
+      private serviceService: IServiceService
+    
+  ){}
     async listServices(req:Request, res:Response):Promise<void>{
         try {
-          const result = await serviceService.listServices();
+          const result = await this.serviceService.listServices();
           res.status(result.status).json({
             services: result.services,
           });
@@ -24,7 +33,7 @@ class serviceController implements IServiceController {
         try {
           const serviceData= req.body;
           const serviceImage = req.file?.path;
-          const result = await serviceService.createService(serviceData);
+          const result = await this.serviceService.createService(serviceData);
           res.status(result.status).json({
             message: result.message,
           }); 
@@ -32,7 +41,19 @@ class serviceController implements IServiceController {
           console.log(error)
         }
       }
+      
+      async updateServiceStatus(req:Request,res:Response):Promise<void>{
+        const id = req.params.id;
+        const status= req.body.status;
+        console.log(req.body);
+        const result = await this.serviceService.updateServiceStatus(id,status)
+      
+        res.status(result.status).json({
+          message: result.message,
+        });
+      }
+      
 }
 
 
-export default new serviceController();
+export default  ServiceController;

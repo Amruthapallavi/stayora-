@@ -64,7 +64,7 @@ const AdminServices = () => {
       if (result.isConfirmed) {
     try {
       const newStatus = currentStatus === "active" ? "disabled" : "active";
-      const response = await updateServiceStatus(id,newStatus);
+      const response:any = await updateServiceStatus(id,newStatus);
       
       
   
@@ -75,6 +75,8 @@ const AdminServices = () => {
           service._id === id ? { ...service, status: newStatus } : service
         )
       );
+      window.location.reload();
+
       notifySuccess(`Service ${newStatus} successfully`);
     } catch (error) {
       notifyError("Error updating service status");

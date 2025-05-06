@@ -100,7 +100,6 @@ const PropertyDetailedPage = () => {
       
       // Load property details
       const propertyResponse = await getPropertyById(id || '');
-      console.log(propertyResponse)
       if (!propertyResponse.Property) {
         notifyError('Property not found');
         return;
@@ -320,12 +319,12 @@ const PropertyDetailedPage = () => {
                       <span className="text-gray-600">{feature}</span>
                     </div>
                   ))}
-                  {property.otherFeatures?.map((feature: string, index: number) => (
+                  {/* {property.features?.map((feature: string, index: number) => (
                     <div key={`other-${index}`} className="flex items-center">
                       <Check size={16} className="text-golden mr-2" />
                       <span className="text-gray-600">{feature}</span>
                     </div>
-                  ))}
+                  ))} */}
                 </div>
               </motion.div>
               

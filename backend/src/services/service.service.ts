@@ -3,13 +3,20 @@ import adminRepository from "../repositories/admin.repository";
 import serviceRepository from "../repositories/serviceRepository";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import { IServiceService } from "./interfaces/IServiceService";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { IServiceRepository } from "../repositories/interfaces/IServiceRepository";
 
-
-class serviceService implements IServiceService{
-
-      async listServices(): Promise<{ services: any[]; status: number; message: string }> {
+@injectable()
+export class ServiceService implements IServiceService {
+  constructor(
+    @inject(TYPES.ServiceRepository)
+      private serviceRepository: IServiceRepository
+    
+  ){}
+      async listServices(): Promise<{ services: IService[] |[]; status: number; message: string }> {
         try {
-          const services = await serviceRepository.findAllServices();
+          const services = await this.serviceRepository.findAllServices();
       
           console.log("Fetched Services:", services); 
           return {
@@ -26,6 +33,7 @@ class serviceService implements IServiceService{
           };
         }
       }
+
       async createService(serviceData: Partial<IService>): Promise<{ message: string; status: number }> {
         try {
           const { name, description, image, price, contactMail, contactNumber } = serviceData;
@@ -38,12 +46,12 @@ class serviceService implements IServiceService{
             return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
           }
       
-          const existingService = await serviceRepository.findService(name);
+          const existingService = await this.serviceRepository.findServiceWithName(name);
           if (existingService) {
             return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
           }
       
-          await serviceRepository.create({ name, description, price, contactMail, contactNumber, image });
+          await this.serviceRepository.create({ name, description, price, contactMail, contactNumber, image });
       
           return { message: "Service added successfully!", status: STATUS_CODES.CREATED };
         } catch (error) {
@@ -52,9 +60,37 @@ class serviceService implements IServiceService{
         }
       }
       
-      
+       
+        async updateServiceStatus(id: string, status: string): Promise<{ message: string; status: number }> {
+         try {
+           const service = await this.serviceRepository.findService(id);
+        
+           if (!service) {
+             return {
+               message: "Service not found",
+               status: STATUS_CODES.NOT_FOUND, 
+             };
+           }
+         
+           service.status = service.status === "active" ? "disabled" : "active";
+         
+           
+           
+           await service.save();
+         
+           return {
+             message: "Successful",
+             status: STATUS_CODES.OK, 
+           };
+         } catch (error) {
+          
+         
+          console.error("Error in addService:", error);
+          return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
+        }
+      }
       
       
 }
 
-export default new serviceService();
+export default ServiceService;

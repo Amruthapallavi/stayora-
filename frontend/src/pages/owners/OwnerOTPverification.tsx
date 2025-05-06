@@ -22,7 +22,6 @@ const OwnerOTPverification = () => {
       const storedEmail = localStorage.getItem("email");
       if (storedEmail) {
         setEmail(storedEmail);
-        console.log(storedEmail,"from frontend")
       } else {
         alert("Email not found. Redirecting...");
         navigate("/register");
@@ -36,15 +35,12 @@ const OwnerOTPverification = () => {
     updatedOtp[index] = value.slice(0, 1);
     setOtp(updatedOtp);
 
-    // Auto-focus on the next input
     if (value && index < otp.length - 1) {
       document.getElementById(`otp-input-${index + 1}`)?.focus();
     }
   };
 
-  // Handle OTP verification
   const handleSubmit = async () => {
-    console.log("Sending OTP verification for:", email); // Debug line
 
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
@@ -56,7 +52,6 @@ const OwnerOTPverification = () => {
     try {
       const response = await verifyOtp( email, otpValue,"owner");
       notifySuccess("OTP verification successful. Please Login to continue");
-      console.log(response);
       navigate('/owner/login')
     } catch (error) {
       setError("OTP verification failed. Try again.");

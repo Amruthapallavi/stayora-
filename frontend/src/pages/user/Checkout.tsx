@@ -41,7 +41,7 @@ import { notifyError } from "../../utils/notifications";
 import RazorpayPaymentButton from "../../components/RazorpayPayment";
 import { IBooking } from "../../types/IBooking";
 
-interface CheckoutProps {}
+// interface CheckoutProps {}
 
 
 const CheckoutPage: React.FC<CheckoutProps> = () => {
@@ -79,8 +79,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const [rentalPeriodError, setRentalPeriodError] = useState<string>("");
   const [bookingData, setBookingData] = useState<IBooking | null>(null);
 
-  console.log(propertyId, propertyName);
-  // Calculate end date based on move-in date and rental period
   useEffect(() => {
     if (moveInDate && rentalPeriod) {
       const calculatedEndDate = addMonths(moveInDate, rentalPeriod);
@@ -88,7 +86,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
     }
   }, [moveInDate, rentalPeriod]);
 
-  // Load cart data on mount
   useEffect(() => {
     const loadCartData = async () => {
       if (!propertyId) return; // Safety check
@@ -118,7 +115,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
 
     fetchServices();
   }, []);
-  console.log(services, "services");
   useEffect(() => {
     const completed = localStorage.getItem("bookingCompleted") === "true";
   
@@ -133,7 +129,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   
   
   
-  console.log(bookingDetails, "booking");
   const handleStepChange = async (step: number) => {
     if (currentStep === 4) return; 
 
@@ -143,7 +138,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
         setIsLoading(true);
         if (moveInDate && endDate) {
           try {
-            console.log(moveInDate, rentalPeriod, endDate);
 
             await saveBookingDates(
               moveInDate,
@@ -172,7 +166,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
         setIsLoading(true);
 
         try {
-          console.log(selectedAddOns, "seke");
           await saveAddOns(selectedAddOns, propertyId);
         } catch (error) {
           setIsLoading(false);
@@ -238,8 +231,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
     }
   };
   
-  console.log(bookingData,"boooking data")
-  // Validate move-in date is selected
 
  
 

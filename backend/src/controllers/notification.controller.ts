@@ -2,12 +2,23 @@ import { Request, Response } from "express";
 import notificationService from "../services/notification.service";
 import { STATUS_CODES } from "../utils/constants";
 import { INotificationController } from "./interfaces/INotificationController";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { INotificationService } from "../services/interfaces/INotificationServices";
 
-class NotificationController implements INotificationController {
+@injectable()
+export class NotificationController implements INotificationController {
+  constructor(
+    @inject(TYPES.NotificationService)
+      private notificationService: INotificationService
+    
+  ){}
+
   async getNotifications(req: Request, res: Response): Promise<void> {
     try {
       const recipient = (req as any).userId;
-      const result = await notificationService.getNotifications(recipient);
+      console.log(recipient,"for notification")
+      const result = await this.notificationService.getNotifications(recipient);
       res.status(result.status).json({
         message: result.message,
         data: result.data,
@@ -25,7 +36,7 @@ class NotificationController implements INotificationController {
   async markNotificationAsRead(req: Request, res: Response): Promise<void> {
     try {
       const { notificationId } = req.params;
-      const result = await notificationService.markAsRead(notificationId);
+      const result = await this.notificationService.markAsRead(notificationId);
       res.status(result.status).json({
         message: result.message,
         data: result.data,
@@ -42,4 +53,4 @@ class NotificationController implements INotificationController {
   }
 }
 
-export default new NotificationController();
+export default NotificationController;

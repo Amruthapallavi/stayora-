@@ -41,7 +41,6 @@ const BookingDetails = () => {
       try {
         setLoading(true);
         const bookingData = await bookingDetails(id);
-        console.log(bookingData.bookingData,"hiyt")
         if (bookingData) {
           setBooking(bookingData.bookingData);
           setUserData(bookingData.userData);
@@ -59,8 +58,6 @@ const BookingDetails = () => {
 
     fetchBooking();
   }, [id, navigate, bookingDetails]);
-console.log("nokku",booking)
-console.log(userData,"kk")
 const handleCancelBooking = async () => {
   if (!cancelReason.trim()) {
     return notifyError("Please provide a reason for cancellation.");

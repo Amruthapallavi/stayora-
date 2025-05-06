@@ -177,7 +177,6 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       ...prev,
       mapLocation: location
     }));
-    console.log(formData.mapLocation);
   };
   
  
@@ -257,7 +256,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       images.forEach((file) => {
         formDataToSend.append("images", file);
       });
-      console.log("Form Data Before Sending:", [...formDataToSend.entries()]);
+
       const response = await addProperty(formDataToSend);
       notifySuccess("Property added successfully!");
       navigate("/owner/properties");

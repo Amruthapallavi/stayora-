@@ -1,26 +1,75 @@
 
 import { IBooking } from "../../models/booking.model";
+import { IOwner } from "../../models/owner.model";
+import { IUser } from "../../models/user.model";
+
 
 
 export interface IBookingService {
-  createBookingOrder(amount: number, productId: string, userId: string): Promise<any>;
+  createBookingOrder(
+    amount: number,
+    productId: string,
+    userId: string
+  ): Promise<{
+    id: string;
+    amount: number;
+    currency: string;
+    bookingId: string;
+  }>;
 
-   verifyBookingPayment(payload: RazorpayVerifyPayload): Promise<{
+  verifyBookingPayment(
+    payload: RazorpayVerifyPayload
+  ): Promise<{
     isValid: boolean;
     booking: IBooking | null;
-  }>
+  }>;
 
   listBookingsByOwner(
-    ownerId: string,
-    // filter: string
-  ): Promise<{ message: string; status: number; bookings: IBooking[] }>;
-  
-  
+    id: string
+  ): Promise<{
+    bookings: IBooking[];
+    status: number;
+    message: string;
+  }>;
 
-  
+  bookingDetails(
+    id: string
+  ): Promise<{
+    bookingData: IBooking | null;
+    userData: IUser | null;
+    status: number;
+    message: string;
+  }>;
+
+  userBookingDetails(
+    id: string
+  ): Promise<{
+    bookingData: IBooking | null;
+    ownerData: IOwner | null;
+    status: number;
+    message: string;
+  }>;
+
+  listAllBookings(
+    page: number,
+    limit: number
+  ): Promise<{
+    bookings: IBooking[];
+    status: number;
+    message: string;
+    totalPages: number;
+  }>;
+
+  AllbookingDetails(
+    id: string
+  ): Promise<{
+    bookingData: IBooking | null;
+    ownerData: IOwner | null;
+    userData: IUser | null;
+    status: number;
+    message: string;
+  }>;
 }
-
-
 
 
 

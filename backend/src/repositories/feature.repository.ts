@@ -24,7 +24,12 @@ class featureRepository extends BaseRepository<IFeature> implements IFeatureRepo
           { name: 1, _id: 0 } 
         );
       }
-
+      async findFeature(featureId:string): Promise<IFeature |null>{
+        return await Feature.findOne({_id:featureId})
+      }
+      async deleteFeature(featureId:string): Promise<IFeature | null>{
+        return await Feature.findByIdAndDelete({_id:featureId});
+      }
 }
 
-export default new featureRepository();
+export default featureRepository;

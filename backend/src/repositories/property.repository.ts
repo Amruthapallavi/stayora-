@@ -20,6 +20,9 @@ class propertyRepository
       .populate("ownerId", "-password");
   }
   
+  async propertiesWithSameType(id:string,type:string):Promise<IProperty[] |[]>{
+    return await Property.find({ownerId:id,type:type})
+  }
   async updatePropertyById(id: Types.ObjectId, updateData: Partial<IProperty>): Promise<IProperty | null> {
     const updatedProperty = await Property.updateOne({ _id: id }, updateData);
   
@@ -85,7 +88,18 @@ class propertyRepository
   
     return query;
   }
+    async approveProperty (propertyId: string) {
+        return await Property.findByIdAndUpdate(propertyId, { status: 'active' });
+      };
+      async blockUnblockProperty (propertyId: string, status: string) {
+        return await Property.findByIdAndUpdate(propertyId, { status });
+       };
+       
+       async deleteProperty (propertyId: string) {
+         return await Property.findByIdAndDelete(propertyId);
+       };
+    
   
   
 }
-export default new propertyRepository();
+export default propertyRepository;

@@ -73,7 +73,6 @@ const ConfirmPassword = () => {
       notifyError("Passwords do not match.");
       return;
     }
-console.log(email,newPassword)
     try {
       await resetPassword(email, newPassword,"owner");
       

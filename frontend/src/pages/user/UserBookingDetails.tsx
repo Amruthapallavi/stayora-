@@ -58,8 +58,6 @@ const UserBookingDetails = () => {
 
     fetchBooking();
   }, [id, navigate, bookingDetails]);
-console.log("nokku",booking)
-console.log(ownerData)
 
 const handleCancelBooking = async () => {
   if (!cancelReason.trim()) {
@@ -79,11 +77,9 @@ const handleCancelBooking = async () => {
     try {
 
        const response = await cancelBooking(id ||"",cancelReason);
-       console.log(response,"for cancell")
       notifySuccess(response?.message);
       navigate("/user/bookings")
     } catch (err) {
-      console.log(err)
       console.error("Cancel Booking Error:", err);
       notifyError(err?.response?.data.message)
     }

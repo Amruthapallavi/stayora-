@@ -3,6 +3,7 @@ import { userApi, ownerApi } from "../api";
 export const notificationService = {
   getNotifications: async (role: string) => {
     if (role === "owner") {
+
       const response = await ownerApi.get("/notifications");
       return response.data;
     } else {

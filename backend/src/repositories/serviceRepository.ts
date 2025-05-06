@@ -11,12 +11,14 @@ class serviceRepository extends BaseRepository<IService> implements IServiceRepo
     async findAllServices():Promise<IService[]>{
         return await Service.find()
       }
-      async findService(name:string):Promise<IService|null>{
+      async findServiceWithName(name:string):Promise<IService|null>{
         return await Service.findOne({name:name})
       }
-
+async findService(serviceId:string): Promise<IService|null> {
+      return await Service.findOne({_id:serviceId});
+    }
 }
 
 
 
-export default new serviceRepository();
+export default serviceRepository;

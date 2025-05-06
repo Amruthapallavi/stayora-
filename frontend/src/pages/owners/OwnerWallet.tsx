@@ -26,7 +26,6 @@ const OwnerWalletPage = () => {
     const getWallet = async () => {
       if (user?.id) {
         const response = await fetchWalletData(user.id); 
-        console.log(response,"hiut");
         setTransactions(response?.data.transactionDetails);
         if (response?.data) {
           setWalletData(response?.data); // set the fetched wallet data to local state

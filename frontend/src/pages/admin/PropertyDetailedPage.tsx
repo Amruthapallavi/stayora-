@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash, Star, Map, Home, DollarSign, User, Calendar, IndianRupee } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Map, Home, User, Calendar, IndianRupee } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Separator } from '../../components/ui/seperator';
 import { useAuthStore } from '../../stores/authStore';
-import Property, { IProperty } from '../../types/IProperty';
+import  { IProperty } from '../../types/IProperty';
 import { IOwner } from '../../types/IOwner';
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Swal from 'sweetalert2';
-import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '../../components/ConfirmationAlert';
+// import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '../../components/ConfirmationAlert';
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -218,12 +218,39 @@ const PropertyDetail = () => {
             
             <TabsContent value="bookings">
   {bookingData.length > 0 ? (
-    <div className="space-y-4">
-      {bookingData.map((booking) => (
-        <div key={booking.id} className="border p-4 rounded-lg shadow-md">
-          <h4 className="font-semibold text-xl">{booking.user}</h4>
-          <p className="text-gray-500">Date: {booking.date}</p>
-          <p className="text-gray-500">Status: {booking.status}</p>
+    <div className="grid gap-4">
+      {bookingData.map((booking:any) => (
+        <div
+          key={booking._id}
+          className="bg-white border border-[#b68451]/30 rounded-lg shadow-sm p-5 hover:shadow-md transition"
+        >
+          <div className="flex justify-between items-start flex-wrap gap-3">
+          <div className="w-full md:w-48 h-32 rounded overflow-hidden">
+            <img
+              src={booking.propertyImages[0]} // Assuming the first image is the main property image
+              alt={booking.propertyName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+            <div className="space-y-1 text-sm text-gray-700">
+              <p><span className="font-medium text-gray-900">Booking ID:</span> {booking.bookingId}</p>
+              <p><span className="font-medium text-gray-900">Status:</span> <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${booking.bookingStatus === 'confirmed' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-600'}`}>{booking.bookingStatus}</span></p>
+              <p><span className="font-medium text-gray-900">Rent:</span> ₹{booking.rentPerMonth}/month</p>
+              <p><span className="font-medium text-gray-900">Move-in:</span> {new Date(booking.moveInDate).toLocaleDateString()}</p>
+              <p><span className="font-medium text-gray-900">Booked by:</span> {booking.userId?.name} ({booking.userId?.phone})</p>
+              <p className="text-sm text-gray-500">
+              Booked At: {new Date(booking.createdAt).toLocaleDateString()}
+            </p>
+            </div>
+            <div className="self-center">
+              <Link
+                to={`/admin/bookings/${booking._id}`}
+                className="inline-block bg-[#b68451] text-white text-sm px-4 py-2 rounded hover:bg-[#a8743f] transition"
+              >
+                View Details
+              </Link>
+            </div>
+          </div>
         </div>
       ))}
     </div>
@@ -235,6 +262,8 @@ const PropertyDetail = () => {
     </div>
   )}
 </TabsContent>
+
+
 
           </Tabs>
         </div>

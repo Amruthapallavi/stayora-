@@ -5,5 +5,6 @@ export default interface IServiceController{
 
  listServices(req:Request,res:Response):Promise<void>;
  createService(req:Request,res:Response):Promise<void>;
+ updateServiceStatus(req: Request, res: Response): Promise<void>;
 
 }

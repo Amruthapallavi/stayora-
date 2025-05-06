@@ -51,11 +51,9 @@ export default function OwnerProfile() {
 
   useEffect(() => {
     if (user?.id) {
-      console.log("Fetching user data for ID:", user.id); // Debug log for user ID
 
       getUserData(user.id, "owner")
         .then((data) => {
-          console.log("Fetched user data:", data); // Debug log for fetched data
           setUserData(data);
 
         })

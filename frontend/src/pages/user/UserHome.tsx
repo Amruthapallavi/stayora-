@@ -3,20 +3,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import Navbar from "../../components/user/Navbar";
 import UserLayout from "../../components/user/UserLayout";
 import CTASection from "../../components/user/CTASection";
 import PopularLocations from "../../components/user/PopularLocations";
 import Property from "../../types/IProperty";
 import { FaBath, FaBed, FaMapMarkerAlt, FaRupeeSign } from "react-icons/fa";
-interface FilterState {
-  location: string;
-  propertyType: string;
-  minPrice: number;
-  maxPrice: number;
-  bedrooms: number;
-  bathrooms: number;
-}
 
 const UserHomePage = () => {
 
@@ -30,10 +21,8 @@ const UserHomePage = () => {
       setLoading(true);
       try {
         const response = await getAllProperties();
-        console.log("Fetched data:", response); // Debug API response structure
   
         if (response && Array.isArray(response.properties)) {
-          // Sort by createdAt in descending order
           const sortedProperties = response.properties.sort(
             (a:any, b:any) => new Date(b.createdAt) - new Date(a.createdAt)
           );
@@ -43,7 +32,6 @@ const UserHomePage = () => {
   
           setProperties(latestThree);
         } else {
-          console.warn("Invalid property data format:", response);
           setProperties([]);
         }
       } catch (error) {

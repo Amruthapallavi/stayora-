@@ -29,7 +29,6 @@ const ownerPropertyDetailedPage = () => {
       
       // Load property details
       const propertyResponse = await getPropertyById(id || '');
-      console.log(propertyResponse)
       if (!propertyResponse.Property) {
         notifyError('Property not found');
         return;
@@ -47,7 +46,6 @@ const ownerPropertyDetailedPage = () => {
       setLoading(false);
     }
   };
-console.log(property,"checking the detailed")
 
   
 const handleDeleteProperty = async (propertyId: string) => {
@@ -112,9 +110,12 @@ const handleDeleteProperty = async (propertyId: string) => {
           {/* Header with navigation */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
             <div className="flex items-center mb-4 md:mb-0">
-              <Link to="/owner/properties" className="text-gray-500 hover:text-gray-700 mr-3">
-                <ArrowLeft size={20} />
-              </Link>
+            <button
+      onClick={() => navigate(-1)}
+      className="text-gray-500 hover:text-gray-700 mr-3"
+    >
+      <ArrowLeft size={20} />
+    </button>
               <h1 className="text-2xl font-bold text-golden-dark">{property.title}</h1>
             </div>
             <div className="flex flex-wrap gap-3">

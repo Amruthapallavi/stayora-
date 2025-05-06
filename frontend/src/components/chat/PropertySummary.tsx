@@ -1,5 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { IProperty } from "../../types/IProperty";
+import { Link } from "react-router-dom";
 
 interface PropertySummaryProps {
   property: IProperty | null;
@@ -33,7 +34,7 @@ const PropertySummary = ({ property }: PropertySummaryProps) => {
           <div>
             <span className="text-gray-600">Rent:</span>
             <span className="ml-2 text-gray-800">
-              ${property.rentPerMonth}/mo
+              ₹{property.rentPerMonth}/month
             </span>
           </div>
           <div>
@@ -44,6 +45,16 @@ const PropertySummary = ({ property }: PropertySummaryProps) => {
             <span className="text-gray-600">Bathrooms:</span>
             <span className="ml-2 text-gray-800">{property.bathrooms}</span>
           </div>
+        </div>
+
+        {/* View button */}
+        <div className="pt-4">
+          <Link
+            to={`/owner/property/${property._id}`}
+            className="inline-block px-4 py-2 rounded-md bg-[#b68451] text-white text-sm font-medium hover:bg-[#9e6f3d] transition duration-300"
+          >
+            View Full Details
+          </Link>
         </div>
       </div>
     </div>

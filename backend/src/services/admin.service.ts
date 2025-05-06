@@ -18,7 +18,13 @@ import { IBooking } from "../models/booking.model";
 import propertyRepository from "../repositories/property.repository";
 import mongoose from "mongoose";
 import bookingRepository from "../repositories/booking.repository";
-
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
+import { IPropertyRepository } from "../repositories/interfaces/IPropertyRepository";
+import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 
 interface ServiceData {
   name: string;
@@ -30,15 +36,23 @@ interface ServiceData {
   duration: string;
 }
 
-interface FeatureData {
-  name: string;
-  description: string;
-  icon: string;
-  
-}
+@injectable()
+export class AdminService implements IAdminService {
+  constructor(
+    @inject(TYPES.AdminRepository)
+      private adminRepository: IAdminRepository,
+      @inject(TYPES.PropertyRepository)
+      private propertyRepository: IPropertyRepository,
+      @inject(TYPES.BookingRepository)
+      private bookingRepository: IBookingRepository,
+      @inject(TYPES.UserRepository)
+      private userRepository: IUserRepository,
+      @inject(TYPES.OwnerRepository)
+      private ownerRepository: IOwnerRepository
+    
+  ){}
 
-
-class AdminService implements IAdminService {
+   
   private sanitizeAdmin(admin: IUser) {
     const { password, __v, ...sanitizedAdmin } = admin.toObject();
     return sanitizedAdmin;
@@ -61,7 +75,7 @@ class AdminService implements IAdminService {
       throw new Error("Password is required");
     }
 
-    const admin = await adminRepository.findByEmail(email);
+    const admin = await this.adminRepository.findByEmail(email);
     if (!admin || admin.role !== "admin") {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -102,7 +116,7 @@ if (!isPasswordValid) {
       { expiresIn: "7d" }
     );
     // const adminId=admin._id;
-    await adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
+    await this.adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
 
     return {
       admin:{
@@ -163,7 +177,7 @@ if (!isPasswordValid) {
 
   async listAllUsers(): Promise<{ users: any[]; status: number }> {
     try {
-      const users = await adminRepository.findAllUsers();
+      const users = await this.adminRepository.findAllUsers();
     console.log(users)
     return {
       users,
@@ -178,9 +192,9 @@ if (!isPasswordValid) {
     }
   }
 
-  async listAllOwners(): Promise<{ owners: any[]; status: number }> {
+  async listAllOwners(): Promise<{ owners: IOwner[]; status: number }> {
     try {
-      const owners = await adminRepository.findAllOwners();
+      const owners = await this.adminRepository.findAllOwners();
     return {
       owners,
       status: STATUS_CODES.OK,
@@ -196,7 +210,7 @@ if (!isPasswordValid) {
 
   async updateUserStatus(id: string, status: string): Promise<{ message: string; status: number }> {
     try {
-      const user = await adminRepository.findUser(id);
+      const user = await this.adminRepository.findUser(id);
     if (!user) {
       return {
         message: "user not found",
@@ -231,13 +245,13 @@ if (!isPasswordValid) {
         allUsers,
         allOwners,
       ] = await Promise.all([
-        adminRepository.getUserRegistrations(),
-        adminRepository.getOwnerRegistrations(),
-        adminRepository.getBookingStats(),
-        propertyRepository.find(), // fetch all properties
-        bookingRepository.find(),    // fetch all bookings
-        userRepository.find(),
-        ownerRepository.find(),
+        this.adminRepository.getUserRegistrations(),
+        this.adminRepository.getOwnerRegistrations(),
+        this.adminRepository.getBookingStats(),
+        this.propertyRepository.find(), // fetch all properties
+        this.bookingRepository.find(),    // fetch all bookings
+        this.userRepository.find(),
+        this.ownerRepository.find(),
       ]);
       console.log(userStats,"dta")
       const totalUsers = allUsers.filter(p => p.role === "user").length;
@@ -331,146 +345,13 @@ if (!isPasswordValid) {
     }
   }
 
-//   async addService(serviceData: ServiceData): Promise<{ message: string; status: number }> {
-//     try {
-//       let { name, description,image, price, contactMail,contactNumber } = serviceData;
-// console.log(image,"image");
-//       // Trim values to remove unnecessary spaces
-//       // name = name.trim();
-//       // description = description.trim();
-//       // duration = duration.trim();
 
-//       // Validate required fields
-//       if (!name || !description || !price || !contactMail || !contactNumber) {
-//         return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
-//       }
-
-//       if (price <= 0 || isNaN(price)) {
-//         return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
-//       }
-
-//       const existingService = await Service.findOne({ name });
-//       if (existingService) {
-//         return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
-//       }
-
-//       const newService = new Service({ name, description, price, contactMail,contactNumber,image });
-//       await newService.save(); 
-//         // await adminRepository.create({
-//         //     ...serviceData,
-            
-//         //     });
-//       // Create and save the service
-//       // const newService = new ServiceModel({ name, description, price, duration });
-//       // await newService.save();
-
-//       return { message: "Service added successfully!", status: STATUS_CODES.CREATED };
-//     } catch (error) {
-//       console.error("Error in add Service:", error);
-//       return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
-//     }
-//   }
-
-  // async listServices(): Promise<{ services: any[]; status: number; message: string }> {
-  //   try {
-  //     const services = await adminRepository.findServices();
   
-  //     console.log("Fetched Services:", services); 
-  //     return {
-  //       services,
-  //       status: STATUS_CODES.OK,
-  //       message: "successfully fetched", 
-  //     };
-  //   } catch (error) {
-  //     console.error("Error in listServices:", error);
-  //     return { 
-  //       services: [], 
-  //       message: MESSAGES.ERROR.SERVER_ERROR, 
-  //       status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-  //     };
-  //   }
-  // }
-  
-  
-  async updateServiceStatus(id: string, status: string): Promise<{ message: string; status: number }> {
-   try {
-     const service = await adminRepository.findService(id);
-  
-     if (!service) {
-       return {
-         message: "Service not found",
-         status: STATUS_CODES.NOT_FOUND, 
-       };
-     }
-   
-     service.status = service.status === "active" ? "disabled" : "active";
-   
-     
-     
-     await service.save();
-   
-     return {
-       message: "Successful",
-       status: STATUS_CODES.OK, 
-     };
-   } catch (error) {
-    
-   
-    console.error("Error in addService:", error);
-    return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
-  }
-}
-  
-  async listFeatures(): Promise<{ features: any[]; status: number; message:string }> {
-    try {
-      const features = await adminRepository.findFeatures();
-
-    console.log(features)
-    return {
-      features,
-      status: STATUS_CODES.OK,
-      message:"successfully fetched"
-    };
-    } catch (error) {
-      console.error("Error in listServices:", error);
-      return { 
-        features: [], 
-        message: MESSAGES.ERROR.SERVER_ERROR, 
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-    }
-  }
-
-  }
-
-  async addFeature(featureData: FeatureData): Promise<{ message: string; status: number }> {
-    try {
-      let { name, description,icon } = featureData;
-      console.log(icon,"icon");
-      
-
-      if (!name || !description ) {
-        return { message: MESSAGES.ERROR.INVALID_INPUT, status: STATUS_CODES.BAD_REQUEST };
-      }
-
-      
-
-      const existingFeature = await Feature.findOne({ name });
-      if (existingFeature) {
-        return { message: "Feature already exists.", status: STATUS_CODES.CONFLICT };
-      }
-
-      const newFeature = new Feature({ name, description, icon });
-      await newFeature.save();
-      return { message: "Feature added successfully!", status: STATUS_CODES.CREATED };
-    } catch (error) {
-      console.error("Error in addService:", error);
-      return { message: MESSAGES.ERROR.SERVER_ERROR, status: STATUS_CODES.INTERNAL_SERVER_ERROR };
-    }
-  }
-
+ 
+ 
   async updateOwnerStatus(id: string, status: string): Promise<{ message: string; status: number }> {
     try {
-      const owner = await adminRepository.findOwner(id);
+      const owner = await this.adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "owner not found",
@@ -493,48 +374,20 @@ if (!isPasswordValid) {
     }
   }
   
-  async updateFeature(
-    id: string,
-    updatedData: Record<string, any>
-  ): Promise<{ message: string; status: number }> {
-    try {
-      const feature = await adminRepository.findFeature(id);
-      if (!feature) {
-        return {
-          message: "Feature not found",
-          status: STATUS_CODES.NOT_FOUND,
-        };
-      }
-  
-      Object.assign(feature, updatedData);
-  
-      await feature.save();
-  
-      return {
-        message: "Update successful",
-        status: STATUS_CODES.OK,
-      };
-    } catch (error) {
-      console.error("Error in updateFeature:", error);
-      return {
-        message: MESSAGES.ERROR.SERVER_ERROR,
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-      };
-    }
-  }
+ 
   
 
 
   async deleteOwner(id: string): Promise<{ message: string; status: number }> {
     try {
-      const owner = await adminRepository.findOwner(id);
+      const owner = await this.adminRepository.findOwner(id);
       if (!owner) {
         return {
           message: "owner not found",
           status: STATUS_CODES.NOT_FOUND, 
         };
       }
-      const result=await adminRepository.deleteOwner( id);
+      const result=await this.adminRepository.deleteOwner( id);
       
       console.log(result)
       return {
@@ -552,7 +405,7 @@ if (!isPasswordValid) {
   
  async approveOwner(id: string): Promise<{ message: string; status: number }> {
   try {
-    const owner = await adminRepository.findOwner(id);
+    const owner = await this.adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "owner not found",
@@ -586,7 +439,7 @@ if (!isPasswordValid) {
 
 async rejectOwner(id: string, reason: string): Promise<{ message: string; status: number }> {
   try {
-    const owner = await adminRepository.findOwner(id);
+    const owner = await this.adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "Owner not found",
@@ -594,7 +447,7 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
       };
     }
 
-    await ownerRepository.update(id, {
+    await this.ownerRepository.update(id, {
       govtIdStatus: "rejected",
       rejectionReason: reason,
     });
@@ -614,239 +467,16 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
   }
 }
 
-async removeFeature(id: string): Promise<{ message: string; status: number }> {
-  try {
-    const feature = await adminRepository.findFeature(id);
-    if (!feature) {
-      return {
-        message: "bo feature found",
-        status: STATUS_CODES.NOT_FOUND, 
-      };
-    }
-    const result=await adminRepository.deleteFeature( id);
-    
-    console.log(result)
-    return {
-      message: "Successfully deleted",
-      status: STATUS_CODES.OK,
-    };
-  } catch (error) {
-    console.error("Error in remove feature:", error);
-    return { 
-      message: MESSAGES.ERROR.SERVER_ERROR, 
-      status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-    };
-  }
-}
 
 
-  async approveProperty(id: string): Promise<{ status: number; message: string }> {
-    try {
-      await adminRepository.approveProperty(id);
-  
-      return {
-        status: STATUS_CODES.OK,
-        message: "Property approved successfully",
-      };
-    } catch (error) {
-      console.error("Error approving property:", error);
-      return {
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        message: MESSAGES.ERROR.SERVER_ERROR,
-      };
-    }
-  }
-  async blockUnblockProperty(id: string, status: string): Promise<{ status: number; message: string }> {
-    try {
-      await adminRepository.blockUnblockProperty(id, status);
-  
-      return {
-        status: STATUS_CODES.OK,
-        message: `Property status updated to ${status}`,
-      };
-    } catch (error) {
-      console.error("Error updating property status:", error);
-      return {
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        message: MESSAGES.ERROR.SERVER_ERROR,
-      };
-    }
-  }
-  async deleteProperty(id: string): Promise<{ status: number; message: string }> {
-    try {
-      await adminRepository.deleteProperty(id);
-  
-      return {
-        status: STATUS_CODES.OK,
-        message: "Property deleted successfully",
-      };
-    } catch (error) {
-      console.error("Error deleting property:", error);
-      return {
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        message: MESSAGES.ERROR.SERVER_ERROR,
-      };
-    }
-  }
-  async listAllBookings(  page: number = 1,
-    limit: number = 5): Promise<{ bookings: IBooking[]; status: number; message: string;    totalPages: number;
-    }> {
-    try {
-      const skip = (page - 1) * limit;
-
-      const bookings = await adminRepository.findAllBookings(skip,limit);
-      const totalBookings = await adminRepository.countAllBookings();
-      const totalPages = Math.ceil(totalBookings / limit);
-      return {
-        bookings: bookings || [], 
-        status: STATUS_CODES.OK,
-        totalPages,
-        message: "Successfully fetched",
-      };
-    } catch (error) {
-      console.error("Error in property listing:", error);
-      return {
-        bookings: [], 
-        totalPages:0,
-        message: MESSAGES.ERROR.SERVER_ERROR,
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-      };
-    }
-  }
-    
-  
-
-async rejectProperty(id: string, reason: string): Promise<{ message: string; status: number }> {
-  try {
-    const property = await propertyRepository.findById(id);
-    if (!property) {
-      return {
-        message: "property not found",
-        status: STATUS_CODES.NOT_FOUND,
-      };
-    }
-
-    const updatedData:Partial<IProperty>={
-      isRejected:true,
-      rejectedReason:reason,
-      status:"rejected",
-    }
-    // const ownerId=new mongoose.Types.ObjectId(property.ownerId);
-    // const owner=await ownerRepository.findById(ownerId);
-
-    // await ownerRepository.update(id, {
-    //   govtIdStatus: "rejected",
-    //   rejectionReason: reason,
-    // });
 
 
-    // await Mail.sendRejectionMail(owner.email, reason);
-        const response=  await propertyRepository.update(id, updatedData);
-        console.log(response);
 
-    return {
-      message: "Rejected successfully & email sent",
-      status: STATUS_CODES.OK,
-    };
-  } catch (error) {
-    console.error("Error rejecting owner:", error);
-    return {
-      message: "Internal Server Error",
-      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-    };
-  }
-}
 
- async bookingDetails(id: string): Promise<{
-      bookingData: IBooking | null;
-      ownerData:IOwner |null;
-      userData:IUser | null;
-      status: number;
-      message: string;
-    }> {
-      try {
-        const bookingData = await bookingRepository.findBookingData(id);
-        let userData: IUser | null = null;
-        let ownerData:IOwner |null=null;
-        if (bookingData?.userId) {
-          userData = await userRepository.findById(bookingData.userId.toString());
-          console.log('user:', userData);
-        }
-        console.log(bookingData?.ownerId,"ownerId")
-        if (bookingData?.ownerId) {
-          ownerData = await ownerRepository.findById(bookingData.ownerId.toString());
-          console.log('Owner:', ownerData);
-        }
-            return {
-          bookingData,
-          userData,
-          ownerData,
-          status: STATUS_CODES.OK,
-          message: "Successfully fetched",
-        };
-      } catch (error) {
-        console.error("Error in bookingDetails:", error);
-        return {
-          bookingData: null,
-          userData:null,
-          ownerData:null,
-          message: MESSAGES.ERROR.SERVER_ERROR,
-          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        };
-      }
-    }
 
     
-      async getPropertyById(id: string): Promise<{ property: any; ownerData: any;booking:any; status: number; message: string }> {
-        try {
-          const property = await propertyRepository.findPropertyById(id) as IProperty;
-    
-          if (!property) {
-            throw new Error("Property not available");
-          }
-          
-          if (!property) {
-            return {
-              property: null,
-              booking:null,
-              ownerData: null,
-              status: STATUS_CODES.NOT_FOUND,
-              message: "Property not found"
-            };
-          }
-      
-          const ownerId = property.ownerId.toString(); 
-          const owner = await userRepository.findOwnerById(ownerId);
-      
-          const ownerData = owner
-          ? {
-              name: owner.name,
-              phone: owner.phone,
-              email: owner.email
-            }
-          : null;
-          const booking = await bookingRepository.findPropertyBookings(id);
-          console.log(booking,"for admin pag")
-          return {
-            property,
-            booking,
-            ownerData,
-            status: STATUS_CODES.OK,
-            message: "Property fetched successfully"
-          };
-      
-        } catch (error) {
-          console.error("Error in getPropertyById:", error);
-          return {
-            property: null,
-            ownerData: null,
-            booking:null,
-            status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-            message: MESSAGES.ERROR.SERVER_ERROR,
-          };
-        }
-      }
+  
     
 
 }
-export default new AdminService();
+export default AdminService;

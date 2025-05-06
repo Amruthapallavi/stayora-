@@ -23,10 +23,8 @@ const UserWalletPage = () => {
   const [transactions,setTransactions]=useState<any[]>([]);
   useEffect(() => {
     const getWallet = async () => {
-      console.log(user.id,"koi")
       if (user?.id) {
         const response = await fetchWalletData(user.id); // calling the store function with userId
-        console.log(response,"hiut");
         setTransactions(response?.data.transactionDetails);
         if (response?.data) {
           setWalletData(response?.data); // set the fetched wallet data to local state

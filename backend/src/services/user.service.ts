@@ -4,11 +4,15 @@ import OTPService from "../utils/OTPService";
 
 import userRepository from "../repositories/user.repository";
 import { IUser } from "../models/user.model";
-import { IUserService } from "./interfaces/IUserService";
+import {
+  IUserService,
+  IWalletWithTotals,
+  SignupData,
+} from "./interfaces/IUserService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import { isValidEmail, isValidOTP, isValidPhone } from "../utils/validators";
 import ownerRepository from "../repositories/owner.repository";
-import Cart,{IAddOn, ICart} from "../models/cart.model";
+import Cart, { IAddOn, ICart } from "../models/cart.model";
 import mongoose, { ObjectId, Types } from "mongoose";
 import Service from "../models/service.model";
 import bookingRepository from "../repositories/booking.repository";
@@ -18,47 +22,54 @@ import { IBooking } from "../models/booking.model";
 import { IWallet } from "../models/wallet.model";
 import walletRepository from "../repositories/wallet.repository";
 import { Response } from "express";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { inject, injectable } from "inversify";
+import TYPES from "../config/DI/types";
+import { IPropertyRepository } from "../repositories/interfaces/IPropertyRepository";
+import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
+import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
+import { INotificationService } from "./interfaces/INotificationServices";
+import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 
-interface SignupData extends Partial<IUser> {
-    confirmPassword?: string;
-  }
-  
-  interface IWalletWithTotals {
-    userId: mongoose.Types.ObjectId;
-    balance: number;
-    transactionDetails: {
-      paymentType: 'credit' | 'debit';
-      amount: number;
-      bookingId: string;
-      date: Date;
-    }[];
-    totalDebit: number;
-    totalCredit: number;
-  }
-  class UserService implements IUserService {
-    private sanitizeUser(user: IUser) {
-        
-      const { password, otp, __v, ...sanitizedUser } = user.toObject();
-      return sanitizedUser;
-    }
+@injectable()
+export class UserService implements IUserService {
+  constructor(
+    @inject(TYPES.UserRepository)
+    private userRepository: IUserRepository,
+    @inject(TYPES.PropertyRepository)
+    private propertyRepository: IPropertyRepository,
+    @inject(TYPES.OwnerRepository)
+    private ownerRepository: IOwnerRepository,
+    @inject(TYPES.BookingRepository)
+    private bookingRepository: IBookingRepository,
+    @inject(TYPES.WalletRepository)
+    private walletRepository: IWalletRepository,
+    @inject(TYPES.NotificationService)
+    private notificationService: INotificationService
+  ) {}
 
-   async registerUser(
+  private sanitizeUser(user: IUser) {
+    const { password, otp, __v, ...sanitizedUser } = user.toObject();
+    return sanitizedUser;
+  }
+
+  async registerUser(
     userData: SignupData
   ): Promise<{ message: string; status: number }> {
     const { name, email, password, confirmPassword, phone } = userData;
-    if (!name || !email || !password || !confirmPassword ||!phone) {
+    if (!name || !email || !password || !confirmPassword || !phone) {
       throw new Error(MESSAGES.ERROR.INVALID_INPUT);
     }
     if (!isValidEmail(email)) {
       throw new Error("Invalid email format");
     }
     if (!isValidPhone(phone)) {
-              throw new Error("Invalid Phone number");
-     }
+      throw new Error("Invalid Phone number");
+    }
     if (password !== confirmPassword) {
       throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
     }
-    const existingUser = await userRepository.findByEmail(email);
+    const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
       throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
     }
@@ -67,16 +78,16 @@ interface SignupData extends Partial<IUser> {
     const otp = OTPService.generateOTP();
     await OTPService.sendOTP(email, otp);
 
-    console.log(otp,"and email",email);
+    console.log(otp, "and email", email);
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-    await userRepository.create({
+    await this.userRepository.create({
       ...userData,
       password: hashedPassword,
       isVerified: false,
       otp,
       otpExpires,
-      });
+    });
     return { message: MESSAGES.SUCCESS.SIGNUP, status: STATUS_CODES.CREATED };
   }
 
@@ -84,18 +95,18 @@ interface SignupData extends Partial<IUser> {
     email: string,
     otp: string
   ): Promise<{ message: string; status: number }> {
-    console.log(email,"email")
-    const user = await userRepository.findByEmail(email);
-    console.log(user,"user")
+    console.log(email, "email");
+    const user = await this.userRepository.findByEmail(email);
+    console.log(user, "user");
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
     if (!isValidOTP(otp)) {
       throw new Error("Invalid otp");
     }
-    console.log('user otp',user.otp ,"and " ,otp)
+    console.log("user otp", user.otp, "and ", otp);
     console.log("Stored OTP Expires:", user.otpExpires?.getTime());
-console.log("Current Time:", Date.now());
+    console.log("Current Time:", Date.now());
 
     if (user.otp !== otp || (user.otpExpires?.getTime() ?? 0) < Date.now()) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
@@ -104,17 +115,17 @@ console.log("Current Time:", Date.now());
     // user.otp = undefined;
     // user.otpExpires = undefined;
 
-    await userRepository.update(user._id.toString(), {
+    await this.userRepository.update(user._id.toString(), {
       isVerified: true,
       otp: null,
       otpExpires: null,
     });
-    
+
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED, status: STATUS_CODES.OK };
   }
 
   async resendOTP(email: string): Promise<{ message: string; status: number }> {
-    const user = await userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -131,19 +142,24 @@ console.log("Current Time:", Date.now());
     console.log(newOtp);
 
     user.otp = newOtp;
-    user.otpExpires=otpExpires
-    await userRepository.update(user._id.toString(), user);
+    user.otpExpires = otpExpires;
+    await this.userRepository.update(user._id.toString(), user);
 
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
   }
-  
+
   async loginUser(
     email: string,
     password: string,
-        res: Response
-    
-  ): Promise<{ user: IUser; token: string; message: string; refreshToken:string; status: number }> {
-    const user = await userRepository.findByEmail(email);
+    res: Response
+  ): Promise<{
+    user: IUser;
+    token: string;
+    message: string;
+    refreshToken: string;
+    status: number;
+  }> {
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -151,7 +167,7 @@ console.log("Current Time:", Date.now());
     if (!user.isVerified) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
-    if (user.status==="Blocked") {
+    if (user.status === "Blocked") {
       throw new Error(MESSAGES.ERROR.BLOCKED_USER);
     }
     if (!user.password) {
@@ -170,23 +186,23 @@ console.log("Current Time:", Date.now());
     const token = jwt.sign({ userId: user._id, type: "user" }, accessToken, {
       expiresIn: "1h",
     });
-     const refreshToken = jwt.sign(
-          { userId: user._id, type: "user" },
-          refreshTokenSecret,
-          { expiresIn: "7d" }
-        );
-     console.log(token,"jwt token");
-     res.cookie("refreshToken", refreshToken, {
+    const refreshToken = jwt.sign(
+      { userId: user._id, type: "user" },
+      refreshTokenSecret,
+      { expiresIn: "7d" }
+    );
+    console.log(token, "jwt token");
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      path: "/", 
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     return {
       user: this.sanitizeUser(user),
       token,
-      refreshToken:refreshToken,
+      refreshToken: refreshToken,
 
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
@@ -194,37 +210,39 @@ console.log("Current Time:", Date.now());
   }
 
   async resetPassword(
-    email:string,
-    newPassword:string
-  ):Promise<{ message:string; status: number}> {
-    const user = await userRepository.findByEmail(email);
-    if(!user){
+    email: string,
+    newPassword: string
+  ): Promise<{ message: string; status: number }> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;
-    user.otp = null; 
+    user.otp = null;
     user.otpExpires = null;
-    user.isVerified = true; 
+    user.isVerified = true;
 
-    await userRepository.update(user._id.toString(), user);
-    return { message: MESSAGES.SUCCESS.PASSWORD_RESET, status: STATUS_CODES.OK };
-
+    await this.userRepository.update(user._id.toString(), user);
+    return {
+      message: MESSAGES.SUCCESS.PASSWORD_RESET,
+      status: STATUS_CODES.OK,
+    };
   }
 
   async processGoogleAuth(
     profile: any
   ): Promise<{ user: IUser; token: string; message: string; status: number }> {
     const email = profile.email;
-    let user = await userRepository.findByEmail(email);
+    let user = await this.userRepository.findByEmail(email);
     if (user) {
       if (!user.googleId) {
         user.googleId = profile.id;
-        await userRepository.update(user._id.toString(), user);
+        await this.userRepository.update(user._id.toString(), user);
       }
     } else {
-      user = await userRepository.create({
+      user = await this.userRepository.create({
         googleId: profile.id,
         name: profile.displayName,
         email,
@@ -258,20 +276,23 @@ console.log("Current Time:", Date.now());
     };
   }
 
-
-async getAllProperties(): Promise<{ properties: any[]; status: number; message: string }> {
+  async getAllProperties(): Promise<{
+    properties: any[];
+    status: number;
+    message: string;
+  }> {
     try {
-      const properties = await userRepository.findProperties();
-  
+      const properties = await this.userRepository.findProperties();
+
       return {
-        properties: properties || [], 
+        properties: properties || [],
         status: STATUS_CODES.OK,
         message: "Successfully fetched",
       };
     } catch (error) {
       console.error("Error in property listing:", error);
       return {
-        properties: [], 
+        properties: [],
         message: MESSAGES.ERROR.SERVER_ERROR,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
       };
@@ -283,7 +304,7 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
     rentalPeriod: number,
     endDate: Date,
     userId: string,
-    propertyId: string,
+    propertyId: string
   ): Promise<{ status: number; message: string }> {
     try {
       if (!userId || !moveInDate || !rentalPeriod || !endDate || !propertyId) {
@@ -292,49 +313,49 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           message: "Missing required booking data",
         };
       }
-  
-      const existingCart = await userRepository.findCart(userId);
+
+      const existingCart = await this.userRepository.findCart(userId);
       if (!existingCart) {
         return {
           status: STATUS_CODES.NOT_FOUND,
           message: "Cart not found",
         };
       }
-  console.log(existingCart,"cart")
+      console.log(existingCart, "cart");
       const toLocalDateString = (date: Date) => {
         const offset = date.getTimezoneOffset() * 60000;
         return new Date(date.getTime() - offset).toISOString().split("T")[0];
       };
-  
+
       const moveIn = new Date(toLocalDateString(moveInDate));
       const end = new Date(toLocalDateString(endDate));
-  
-      const selectedProperty = existingCart.properties.find((p) =>
-        p.propertyId.toString() === propertyId
+
+      const selectedProperty = existingCart.properties.find(
+        (p) => p.propertyId.toString() === propertyId
       );
-  
+
       if (!selectedProperty) {
         return {
           status: STATUS_CODES.NOT_FOUND,
           message: "Property not found in cart",
         };
       }
-  
+
       selectedProperty.moveInDate = moveIn;
       selectedProperty.rentalPeriod = rentalPeriod;
       selectedProperty.endDate = end;
-  
+
       const rent = selectedProperty.rentPerMonth || 0;
       const addOnCost = selectedProperty.addOnCost || 0;
       selectedProperty.totalCost = rent * rentalPeriod + addOnCost;
-  
+
       existingCart.totalCost = existingCart.properties.reduce(
         (sum, p) => sum + (p.totalCost || 0),
         0
       );
-  
+
       await existingCart.save();
-  
+
       return {
         status: STATUS_CODES.OK,
         message: "Booking dates updated successfully",
@@ -348,72 +369,80 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
     }
   }
 
-    async getProfileData(id: string): Promise<{ user: any; status: number; message: string }> {
-        try {
-          const user = await userRepository.getUserById(id);
-      
-          if (!user) {
-            return {
-              user: null,
-              status: STATUS_CODES.NOT_FOUND,
-              message: "User not found",
-            };
-          }
-      
-          return {
-            user,
-            status: STATUS_CODES.OK,
-            message: "Successfully fetched",
-          };
-        } catch (error) {
-          console.error("Error in getProfileData:", error);
-          return {
-            user: null,
-            status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-            message: MESSAGES.ERROR.SERVER_ERROR,
-          };
-        }
-      }
-      
-  
-
-  async getPropertyById(id: string): Promise<{ property: any; ownerData: any; status: number; message: string }> {
+  async getProfileData(
+    id: string
+  ): Promise<{ user: any; status: number; message: string }> {
     try {
-      const propertyId = id.toString(); 
+      const user = await this.userRepository.getUserById(id);
 
-      const property = await propertyRepository.findPropertyById(propertyId);
-       console.log(id,"property")
-       console.log(property)
+      if (!user) {
+        return {
+          user: null,
+          status: STATUS_CODES.NOT_FOUND,
+          message: "User not found",
+        };
+      }
+
+      return {
+        user,
+        status: STATUS_CODES.OK,
+        message: "Successfully fetched",
+      };
+    } catch (error) {
+      console.error("Error in getProfileData:", error);
+      return {
+        user: null,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+
+  async getPropertyById(
+    id: string
+  ): Promise<{
+    property: any;
+    ownerData: any;
+    status: number;
+    message: string;
+  }> {
+    try {
+      const propertyId = id.toString();
+
+      const property = await this.propertyRepository.findPropertyById(
+        propertyId
+      );
+      console.log(id, "property");
+      console.log(property);
       // if (!property || property.status !== "active") {
       //   throw new Error("Property not available");
       // }
-      
+
       if (!property) {
         return {
           property: null,
           ownerData: null,
           status: STATUS_CODES.NOT_FOUND,
-          message: "Property not found"
+          message: "Property not found",
         };
       }
-  
-      const ownerId = property.ownerId.toString(); 
-      const owner = await userRepository.findOwnerById(ownerId);
-  
+
+      const ownerId = property.ownerId.toString();
+      const owner = await this.userRepository.findOwnerById(ownerId);
+
       const ownerData = owner
-      ? {
-          name: owner.name,
-          phone: owner.phone,
-          email: owner.email
-        }
-      : null;
+        ? {
+            name: owner.name,
+            phone: owner.phone,
+            email: owner.email,
+          }
+        : null;
       return {
         property,
         ownerData,
         status: STATUS_CODES.OK,
-        message: "Property fetched successfully"
+        message: "Property fetched successfully",
       };
-  
     } catch (error) {
       console.error("Error in getPropertyById:", error);
       return {
@@ -425,15 +454,14 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
     }
   }
 
-
   async getUserStatus(id: string): Promise<{
     user: any | null;
     status: number;
     message: string;
   }> {
     try {
-      const user = await userRepository.findUserById(id);
-  
+      const user = await this.userRepository.findUserById(id);
+
       if (!user) {
         return {
           user: null,
@@ -441,7 +469,7 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           message: "User not found",
         };
       }
-  
+
       return {
         user,
         status: STATUS_CODES.OK,
@@ -456,25 +484,30 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
       };
     }
   }
-  
+
   async getCartData(
     propertyId: string,
     userId: string
-  ): Promise<{ cartData: any;property:any; status: number; message: string }> {
+  ): Promise<{
+    cartData: any;
+    property: any;
+    status: number;
+    message: string;
+  }> {
     try {
-
-      
-      const property = await propertyRepository.findPropertyById(propertyId);
-  console.log(property)
+      const property = await this.propertyRepository.findPropertyById(
+        propertyId
+      );
+      console.log(property);
       if (!property) {
         return {
           cartData: null,
-          property:null,
+          property: null,
           status: STATUS_CODES.NOT_FOUND,
-          message: "Property not found"
+          message: "Property not found",
         };
       }
-  
+
       const propertyData = {
         propertyId: new mongoose.Types.ObjectId(propertyId),
         propertyName: property.title,
@@ -482,17 +515,17 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
         location: [
           {
             latitude: property.mapLocation?.coordinates?.latitude || 0,
-            longitude: property.mapLocation?.coordinates?.longitude || 0
-          }
+            longitude: property.mapLocation?.coordinates?.longitude || 0,
+          },
         ],
-        address:property.address,
-                rentPerMonth: property.rentPerMonth,
+        address: property.address,
+        rentPerMonth: property.rentPerMonth,
         totalCost: property.rentPerMonth,
       };
-  
-      console.log(propertyData)
-      let cart = await userRepository.findCart(userId);
-  
+
+      console.log(propertyData);
+      let cart = await this.userRepository.findCart(userId);
+
       if (!cart) {
         cart = new Cart({
           userId,
@@ -508,20 +541,20 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           cart.totalCost += property.rentPerMonth;
         }
       }
-  
+
       await cart.save();
-  
+
       return {
         cartData: cart,
-        property:property,
+        property: property,
         status: STATUS_CODES.OK,
-        message: "Property added to cart"
+        message: "Property added to cart",
       };
     } catch (error) {
       console.error("Error in getCartData:", error);
       return {
         cartData: null,
-        property:null,
+        property: null,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
         message: MESSAGES.ERROR.SERVER_ERROR,
       };
@@ -540,12 +573,12 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
   }> {
     try {
       const skip = (page - 1) * limit;
-  
+
       const [bookings, totalCount] = await Promise.all([
-        bookingRepository.findBookingsByUserId(userId, skip, limit),
-        bookingRepository.countUserBookings(userId),
+        this.bookingRepository.findBookingsByUserId(userId, skip, limit),
+        this.bookingRepository.countUserBookings(userId),
       ]);
-  
+
       if (!bookings || bookings.length === 0) {
         return {
           bookings: null,
@@ -554,9 +587,9 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
           message: "No bookings found for this user",
         };
       }
-  
+
       const totalPages = Math.ceil(totalCount / limit);
-  
+
       return {
         bookings,
         totalPages,
@@ -573,322 +606,382 @@ async getAllProperties(): Promise<{ properties: any[]; status: number; message: 
       };
     }
   }
-  
-  
-  
-   async listServices(): Promise<{ services: any[]; status: number; message: string }> {
-      try {
-        const services = await userRepository.findActiveServices();
+
+  async listServices(): Promise<{
+    services: any[];
+    status: number;
+    message: string;
+  }> {
+    try {
+      const services = await this.userRepository.findActiveServices();
+      return {
+        services: services,
+        status: STATUS_CODES.OK,
+        message: "successfully fetched",
+      };
+    } catch (error) {
+      console.error("Error in listServices:", error);
+      return {
+        services: [],
+        message: MESSAGES.ERROR.SERVER_ERROR,
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  async saveAddOnsForProperty(
+    userId: string,
+    propertyId: string,
+    addOnIds: string[]
+  ): Promise<{ status: number; message: string }> {
+    try {
+      if (!userId || !propertyId || !Array.isArray(addOnIds)) {
         return {
-          services:services,
-          status: STATUS_CODES.OK,
-          message: "successfully fetched", 
-        };
-      } catch (error) {
-        console.error("Error in listServices:", error);
-        return { 
-          services: [], 
-          message: MESSAGES.ERROR.SERVER_ERROR, 
-          status: STATUS_CODES.INTERNAL_SERVER_ERROR 
+          status: STATUS_CODES.BAD_REQUEST,
+          message: "Missing required data for add-ons",
         };
       }
-    }
-    
 
-    async saveAddOnsForProperty(
-      userId: string,
-      propertyId: string,
-      addOnIds: string[]
-    ): Promise<{ status: number; message: string }> {
-      try {
-        if (!userId || !propertyId || !Array.isArray(addOnIds)) {
-          return {
-            status: STATUS_CODES.BAD_REQUEST,
-            message: "Missing required data for add-ons",
-          };
+      const cart = await this.userRepository.findCart(userId);
+      if (!cart) {
+        return {
+          status: STATUS_CODES.NOT_FOUND,
+          message: "Cart not found",
+        };
+      }
+
+      const selectedProperty = cart.properties.find(
+        (p) => p.propertyId.toString() === propertyId
+      );
+
+      if (!selectedProperty) {
+        return {
+          status: STATUS_CODES.NOT_FOUND,
+          message: "Property not found in cart",
+        };
+      }
+
+      const addOnServices = await Service.find({
+        _id: { $in: addOnIds },
+      });
+
+      const addOnCost = addOnServices.reduce(
+        (sum, s) => sum + (s.price || 0),
+        0
+      );
+      const formattedAddOns: IAddOn[] = addOnServices.map((service) => ({
+        serviceId: service._id as ObjectId,
+        serviceName: service.name,
+        serviceCost: service.price,
+      }));
+
+      selectedProperty.addOn = formattedAddOns;
+      selectedProperty.addOnCost = addOnCost;
+
+      const rent = selectedProperty.rentPerMonth || 0;
+      const rentalPeriod = selectedProperty.rentalPeriod || 1;
+      selectedProperty.totalCost = rent * rentalPeriod + addOnCost;
+
+      cart.totalCost = cart.properties.reduce(
+        (sum, p) => sum + (p.totalCost || 0),
+        0
+      );
+
+      await cart.save();
+
+      return {
+        status: STATUS_CODES.OK,
+        message: "Add-on services saved successfully",
+      };
+    } catch (error) {
+      console.error("Error saving add-ons:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: "Failed to save add-on services",
+      };
+    }
+  }
+
+  async updateProfile(
+    id: string,
+    updatedData: Record<string, any>
+  ): Promise<{ message: string; status: number }> {
+    try {
+      if (!id) {
+        return {
+          message: "Invalid user ID",
+          status: STATUS_CODES.BAD_REQUEST,
+        };
+      }
+
+      const user = await this.userRepository.findById(id);
+      console.log(user, "for updating");
+      if (!user) {
+        return {
+          message: "User not found",
+          status: STATUS_CODES.NOT_FOUND,
+        };
+      }
+      console.log(updatedData);
+      user.name = updatedData.data.name;
+      user.phone = updatedData.data.phone;
+      user.address = updatedData.data.address;
+      await user.save();
+
+      return {
+        message: "Profile updated successfully",
+        status: STATUS_CODES.OK,
+      };
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      return {
+        message: "Internal Server Error",
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      };
+    }
+  }
+
+  async fetchWalletData(
+    id: string
+  ): Promise<{
+    message: string;
+    status: number;
+    data: IWalletWithTotals | null;
+  }> {
+    try {
+      if (!id) {
+        return {
+          message: "Invalid user ID",
+          data: null,
+          status: STATUS_CODES.BAD_REQUEST,
+        };
+      }
+
+      // Fetch wallet data for the given user ID
+      const data = await this.walletRepository.findOne({
+        userId: new mongoose.Types.ObjectId(id),
+      });
+
+      if (!data) {
+        return {
+          message: "No wallet transactions found",
+          data: null,
+          status: STATUS_CODES.NOT_FOUND,
+        };
+      }
+
+      let totalDebit = 0;
+      let totalCredit = 0;
+
+      data.transactionDetails.forEach((txn) => {
+        if (txn.paymentType === "debit") {
+          totalDebit += txn.amount;
+        } else if (txn.paymentType === "credit") {
+          totalCredit += txn.amount;
         }
-    
-        const cart = await userRepository.findCart(userId);
-        if (!cart) {
-          return {
-            status: STATUS_CODES.NOT_FOUND,
-            message: "Cart not found",
-          };
-        }
-    
-        const selectedProperty = cart.properties.find(
-          (p) => p.propertyId.toString() === propertyId
+      });
+
+      const responseData: IWalletWithTotals = {
+        ...data.toObject(),
+        totalDebit,
+        totalCredit,
+      };
+
+      return {
+        message: "Wallet data fetched successfully",
+        status: STATUS_CODES.OK,
+        data: responseData,
+      };
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+      return {
+        message: "Internal Server Error",
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        data: null,
+      };
+    }
+  }
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<{ status: number; message: string }> {
+    try {
+      const user = await this.userRepository.findUserById(userId);
+      if (!user) {
+        return {
+          status: STATUS_CODES.NOT_FOUND,
+          message: MESSAGES.ERROR.USER_NOT_FOUND,
+        };
+      }
+      console.log(userId);
+      const isMatch = await bcrypt.compare(oldPassword, user.password || "");
+      if (!isMatch) {
+        return {
+          status: STATUS_CODES.BAD_REQUEST,
+          message: MESSAGES.ERROR.INCORRECT_PASSWORD,
+        };
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await this.userRepository.updateUserPassword(userId, hashedPassword);
+
+      return {
+        status: STATUS_CODES.OK,
+        message: "Password updated successfully",
+      };
+    } catch (error) {
+      console.error("Error in changePasswordService:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+
+  async cancelBooking(
+    id: string,
+    reason: string
+  ): Promise<{ status: number; message: string }> {
+    try {
+      const booking = await this.bookingRepository.findById(id);
+      if (!booking) {
+        return {
+          status: STATUS_CODES.NOT_FOUND,
+          message: MESSAGES.ERROR.BOOKING_NOT_FOUND,
+        };
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset the time to midnight
+
+      const moveInDate = new Date(booking.moveInDate);
+      moveInDate.setHours(0, 0, 0, 0); // Reset the time to midnight
+
+      const fiveDaysBeforeMoveIn = new Date(moveInDate);
+      fiveDaysBeforeMoveIn.setDate(fiveDaysBeforeMoveIn.getDate() - 5);
+
+      if (today > fiveDaysBeforeMoveIn) {
+        return {
+          status: STATUS_CODES.BAD_REQUEST,
+          message: MESSAGES.ERROR.BOOKING_CANCEL_NOT_ALLOWED,
+        };
+      }
+
+      const refundAmount =
+        booking.paymentMethod && booking.paymentMethod !== "COD"
+          ? booking.totalCost
+          : 0;
+
+      const updateData: Partial<IBooking> = {
+        isCancelled: true,
+        cancellationReason: reason,
+        refundAmount: refundAmount,
+        bookingStatus: "cancelled",
+        paymentStatus: "refunded",
+      };
+
+      console.log(reason);
+      console.log("updated data", updateData);
+
+      const response = await this.bookingRepository.updateBookingDetails(
+        id,
+        updateData
+      );
+      const propertyId = new mongoose.Types.ObjectId(
+        booking.propertyId.toString()
+      );
+      const property = await this.propertyRepository.updatePropertyById(
+        propertyId,
+        { status: "active" }
+      );
+
+      console.log(response);
+
+      return {
+        status: STATUS_CODES.OK,
+        message: "Booking cancelled successfully",
+      };
+    } catch (error) {
+      console.error("Error while cancelling booking:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+
+  async updateBookingAndPropertyStatus(): Promise<void> {
+    const today = new Date();
+    const bookings = await this.bookingRepository.findBookingsToComplete(today);
+
+    if (Array.isArray(bookings) && bookings.length > 0) {
+      for (const booking of bookings) {
+        const bookingId = booking._id as string;
+        const propertyId = new mongoose.Types.ObjectId(
+          booking.propertyId.toString()
         );
-    
-        if (!selectedProperty) {
-          return {
-            status: STATUS_CODES.NOT_FOUND,
-            message: "Property not found in cart",
-          };
-        }
-    
-        const addOnServices = await Service.find({
-          _id: { $in: addOnIds },
+
+        await this.bookingRepository.updateBookingDetails(bookingId, {
+          bookingStatus: "completed",
         });
-    
-        const addOnCost = addOnServices.reduce((sum, s) => sum + (s.price || 0), 0);
-        const formattedAddOns: IAddOn[] = addOnServices.map((service) => ({
-          serviceId: service._id as ObjectId,
-          serviceName: service.name,
-          serviceCost: service.price,
-        }));
-        
-        selectedProperty.addOn = formattedAddOns; 
-        selectedProperty.addOnCost = addOnCost;
-    
-        const rent = selectedProperty.rentPerMonth || 0;
-        const rentalPeriod = selectedProperty.rentalPeriod || 1;
-        selectedProperty.totalCost = rent * rentalPeriod + addOnCost;
-    
-        cart.totalCost = cart.properties.reduce(
-          (sum, p) => sum + (p.totalCost || 0),
-          0
+
+        await this.propertyRepository.updatePropertyById(propertyId, {
+          status: "active",
+        });
+        const user = await this.userRepository.getUserById(
+          booking.userId.toString()
         );
-    
-        await cart.save();
-    
-        return {
-          status: STATUS_CODES.OK,
-          message: "Add-on services saved successfully",
-        };
-      } catch (error) {
-        console.error("Error saving add-ons:", error);
-        return {
-          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-          message: "Failed to save add-on services",
-        };
-      }
-    }
+        const owner = await this.ownerRepository.findById(
+          booking.ownerId.toString()
+        );
+        const propertyName = booking.propertyName ?? "your property";
 
-     
-        async updateProfile(
-          id: string,
-          updatedData: Record<string, any>
-        ): Promise<{ message: string; status: number }> {
-          try {
-            if (!id) {
-              return {
-                message: "Invalid user ID",
-                status: STATUS_CODES.BAD_REQUEST,
-              };
-            }
-        
-            const user = await userRepository.findById(id);
-            console.log(user,"for updating")
-            if (!user) {
-              return {
-                message: "User not found",
-                status: STATUS_CODES.NOT_FOUND,
-              };
-            }
-        console.log(updatedData);
-            user.name=updatedData.data.name;
-            user.phone=updatedData.data.phone;
-            user.address=updatedData.data.address;
-            await user.save();
-        
-            return {
-              message: "Profile updated successfully",
-              status: STATUS_CODES.OK,
-            };
-          } catch (error) {
-            console.error("Error updating profile:", error);
-            return {
-              message: "Internal Server Error",
-              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-            };
-          }
+        if (user) {
+          await this.notificationService.createNotification(
+            user._id.toString(),
+            "User",
+            "booking",
+            `Your rental period for the property "${propertyName}" has ended. Thank you for staying with us!`,
+            bookingId
+          );
+        } else {
+          console.warn(`User not found for booking ${bookingId}`);
         }
 
-        async  fetchWalletData(id: string): Promise<{ message: string; status: number; data: IWalletWithTotals | null }> {
-          try {
-            if (!id) {
-              return {
-                message: "Invalid user ID",
-                data: null,
-                status: STATUS_CODES.BAD_REQUEST,
-              };
-            }
-        
-            // Fetch wallet data for the given user ID
-            const data = await walletRepository.findOne({
-              userId: new mongoose.Types.ObjectId(id),
-            });
-        
-            if (!data) {
-              return {
-                message: "No wallet transactions found",
-                data: null,
-                status: STATUS_CODES.NOT_FOUND,
-              };
-            }
-        
-            let totalDebit = 0;
-            let totalCredit = 0;
-        
-            data.transactionDetails.forEach((txn) => {
-              if (txn.paymentType === 'debit') {
-                totalDebit += txn.amount;
-              } else if (txn.paymentType === 'credit') {
-                totalCredit += txn.amount;
-              }
-            });
-        
-            const responseData: IWalletWithTotals = {
-              ...data.toObject(),  
-              totalDebit,
-              totalCredit,
-            };
-        
-            return {
-              message: "Wallet data fetched successfully",
-              status: STATUS_CODES.OK,
-              data: responseData,
-            };
-          } catch (error) {
-            console.error("Error fetching wallet data:", error);
-            return {
-              message: "Internal Server Error",
-              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-              data: null,
-             
-            };
-          }
+        if (owner) {
+          await this.notificationService.createNotification(
+            owner._id.toString(),
+            "Owner",
+            "booking",
+            `Your property "${propertyName}" is now available for new bookings.`,
+            bookingId
+          );
+        } else {
+          console.warn(`Owner not found for property in booking ${bookingId}`);
         }
-     async changePassword  (
-          userId: string,
-          oldPassword: string,
-          newPassword: string
-        ): Promise<{ status: number; message: string }> {
-          try {
-            const user = await userRepository.findUserById(userId);
-            if (!user) {
-              return {
-                status: STATUS_CODES.NOT_FOUND,
-                message: MESSAGES.ERROR.USER_NOT_FOUND,
-              };
-            }
-         console.log(userId)
-            const isMatch = await bcrypt.compare(oldPassword, user.password || "");
-            if (!isMatch) {
-              return {
-                status: STATUS_CODES.BAD_REQUEST,
-                message: MESSAGES.ERROR.INCORRECT_PASSWORD,
-              };
-            }
-        
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-            await userRepository.updateUserPassword(userId, hashedPassword);
-        
-            return {
-              status: STATUS_CODES.OK,
-              message: "Password updated successfully",
-            };
-          } catch (error) {
-            console.error("Error in changePasswordService:", error);
-            return {
-              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-              message: MESSAGES.ERROR.SERVER_ERROR,
-            };
-          }
-        };
-        
-        async cancelBooking(
-          id: string,
-          reason: string
-        ): Promise<{ status: number; message: string }> {
-          try {
-            const booking = await bookingRepository.findById(id);
-            if (!booking) {
-              return {
-                status: STATUS_CODES.NOT_FOUND,
-                message: MESSAGES.ERROR.BOOKING_NOT_FOUND,
-              };
-            }
-        
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);  // Reset the time to midnight
-        
-            const moveInDate = new Date(booking.moveInDate);
-            moveInDate.setHours(0, 0, 0, 0);  // Reset the time to midnight
-        
-            const fiveDaysBeforeMoveIn = new Date(moveInDate);
-            fiveDaysBeforeMoveIn.setDate(fiveDaysBeforeMoveIn.getDate() - 5);
-        
-            if (today > fiveDaysBeforeMoveIn) {
-              return {
-                status: STATUS_CODES.BAD_REQUEST,
-                message: MESSAGES.ERROR.BOOKING_CANCEL_NOT_ALLOWED, 
-              };
-            }
-        
-            const refundAmount =
-              booking.paymentMethod && booking.paymentMethod !== "COD"
-                ? booking.totalCost
-                : 0;
-        
-            const updateData: Partial<IBooking> = {
-              isCancelled: true,
-              cancellationReason: reason,
-              refundAmount: refundAmount,
-              bookingStatus: "cancelled",
-              paymentStatus: "refunded",
-            };
-        
-            console.log(reason);
-            console.log("updated data", updateData);
-        
-            const response = await bookingRepository.updateBookingDetails(id, updateData);
-            const propertyId = new mongoose.Types.ObjectId(booking.propertyId.toString());
-            const property = await propertyRepository.updatePropertyById(
-              propertyId,
-              { status: "active" }
+        if (user) {
+          const otherUsers = await this.userRepository.getAllUsersExcept(
+            user._id.toString()
+          );
+          for (const otherUser of otherUsers) {
+            await this.notificationService.createNotification(
+              otherUser._id.toString(),
+              "User",
+              "property",
+              `The property "${propertyName}" is now available for booking!`,
+              propertyId ? propertyId.toString() : null
             );
-        
-            console.log(response);
-        
-            return {
-              status: STATUS_CODES.OK,
-              message: "Booking cancelled successfully",
-            };
-          } catch (error) {
-            console.error("Error while cancelling booking:", error);
-            return {
-              status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-              message: MESSAGES.ERROR.SERVER_ERROR,
-            };
           }
-        };
-
-        async updateBookingAndPropertyStatus (): Promise<void>  {
-          const today = new Date();
-          const bookings = await bookingRepository.findBookingsToComplete(today);
-        
-          if (Array.isArray(bookings) && bookings.length > 0) {
-            for (const booking of bookings) {
-              const bookingId = booking._id as string;
-              const propertyId = new mongoose.Types.ObjectId((booking.propertyId ).toString());
-          
-              await bookingRepository.updateBookingDetails(bookingId, {
-                bookingStatus: 'completed',
-              });
-          
-              await propertyRepository.updatePropertyById(propertyId, {
-                status: 'active',
-              });
-            }
-          } else {
-            console.log("No bookings found to complete.");
-          }
-          
-          }
-        
-        
-        
+        } else {
+          console.warn(
+            "User data is missing or null when attempting to notify other users."
+          );
+        }
+      }
+    } else {
+      console.log("No bookings found to complete.");
+    }
+  }
 }
-    export default new UserService();
+export default UserService;

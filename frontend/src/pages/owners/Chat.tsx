@@ -11,21 +11,23 @@ import PropertySummary from "../../components/chat/PropertySummary";
 import Conversation from "../../components/chat/Conversation";
 import OwnerLayout from "../../components/owner/OwnerLayout";
 import { IUser, Message } from "../../types/user.interface";
+import moment from "moment";
 
 
 const OwnerChatPage = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(
     null
   );
-    const { user, getPropertyById, markMessagesAsRead, getConversation,listConversations } = useAuthStore();
+    const { user, getPropertyById,getNotifications, markMessagesAsRead, getConversation,listConversations } = useAuthStore();
     const [conversations, setConversations] = useState<any[]>([]);
     const [loadingConversations, setLoadingConversations] = useState(true);
     const [propertyData, setPropertyData] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const [socket, setSocket] = useState<any>(null);
     const [partner,setPartner]= useState<IUser>();
+    const [notifications,setNotifications]= useState<any[]>([]);
     const selectedConvObject = conversations.find(c => c._id === selectedConversation);
-    const ownerId = selectedConvObject?.partner?._id; // or whatever field represents the partner/userId
+    const ownerId = selectedConvObject?.partner?._id; 
     const propertyId = selectedConvObject?.propertyId; 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -38,14 +40,13 @@ const OwnerChatPage = () => {
         try {
           const userId = user.userId || user.id;
           const res = await listConversations();
-          console.log(res,"from")
           setConversations(
             res.map((conv: any) => ({
               ...conv,
               partnerId: conv.partner?._id || conv.receiver?._id || conv.sender?._id,
               lastMessage: typeof conv.lastMessage === 'object' 
                 ? conv.lastMessage 
-                : { content: conv.lastMessage, createdAt: new Date().toISOString() } // Add a fallback if it's not an object
+                : { content: conv.lastMessage, createdAt: new Date().toISOString() } 
             }))
           );     
           } catch (error) {
@@ -57,9 +58,22 @@ const OwnerChatPage = () => {
       };
       fetchConversations();
     }, [user,listConversations]);
+
+    useEffect(() => {
+      const fetchNotifications = async () => {
+        try {
+         const res= await getNotifications();
+         setNotifications(res.data);
+        } catch (err) {
+          console.error("Failed to fetch notifications", err);
+        }
+      };
+      fetchNotifications();
+    }, [getNotifications]);
+    
     const reloadData = async () => {
       try {
-        const updatedConversations = await listConversations(); // your API call
+        const updatedConversations = await listConversations(); 
     
         setConversations(updatedConversations);
       } catch (err) {
@@ -74,9 +88,8 @@ const OwnerChatPage = () => {
           if (selected?.lastMessage.propertyId) {
             try {
               const res = await getPropertyById(selected.lastMessage.propertyId);
-              setPropertyData(res.Property); // Adjust this based on your response shape
+              setPropertyData(res.Property); 
               const result = await getConversation(user.id,selected.lastMessage.sender);
-              console.log(result,"checking result")
               setMessages(result.data);
               setPartner(result.chatPartner);
               await markMessagesAsRead(selectedConversation, user.id);
@@ -92,7 +105,6 @@ const OwnerChatPage = () => {
         fetchSelectedProperty();
       }, [selectedConversation, getPropertyById]);
       
-       // Socket setup
         useEffect(() => {
           if (!user) return;
           const socketInstance = io('http://localhost:8000');
@@ -112,12 +124,10 @@ const OwnerChatPage = () => {
     socket.emit('joinRoom', room);
   
     const handleReceiveMessage = (newMessage: Message) => {
-      // Check if the message already exists in the state
       if (!messages.some(msg => msg._id === newMessage._id)) {
         setMessages(prev => [...prev, newMessage]);
       }
     
-      // Update conversations list with new message
       setConversations(prev => {
         const updatedConversations = [...prev];
         const senderIdToCheck = typeof newMessage.sender === 'string' 
@@ -189,7 +199,13 @@ useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-
+  const handleNotificationClick = (notification:any) => {
+    if (notification.type === 'booking') {
+      navigate(`/owner/bookings/${notification.otherId}`);
+    } else if (notification.type === 'property') {
+      navigate(`/owner/property/${notification.otherId}`);
+    }
+  };
     function formatChatTimestamp(dateStr: string) {
         const date = new Date(dateStr);
         const now = new Date();
@@ -204,9 +220,9 @@ useEffect(() => {
         } else if (isYesterday) {
           return "Yesterday";
         } else if (date.getFullYear() === now.getFullYear()) {
-          return date.toLocaleDateString([], { month: 'short', day: 'numeric' }); // e.g., "Apr 23"
+          return date.toLocaleDateString([], { month: 'short', day: 'numeric' }); 
         } else {
-          return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); // e.g., "Apr 10, 2023"
+          return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); 
         }
       }
       
@@ -287,31 +303,31 @@ useEffect(() => {
           >
             <div className="bg-white/70 backdrop-blur-md rounded-lg p-6 border border-[#b68451]/10 shadow-lg">
               <div className="space-y-4">
-
-
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="p-4 rounded-lg bg-white/80 border border-[#b68451]/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[#b68451]/10 flex items-center justify-center">
-                        <BellDot size={20} className="text-[#b68451]" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-[#b68451]">
-                          New Message Received
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          You have a new message regarding Luxury Downtown Apartment
-                        </p>
-                        <span className="text-xs text-gray-500 mt-2 block">
-                          2 hours ago
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              {notifications.map((notification, i) => (
+        <div
+          key={i}
+          className="p-4 rounded-lg bg-white/80 border border-[#b68451]/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+          onClick={() => handleNotificationClick(notification)}  
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-[#b68451]/10 flex items-center justify-center">
+              <BellDot size={20} className="text-[#b68451]" />
+            </div>
+            <div>
+              <h3 className="font-medium text-[#b68451]">
+                New {notification.type} message received
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {notification.message}
+              </p>
+              {/* Time ago calculation using moment.js */}
+              <span className="text-xs text-gray-500 mt-2 block">
+                {moment(notification.createdAt).fromNow()} {/* Display time ago */}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
               </div>
             </div>
           </TabsContent>

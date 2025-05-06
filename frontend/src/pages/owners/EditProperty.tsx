@@ -136,7 +136,6 @@ const EditProperty = () => {
         
         // Load property
         const propertyResponse = await getPropertyById(id || '');
-        console.log(propertyResponse, "response");
         
         const propertyData = propertyResponse.Property;
         
@@ -413,7 +412,6 @@ const EditProperty = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted");
     
     if (!validateForm()) {
       notifyError("Please fix the form errors before submitting");

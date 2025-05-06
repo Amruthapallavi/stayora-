@@ -107,14 +107,67 @@ class BookingRepository extends BaseRepository<IBooking> implements IBookingRepo
     return await Booking.find({ propertyId: propertyId })
       .populate("userId")  
   }
-  
+  async findAllBookings(skip: number = 0, limit: number = 5) {
+    return Booking.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $lookup: {
+          from: "owners",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      {
+        $lookup: {
+          from: "properties",
+          localField: "propertyId",
+          foreignField: "_id",
+          as: "property",
+        },
+      },
+      { $unwind: "$user" },
+      { $unwind: "$owner" },
+      { $unwind: "$property" },
+      {
+        $project: {
+          id: "$_id",
+          userName: "$user.name",
+          ownerName: "$owner.name",
+          propertyName: "$property.title",
+          ownerEmail: "$owner.email",
+          userEmail: "$user.email",
+          moveInDate: 1,
+          endDate: 1,
+          bookingId: 1,
+          bookingStatus: 1,
+          paymentStatus: 1,
+          totalCost: 1,
+          createdAt: 1,
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+  };
  async findBookingsToComplete (today: Date){
     return await Booking.find({
       endDate: { $lt: today },
       bookingStatus: { $ne: 'completed' },
     });
   };
+   async countAllBookings() {
+        return Booking.countDocuments();
+      }
 }
 
 
-export default new BookingRepository();
+export default BookingRepository;

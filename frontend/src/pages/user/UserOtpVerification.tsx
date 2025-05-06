@@ -22,7 +22,6 @@ const OtpVerification = () => {
       const storedEmail = localStorage.getItem("email");
       if (storedEmail) {
         setEmail(storedEmail);
-        console.log(storedEmail,"from frontend")
       } else {
         alert("Email not found. Redirecting...");
         navigate("/user/signup");
@@ -41,7 +40,6 @@ const OtpVerification = () => {
   };
 
   const handleSubmit = async () => {
-    console.log("Sending OTP verification for:", email); 
 
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
@@ -53,7 +51,6 @@ const OtpVerification = () => {
     try {
       const response = await verifyOtp( email, otpValue,"user");
       notifySuccess("OTP verification successful. Please Login to continue");
-      console.log(response);
       navigate('/user/login')
     } catch (error) {
       setError("OTP verification failed. Try again.");
@@ -67,8 +64,6 @@ const OtpVerification = () => {
   const handleResend = async () => {
     if (resendTimer > 0) return;
     try {
-      console.log(email)
-      console.log("Sending data:",  email );
 
       await resendOtp(email,"user");
       notifySuccess("OTP resend successful!");

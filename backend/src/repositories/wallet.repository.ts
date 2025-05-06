@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 import Wallet, { IWallet } from "../models/wallet.model";
 import BaseRepository from "./base.repository";
 import { IWalletRepository } from "./interfaces/IWalletRepository";
+import { injectable } from "inversify";
 
-
+@injectable()
 class walletRepository extends BaseRepository<IWallet> implements IWalletRepository {
-  constructor() {
+    constructor() {
     super(Wallet);
   }
   async updateUserWalletTransaction(
@@ -39,4 +40,4 @@ class walletRepository extends BaseRepository<IWallet> implements IWalletReposit
 
 }
 
-export default new walletRepository();
+export default walletRepository;

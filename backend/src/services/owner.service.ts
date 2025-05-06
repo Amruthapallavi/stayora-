@@ -2,18 +2,31 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import OTPService from "../utils/OTPService";
   import { Response } from "express";
-import ownerRepository from "../repositories/owner.repository";
+// import ownerRepository from "../repositories/owner.repository";
 import { IOwner } from "../models/owner.model";
-import { IOwnerService } from "./interfaces/IOwnerService";
+import  IOwnerService  from "./interfaces/IOwnerService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import Property ,{IProperty} from "../models/property.model"
-import walletRepository from "../repositories/wallet.repository";
+// import walletRepository from "../repositories/wallet.repository";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
 import mongoose, { Types } from "mongoose";
+import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
+import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 interface SignupData extends Partial<IOwner> {
     confirmPassword?: string;
   }
   
-  class OwnerService implements IOwnerService {
+  @injectable()
+  export class OwnerService implements IOwnerService {
+    constructor(
+      @inject(TYPES.OwnerRepository)
+        private ownerRepository: IOwnerRepository,
+        @inject(TYPES.WalletRepository)
+        private walletRepository: IWalletRepository
+      
+    ){}
+
     private sanitizeUser(user: IOwner) {
         
       const { password, otp, __v, ...sanitizedUser } = user.toObject();
@@ -33,7 +46,7 @@ interface SignupData extends Partial<IOwner> {
         throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
       }
     
-      const existingOwner = await ownerRepository.findByEmail(email);
+      const existingOwner = await this.ownerRepository.findByEmail(email);
       if (existingOwner) {
         throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
       }
@@ -48,7 +61,7 @@ interface SignupData extends Partial<IOwner> {
     
       const otpExpires = new Date(Date.now() + 5 * 60 * 1000); 
     
-      await ownerRepository.create({
+      await this.ownerRepository.create({
         ...ownerData,
         govtIdStatus:'pending',
         status:'Pending',
@@ -68,7 +81,7 @@ interface SignupData extends Partial<IOwner> {
     otp: string
   ): Promise<{ message: string; status: number }> {
     console.log(email,"email")
-    const owner = await ownerRepository.findByEmail(email);
+    const owner = await this.ownerRepository.findByEmail(email);
     console.log(owner,"owner")
     if (!owner) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
@@ -83,13 +96,13 @@ interface SignupData extends Partial<IOwner> {
     owner.status='Pending';
     owner.otpExpires = null;
 
-    await ownerRepository.update(owner._id.toString(), owner);
+    await this.ownerRepository.update(owner._id.toString(), owner);
 
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED, status: STATUS_CODES.OK };
   }
 
   async resendOTP(email: string): Promise<{ message: string; status: number }> {
-    const owner = await ownerRepository.findByEmail(email);
+    const owner = await this.ownerRepository.findByEmail(email);
     console.log(owner,"owner")
     if (!owner) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
@@ -108,7 +121,7 @@ interface SignupData extends Partial<IOwner> {
     owner.otp = newOtp;
     owner.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 10 minutes from now
 
-    await ownerRepository.update(owner._id.toString(), owner);
+    await this.ownerRepository.update(owner._id.toString(), owner);
 
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
   }
@@ -120,7 +133,7 @@ interface SignupData extends Partial<IOwner> {
     password: string,
     res: Response
   ): Promise<{ owner: IOwner; token: string; message: string; refreshToken:string,status: number }> {
-    const owner = await ownerRepository.findByEmail(email);
+    const owner = await this.ownerRepository.findByEmail(email);
     if (!owner) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -160,7 +173,7 @@ interface SignupData extends Partial<IOwner> {
       { expiresIn: "7d" }
     );
   
-    await ownerRepository.updateRefreshToken(owner._id.toString(), refreshToken);
+    await this.ownerRepository.updateRefreshToken(owner._id.toString(), refreshToken);
   
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -185,7 +198,7 @@ interface SignupData extends Partial<IOwner> {
       email:string,
       newPassword:string
     ):Promise<{ message:string; status: number}> {
-      const owner = await ownerRepository.findByEmail(email);
+      const owner = await this.ownerRepository.findByEmail(email);
       if(!owner){
         throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
       }
@@ -196,14 +209,14 @@ interface SignupData extends Partial<IOwner> {
       owner.otpExpires = null;
       owner.isVerified = true; 
   
-      await ownerRepository.update(owner._id.toString(), owner);
+      await this.ownerRepository.update(owner._id.toString(), owner);
       return { message: MESSAGES.SUCCESS.PASSWORD_RESET, status: STATUS_CODES.OK };
   
     }
 
     async getProfileData(id: string): Promise<{ user: any; status: number; message: string }> {
       try {
-        const user = await ownerRepository.findById(id);
+        const user = await this.ownerRepository.findById(id);
     
         if (!user) {
           return {
@@ -230,22 +243,24 @@ interface SignupData extends Partial<IOwner> {
     
     async getDashboardData(ownerId: string): Promise<{ data: any; status: number; message: string }> {
       try {
-        const properties = await ownerRepository.getPropertiesByOwner(ownerId);
+        const properties = await this.ownerRepository.getPropertiesByOwner(ownerId);
         const propertyIds: string[] = properties.map((p) => String(p._id));
-  
+     const totalProperties=properties.length;
+     console.log(totalProperties,"count")
         const totalActiveProperties = properties.filter(p => p.status === 'active').length;
         const totalRejectedProperties = properties.filter(p => p.status === 'rejected').length;
   
-        const bookings = await ownerRepository.getBookingsByPropertyIds(propertyIds);
-    const bookingsByMonth = await ownerRepository.bookingsByMonth(ownerId);
+        const bookings = await this.ownerRepository.getBookingsByPropertyIds(propertyIds);
+    const bookingsByMonth = await this.ownerRepository.bookingsByMonth(ownerId);
     console.log(bookingsByMonth,"checking")
         const totalBookings = bookings.filter(b => b.bookingStatus === 'confirmed').length;
         const completedBookings = bookings.filter(b => b.bookingStatus === 'completed');
         const totalCompletedBookings = completedBookings.length;
   
-        const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalCost, 0);
+        const totalRevenue = bookings.reduce((sum, b) => sum + b.totalCost, 0);
   
         const dashboardData = {
+          totalProperties,
           totalActiveProperties,
           totalRejectedProperties,
           totalBookings,
@@ -283,7 +298,7 @@ interface SignupData extends Partial<IOwner> {
           };
         }
     
-        const user = await ownerRepository.findById(id);
+        const user = await this.ownerRepository.findById(id);
         if (!user) {
           return {
             message: "User not found",
@@ -308,6 +323,7 @@ interface SignupData extends Partial<IOwner> {
         };
       }
     }
+
     async addProperty(req: {
       data: Partial<IProperty> & {
         selectedFeatures?: string[];
@@ -354,7 +370,7 @@ interface SignupData extends Partial<IOwner> {
         ? [data.selectedFeatures]
         : [];
 
-        const featureDocs = await ownerRepository.getFeatureNamesByIds(selectedFeatureIds);
+        const featureDocs = await this.ownerRepository.getFeatureNamesByIds(selectedFeatureIds);
         
       const selectedFeatureNames = featureDocs.map((f: any) => f.name);
   
@@ -471,7 +487,7 @@ interface SignupData extends Partial<IOwner> {
       message: string;
     }> {
       try {
-        const user = await ownerRepository.findUserById(id);
+        const user = await this.ownerRepository.findUserById(id);
     
         if (!user) {
           return {
@@ -498,7 +514,7 @@ interface SignupData extends Partial<IOwner> {
     
       async getPropertyById(id: string): Promise<{ property: any;  status: number; message: string }> {
         try {
-          const property = await ownerRepository.findPropertyById(id);
+          const property = await this.ownerRepository.findPropertyById(id);
     
          
           console.log(property,"for checking")
@@ -537,7 +553,7 @@ interface SignupData extends Partial<IOwner> {
                     };
                   }
               
-                  const data = await walletRepository.findOne({
+                  const data = await this.walletRepository.findOne({
                     userId: new mongoose.Types.ObjectId(id),
                   });
               
@@ -639,7 +655,7 @@ interface SignupData extends Partial<IOwner> {
 
     }
   
-    export default new OwnerService();
+    export default OwnerService;
 
 
 

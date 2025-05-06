@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface INotification extends Document {
   recipient: mongoose.Types.ObjectId;
@@ -6,7 +6,9 @@ export interface INotification extends Document {
   type: string;
   message: string;
   read: boolean;
+  otherId?: Types.ObjectId | null;  // Allow ObjectId or null
   createdAt: Date;
+
 }
 
 const notificationSchema: Schema = new Schema(
@@ -20,6 +22,8 @@ const notificationSchema: Schema = new Schema(
     type: { type: String, required: true },
     message: { type: String, required: true },
     read: { type: Boolean, default: false },
+    otherId: { type: Types.ObjectId, required: false, default: null },  // Allow null
+
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

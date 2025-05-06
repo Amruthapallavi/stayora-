@@ -46,34 +46,33 @@ class OwnerRepository
       const bookingsByMonth = await Booking.aggregate([
         {
           $match: {
-            ownerId: new mongoose.Types.ObjectId(ownerId), // Filter by ownerId
-            bookingStatus: 'completed', // Filter only completed bookings, adjust as needed
+            ownerId: new mongoose.Types.ObjectId(ownerId), 
+            bookingStatus: 'confirmed', 
           },
         },
         {
           $project: {
-            month: { $month: "$createdAt" }, // Extract month from createdAt
-            year: { $year: "$createdAt" }, // Extract year from createdAt
-            totalCost: 1, // Include totalCost field to calculate revenue
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }, 
+            totalCost: 1, 
           },
         },
         {
           $group: {
-            _id: { month: "$month", year: "$year" }, // Group by month and year
-            totalBookings: { $sum: 1 }, // Count of bookings
-            totalRevenue: { $sum: "$totalCost" }, // Sum of total cost (revenue)
+            _id: { month: "$month", year: "$year" }, 
+            totalBookings: { $sum: 1 }, 
+            totalRevenue: { $sum: "$totalCost" },
           },
         },
         {
-          $sort: { "_id.year": 1, "_id.month": 1 }, // Sort by year and month in ascending order
+          $sort: { "_id.year": 1, "_id.month": 1 }, 
         },
       ]);
   
-      // Format the data to match the required structure
       const chartData = bookingsByMonth.map((item) => {
         const monthName = new Date(item._id.year, item._id.month - 1).toLocaleString('en', { month: 'short' });
         return {
-          name: `${monthName} ${item._id.year}`, // Format like "Jan 2025"
+          name: `${monthName} ${item._id.year}`, 
           bookings: item.totalBookings,
           revenue: item.totalRevenue,
         };
@@ -88,4 +87,4 @@ class OwnerRepository
 
 }
 
-export default new OwnerRepository();
+export default OwnerRepository;

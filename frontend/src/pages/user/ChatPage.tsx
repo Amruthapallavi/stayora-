@@ -9,10 +9,13 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { Card } from '../../components/ui/card';
-import {  CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
-import { Send, Paperclip, ChevronLeft, Info, User, Clock, Home, MessageSquare, MapPin, ArrowLeft, Bell, BellOff, Star } from 'lucide-react';
+import {  CardContent,
+  //  CardDescription, 
+   CardHeader, CardTitle } from "../../components/ui/card";
+import { Send, Paperclip, ChevronLeft, Info, User, Home, MessageSquare, ArrowLeft, Star } from 'lucide-react';
 import { IProperty } from '../../types/IProperty';
 import { Message } from '../../types/user.interface';
+import NotificationsTab from '../../components/NotificationTab';
 // import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 // import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -29,7 +32,7 @@ interface ChatPartner {
 
 const ChatPage = () => {
   let { propertyId, ownerId } = useParams();
-  const { user, getPropertyById, sendMessage, markMessagesAsRead,getConversation, listConversations } = useAuthStore();
+  const { user, getPropertyById,getNotifications, sendMessage, markMessagesAsRead,getConversation, listConversations } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -44,7 +47,8 @@ const ChatPage = () => {
   const [socket, setSocket] = useState<any>(null);
   const [sending, setSending] = useState(false);
   const [chatPartner, setChatPartner] = useState<ChatPartner | null>(null);
-  
+  const [notifications,setNotifications]= useState<any[]>([]);
+
   const [isMobileInfoVisible, setIsMobileInfoVisible] = useState(false);
   const [isMobileConversationsVisible, setIsMobileConversationsVisible] = useState(false);
   
@@ -61,7 +65,6 @@ const ChatPage = () => {
       if (!user) return;
       try {
         const res = await listConversations();
-        console.log("Conversation data shape:", res);
   
         setConversations(
           res.map((conv: any) => ({
@@ -83,10 +86,8 @@ const ChatPage = () => {
     fetchConversations();
   }, [user, listConversations]);
   
-  console.log('conversation', conversations);
   
 
-  // Fetch property details
   useEffect(() => {
     const fetchProperty = async () => {
       if (!propertyData && propertyId) {
@@ -181,7 +182,6 @@ const ChatPage = () => {
           }
         }
         setChatPartner(result.chatPartner);
-        console.log(result,"chekig")
         await markMessagesAsRead(ownerId, user.id);
 
       } catch (error) {
@@ -224,7 +224,18 @@ const ChatPage = () => {
     }
   };
   
-
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+       const res= await getNotifications();
+       setNotifications(res.data);
+       console.log(res,"for notificationn")
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+    fetchNotifications();
+  }, [getNotifications]);
   // Send message handler
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,7 +262,7 @@ const ChatPage = () => {
       const response = await sendMessage(formData);
       const newMessage = response.data;
   
-      setMessages(prev => [...prev, newMessage]);
+      // setMessages(prev => [...prev, newMessage]);
       if (socket) {
         socket.emit('sendMessage', newMessage, room);
       }
@@ -321,14 +332,20 @@ const ChatPage = () => {
     <UserLayout>
       <div className="bg-gray-50 min-h-screen">
         <div className="container mx-auto py-6 px-4">
-          <Button
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            className="inline-flex items-center text-gray-600 hover:text-yellow-600 transition mb-4"
-          >
-            <ArrowLeft size={18} className="mr-2" />
-            <span>Back</span>
-          </Button>
+        <div className="flex justify-between items-center mb-4">
+    <Button
+      onClick={() => navigate(-1)}
+      variant="ghost"
+      className="inline-flex items-center text-gray-600 hover:text-yellow-600 transition"
+    >
+      <ArrowLeft size={18} className="mr-2" />
+      <span>Back</span>
+    </Button>
+
+    <div>
+    <NotificationsTab notifications={notifications} />
+    </div>
+  </div>
           
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[85vh]">
             {/* Mobile Controls */}
@@ -350,7 +367,7 @@ const ChatPage = () => {
                 {isMobileInfoVisible ? "Hide Info" : "Property Info"}
               </Button>
             </div>
-            
+    
             {/* Conversations List */}
             <div 
               className={`
@@ -515,8 +532,9 @@ const ChatPage = () => {
 
                           </div>
                           <div className={`text-xs text-gray-500 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
+  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+</div>
+
                         </div>
                         
                         {isOwnMessage && showAvatar && (
@@ -630,7 +648,7 @@ const ChatPage = () => {
                     {property?.rentPerMonth && (
                       <div className="flex items-center mb-3">
                         <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-bold">
-                          ${property.rentPerMonth}/month
+                        ₹{property.rentPerMonth}/month
                         </span>
                       </div>
                     )}

@@ -2,10 +2,17 @@ import { Request, Response } from "express";
 import bookingService from "../services/bookingService";
 import { STATUS_CODES } from "../utils/constants";
 import { IBookingController } from "./interfaces/IBookingController";
+import { injectable,inject } from "inversify";
+import TYPES from "../config/DI/types";
+import { IBookingService } from "../services/interfaces/IBookingService";
 
-
-class bookingController implements IBookingController {
-
+@injectable()
+export class BookingController implements IBookingController {
+  constructor(
+    @inject(TYPES.BookingService)
+      private bookingService: IBookingService
+    
+  ){}
     
     async createBooking(req: Request, res: Response): Promise<void> {
       try {
@@ -18,7 +25,7 @@ class bookingController implements IBookingController {
            res.status(400).json({ message: "Invalid amount" });
         }
     
-        const order = await bookingService.createBookingOrder(amount,productId,userId);
+        const order = await this.bookingService.createBookingOrder(amount,productId,userId);
         res.status(200).json(order);
       } catch (error) {
         console.error("Error creating Razorpay order:", error);
@@ -36,7 +43,7 @@ class bookingController implements IBookingController {
            res.status(400).json({ message: "Missing payment verification fields" });
         }
     
-        const result = await bookingService.verifyBookingPayment({
+        const result = await this.bookingService.verifyBookingPayment({
           razorpay_order_id,
           razorpay_payment_id,
           razorpay_signature,
@@ -65,7 +72,7 @@ class bookingController implements IBookingController {
          
         const ownerId = req.query.ownerId as string;
         console.log(ownerId)
-        const result = await bookingService.listBookingsByOwner(ownerId);
+        const result = await this.bookingService.listBookingsByOwner(ownerId);
         res.status(result.status).json({
           bookings: result.bookings,
         });
@@ -80,7 +87,7 @@ class bookingController implements IBookingController {
     async bookingDetails(req:Request,res:Response):Promise<void>{
       try {
         const bookingId=req.params.id;
-        const result = await bookingService.bookingDetails(bookingId);
+        const result = await this.bookingService.bookingDetails(bookingId);
         res.status(result.status).json({
           bookingData: result.bookingData,
           userData:result.userData,
@@ -96,7 +103,7 @@ class bookingController implements IBookingController {
     async userBookingDetails(req:Request,res:Response):Promise<void>{
       try {
         const bookingId=req.params.id;
-        const result = await bookingService.userBookingDetails(bookingId);
+        const result = await this.bookingService.userBookingDetails(bookingId);
         res.status(result.status).json({
           bookingData: result.bookingData,
           ownerData:result.ownerData,
@@ -108,9 +115,45 @@ class bookingController implements IBookingController {
         });
       }
     }
+    
+    async listAllBookings(req:Request, res:Response):Promise<void>{
+      try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 6;
+        const result = await this.bookingService.listAllBookings(page,limit);
+        
+        res.status(result.status).json({
+          bookings: result.bookings,
+          totalPages: result.totalPages,
+          currentPage: page,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+          error: error instanceof Error ? error.message : "Failed to fetch bookings",
+        });
+      }
+    }
+     async AllbookingDetails(req:Request,res:Response):Promise<void>{
+          try {
+            const bookingId=req.params.id;
+            console.log("from controller")
+            const result = await this.bookingService.AllbookingDetails(bookingId);
+            res.status(result.status).json({
+              bookingData: result.bookingData,
+              userData:result.userData,
+              ownerData:result.ownerData,
+            });
+          } catch (error) {
+            console.error(error);
+            res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+              error: error instanceof Error ? error.message : "Failed to fetch booking data",
+            });
+          }
+        }
 }
 
 
 
 
-export default new bookingController();
+export default BookingController;

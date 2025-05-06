@@ -4,7 +4,17 @@ import { IChatController } from "./interfaces/IChatController";
 import { io } from "../config/socket";
 import chatService from "../services/chat.service";
 import notificationService from "../services/notification.service";
-class chatController implements IChatController{
+import { IChatService } from "../services/interfaces/IChatService";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+
+@injectable()
+export class ChatController implements IChatController {
+  constructor(
+    @inject(TYPES.ChatService)
+      private chatService: IChatService
+    
+  ){}
     // async getChat(req: Request, res: Response): Promise<void> {
     //     try {
     //       const { sender, receiver } = req.query;
@@ -42,8 +52,7 @@ class chatController implements IChatController{
             content,
             room
           } = req.body;
-          console.log(req.body,"for send message")
-          const result = await chatService.sendMessage({
+          const result = await this.chatService.sendMessage({
             sender,
             senderModel,
             receiver,
@@ -51,20 +60,19 @@ class chatController implements IChatController{
             propertyId,
             content,
         });
-          console.log(result)
           if (room) {
             io.to(room).emit("receiveMessage", { ...result.data.toObject(), room });
           } else {
             io.emit("receiveMessage", { ...result.data.toObject(), room: "all" });
           }
     
-          const notification = await notificationService.createNotification(
-            receiver,
-            receiverModel,
-            "chat",
-            "You have a new message"
-          );
-          io.to(receiver).emit("newNotification", notification);
+          // const notification = await notificationService.createNotification(
+          //   receiver,
+          //   receiverModel,
+          //   "chat",
+          //   "You have a new message"
+          // );
+          // io.to(receiver).emit("newNotification", notification);
     
           res.status(result.status).json({
             message: result.message,
@@ -85,7 +93,7 @@ class chatController implements IChatController{
           if (!sender || !receiver) {
             throw new Error("Sender and receiver are required");
           }
-          const result = await chatService.getConversation(
+          const result = await this.chatService.getConversation(
             String(sender),
             String(receiver)
           );
@@ -107,7 +115,7 @@ class chatController implements IChatController{
       async listConversations(req: Request, res: Response): Promise<void> {
         try {
           const userId = (req as any).userId;
-          const result = await chatService.listConversations(userId);
+          const result = await this.chatService.listConversations(userId);
           res.status(result.status).json({
             message: result.message,
             data: result.data,
@@ -126,15 +134,13 @@ class chatController implements IChatController{
 async markMessagesAsRead  (req: Request, res: Response) :Promise<void>{
   try {
     const { convId, userId } = req.body.params;
-console.log(convId,userId,"contri")
     if (!convId || !userId) {
        res.status(400).json({ message: "convId and userId are required" });
        return; 
 
     }
 
-    const result = await chatService.markAsRead(convId, userId);
-    console.log(result,"from markAsRead")
+    const result = await this.chatService.markAsRead(convId, userId);
     res.status(200).json({ success: true, updatedCount: result });
     return; 
 
@@ -145,5 +151,5 @@ console.log(convId,userId,"contri")
 
 }
 
-export default new chatController();
+export default  ChatController;
 

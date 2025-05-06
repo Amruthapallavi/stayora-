@@ -1,15 +1,16 @@
 
 import  { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Building, MapPin, BedDouble, Bath, Home, ArrowRight, Search, Filter, X } from 'lucide-react';
+import { Building, MapPin, BedDouble, Bath, Home,
+  //  ArrowRight, Search, Filter, X 
+  } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import Navbar from '../../components/user/Navbar';
 import UserLayout from '../../components/user/UserLayout';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Slider } from '../../components/ui/sidebar';
+// import { Input } from '../../components/ui/input';
+// import { Button } from '../../components/ui/button';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+// import { Slider } from '../../components/ui/sidebar';
 import HeroSection from '../../components/user/HeroSection';
 import CTASection from '../../components/user/CTASection';
 import PopularLocations from '../../components/user/PopularLocations';
@@ -42,17 +43,15 @@ const PropertyListing = () => {
         setLoading(true);
         try {
           const response = await getAllProperties();
-          console.log("Fetched data:", response); // Debug API response structure
     
           if (response && Array.isArray(response.properties)) {
-            setProperties(response.properties); // Extract 'properties' array
+            setProperties(response.properties);
           } else {
-            console.warn("Invalid property data format:", response);
-            setProperties([]); // Avoid undefined errors
+            setProperties([]); 
           }
         } catch (error) {
           console.error("Error fetching properties:", error);
-          setProperties([]); // Prevent crashes on errors
+          setProperties([]); 
         } finally {
           setLoading(false);
         }
@@ -69,9 +68,7 @@ const PropertyListing = () => {
     };
     
     const handleSearch = async () => {
-      console.log("Search with filters:", searchFilters);
       const result= await filteredProperties(searchFilters);
-      console.log(result,"for filtered")
       setProperties(result);
       navigate("/user/properties", { state: { filters: searchFilters } });
     };

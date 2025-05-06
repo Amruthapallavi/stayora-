@@ -101,7 +101,9 @@ console.log(properties)
       if (confirmed) {
         await approveProperty(propertyId);
         showSuccessAlert("Property approved successfully");
+        
         setFilteredProperties(filteredProperties.filter(property => property._id !== propertyId));
+        window.location.reload();
       }
     } catch (error) {
       console.error("Approval failed", error);

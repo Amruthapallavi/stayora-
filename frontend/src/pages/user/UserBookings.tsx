@@ -35,7 +35,6 @@ const Bookings = () => {
         setCurrentPage(page);
       }
     };
-    console.log(bookings,"booking");
     
 
   return (

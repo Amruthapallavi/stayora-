@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Home, Plus, BookOpen, CheckCircle, UserCheck, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import Sidebar from '../../components/owner/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import OwnerLayout from '../../components/owner/OwnerLayout';
 
@@ -15,7 +14,6 @@ interface Property {
   rentPerMonth: number;
   city: string;
   images: string[];
-  // Mock data properties
   views?: number;
   bookings?: number;
   revenue?: number;
@@ -57,7 +55,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<{ name: string; bookings: number; revenue: number }[]>([]);
 
-  const [dashboardData, setDashboardData] = useState<any>(null);  // Change 'any' to the actual type if you know it
+  const [dashboardData, setDashboardData] = useState<any>(null);  
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProperties: 0,
@@ -75,9 +73,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await getDashboardData()  // Adjust the API URL as needed
+        const response = await getDashboardData()  
        
-        setDashboardData(response.data);  // Assuming the response structure is like { data: {...} }
+        setDashboardData(response.data);  
       setChartData(response.data?.bookingsByMonth);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -86,7 +84,6 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [user._id]); 
-  console.log(dashboardData,"dashboard")
   const loadProperties = async () => {
     try {
       setLoading(true);
@@ -96,7 +93,7 @@ const Dashboard = () => {
       setStats({
         totalProperties: response.properties.length,
         activeBookings: Math.floor(Math.random() * 10) + 5,
-        monthlyRevenue: response.properties.reduce((total, prop) => total + prop.rentPerMonth, 0),
+        monthlyRevenue: response.properties.reduce((total:any, prop:any) => total + prop.rentPerMonth, 0),
         occupancyRate: Math.floor(Math.random() * 40) + 60,
       });
     } catch (error) {
@@ -146,6 +143,14 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
               title="Total Properties"
+              value={dashboardData?.totalProperties}
+              description="Properties listed on platform"
+              icon={<Home className="h-5 w-5" />}
+              trend="up" 
+              trendValue="2"
+            />
+             <StatCard
+              title="Total Active Properties"
               value={dashboardData?.totalActiveProperties}
               description="Properties listed on platform"
               icon={<Home className="h-5 w-5" />}

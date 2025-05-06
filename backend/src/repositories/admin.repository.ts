@@ -28,94 +28,21 @@ class AdminRepository
   }
   
   
-   async findService(id:string): Promise<IService|null> {
-      return await Service.findOne({_id:id});
+   
+    async findUser(userId:string):Promise<IUser|null>{
+      return await User.findOne({_id:userId});
     }
-    async findFeatures(): Promise<IFeature[]>{
-      return await Feature.find()
+    async findOwner(ownerId: string): Promise<IOwner | null> {
+      return await Owners.findById(ownerId);
     }
-    async findUser(id:string):Promise<IUser|null>{
-      return await User.findOne({_id:id});
+    async deleteOwner(ownerId: string): Promise<IOwner | null> {
+      return await Owners.findOneAndDelete({ _id: ownerId });
     }
-    async findOwner(id: string): Promise<IOwner | null> {
-      return await Owners.findById(id);
-    }
-    async deleteOwner(id: string): Promise<IOwner | null> {
-      return await Owners.findOneAndDelete({ _id: id });
-    }
-    async findFeature(id:string): Promise<IFeature |null>{
-      return await Feature.findOne({_id:id})
-    }
-    async deleteFeature(id:string): Promise<IFeature | null>{
-      return await Feature.findByIdAndDelete({_id:id});
-    }
+   
   
-    async approveProperty (id: string) {
-      return await Property.findByIdAndUpdate(id, { status: 'active' });
-    };
-    
-    async blockUnblockProperty (id: string, status: string) {
-     return await Property.findByIdAndUpdate(id, { status });
-    };
-    
-    async deleteProperty (id: string) {
-      return await Property.findByIdAndDelete(id);
-    };
-    async findAllBookings(skip: number = 0, limit: number = 5) {
-      return Booking.aggregate([
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $lookup: {
-            from: "owners",
-            localField: "ownerId",
-            foreignField: "_id",
-            as: "owner",
-          },
-        },
-        {
-          $lookup: {
-            from: "properties",
-            localField: "propertyId",
-            foreignField: "_id",
-            as: "property",
-          },
-        },
-        { $unwind: "$user" },
-        { $unwind: "$owner" },
-        { $unwind: "$property" },
-        {
-          $project: {
-            id: "$_id",
-            userName: "$user.name",
-            ownerName: "$owner.name",
-            propertyName: "$property.title",
-            ownerEmail: "$owner.email",
-            userEmail: "$user.email",
-            moveInDate: 1,
-            endDate: 1,
-            bookingId: 1,
-            bookingStatus: 1,
-            paymentStatus: 1,
-            totalCost: 1,
-            createdAt: 1,
-          },
-        },
-        { $sort: { createdAt: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ]);
-    };
+  
 
-    async countAllBookings() {
-      return Booking.countDocuments();
-    }
+   
     async updateRefreshToken(adminId: string | Types.ObjectId, refreshToken: string): Promise<IUser | null> {
       return await Admin.findByIdAndUpdate(adminId, { refreshToken }, { new: true });
   }
@@ -185,4 +112,4 @@ class AdminRepository
     
 }
 
-export default new AdminRepository();
+export default AdminRepository;

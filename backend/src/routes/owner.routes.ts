@@ -1,52 +1,70 @@
 import { Router } from "express";
-import ownerController from "../controllers/owner.controller";
+import container from "../config/DI/inversify";
+import TYPES from "../config/DI/types";
+import  OwnerController from "../controllers/owner.controller";
 import passport from "../config/passport";
 import { uploadGovtId, uploadPropertyImage, uploadServiceImage } from "../middlewares/multer";
 // import { verifyToken } from "../middlewares/authmid";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import propertyController from "../controllers/property.controller";
-import bookingController from "../controllers/booking.controller";
-import featureController from "../controllers/feature.controller";
-import adminController from "../controllers/admin.controller";
-import chatController from "../controllers/chat.controller";
+import BookingController from "../controllers/booking.controller";
+import ChatController from "../controllers/chat.controller";
+import PropertyController from "../controllers/property.controller";
+import NotificationController from "../controllers/notification.controller";
+import FeatureController from "../controllers/feature.controller";
+// import propertyController from "../controllers/property.controller";
+// import bookingController from "../controllers/booking.controller";
+// import featureController from "../controllers/feature.controller";
+// import adminController from "../controllers/admin.controller";
+// import chatController from "../controllers/chat.controller";
+// import notificationController from "../controllers/notification.controller";
 
 const ownerRoutes = Router();
 
-ownerRoutes.post("/signup",uploadGovtId.single("govtId"), ownerController.register);
-ownerRoutes.post("/login",ownerController.login);
-ownerRoutes.get("/check-status/:id",authMiddleware(["owner"]),ownerController.getOwnerStatus);
-ownerRoutes.post("/refresh-token", adminController.refreshToken);
-ownerRoutes.post("/forgot-pass",ownerController.forgotPassword);
-ownerRoutes.post("/resend-otp",ownerController.resendOTP);
-ownerRoutes.post("/reset-password",ownerController.resetPassword);
+const ownerCtr = container.get<OwnerController>(TYPES.OwnerController);
+const bookingCtr = container.get<BookingController>(TYPES.BookingController);
+const chatCtr = container.get<ChatController>(TYPES.ChatController);
+const propertyCtr = container.get<PropertyController>(TYPES.PropertyController);
+const notificationCtr = container.get<NotificationController>(TYPES.NotificationController);
+const featureCtr = container.get<FeatureController>(TYPES.FeatureController);
 
-ownerRoutes.get("/dashboard",authMiddleware(["owner"]),ownerController.getDashboardData);
-ownerRoutes.get("/profile/:id",authMiddleware(["owner"]),ownerController.getProfileData);
-ownerRoutes.patch("/profile/:id",authMiddleware(["owner"]),ownerController.updateProfile);
-ownerRoutes.get("/property/:id",authMiddleware(["owner"]),ownerController.getPropertyById);
-ownerRoutes.patch("/property/update/:id",authMiddleware(["owner"]),ownerController.updateProperty);
-ownerRoutes.get("/wallet/:id",authMiddleware(["owner"]),ownerController.fetchWalletData);
 
-ownerRoutes.get("/features",authMiddleware(["owner"]),uploadPropertyImage.array("images") 
-,featureController.listFeatures);
+
+ownerRoutes.post("/signup",uploadGovtId.single("govtId"), ownerCtr.register.bind(ownerCtr));
+ownerRoutes.post("/login",ownerCtr.login.bind(ownerCtr));
+ownerRoutes.get("/check-status/:id",authMiddleware(["owner"]),ownerCtr.getOwnerStatus.bind(ownerCtr));
+// ownerRoutes.post("/refresh-token", ownerController.refreshToken);
+ownerRoutes.post("/forgot-pass",ownerCtr.forgotPassword.bind(ownerCtr));
+ownerRoutes.post("/resend-otp",ownerCtr.resendOTP.bind(ownerCtr));
+ownerRoutes.post("/reset-password",ownerCtr.resetPassword.bind(ownerCtr));
+
+ownerRoutes.get("/dashboard",authMiddleware(["owner"]),ownerCtr.getDashboardData.bind(ownerCtr));
+ownerRoutes.get("/profile/:id",authMiddleware(["owner"]),ownerCtr.getProfileData.bind(ownerCtr));
+ownerRoutes.patch("/profile/:id",authMiddleware(["owner"]),ownerCtr.updateProfile.bind(ownerCtr));
+ownerRoutes.get("/property/:id",authMiddleware(["owner"]),ownerCtr.getPropertyById.bind(ownerCtr));
+ownerRoutes.patch("/property/update/:id",authMiddleware(["owner"]),ownerCtr.updateProperty.bind(ownerCtr));
+ownerRoutes.get("/wallet/:id",authMiddleware(["owner"]),ownerCtr.fetchWalletData.bind(ownerCtr));
+
+ownerRoutes.get("/features",authMiddleware(["owner"])
+,featureCtr.listFeatures.bind(featureCtr));
 ownerRoutes.post( 
     "/add-property",
     authMiddleware(["owner"]),
     uploadPropertyImage.array("images"), 
-    propertyController.createProperty 
+    propertyCtr.createProperty.bind(propertyCtr) 
   );
-ownerRoutes.get("/bookings",authMiddleware(["owner"]),bookingController.listBookingsByOwner);
-ownerRoutes.get("/bookings/:id",authMiddleware(["owner"]),bookingController.bookingDetails);
+ownerRoutes.get("/bookings",authMiddleware(["owner"]),bookingCtr.listBookingsByOwner.bind(bookingCtr));
+ownerRoutes.get("/bookings/:id",authMiddleware(["owner"]),bookingCtr.bookingDetails.bind(bookingCtr));
 
-ownerRoutes.get("/get-Owner-Properties",authMiddleware(["owner"]),propertyController.getPropertyByOwner)
-ownerRoutes.post("/verify-otp", ownerController.verifyOTP);
-ownerRoutes.post("/logout",ownerController.logout);
-ownerRoutes.delete('/delete/:id', authMiddleware(['owner']), propertyController.deletePropertyById);
-ownerRoutes.get("/conversation",authMiddleware(['owner']),chatController.getConversation);
-ownerRoutes.post("/message",authMiddleware(['owner']),chatController.sendMessage);
-ownerRoutes.patch("/messages/mark-as-read", authMiddleware(["owner"]),chatController.markMessagesAsRead);
+ownerRoutes.get("/get-Owner-Properties",authMiddleware(["owner"]),propertyCtr.getPropertyByOwner.bind(propertyCtr))
+ownerRoutes.post("/verify-otp", ownerCtr.verifyOTP.bind(ownerCtr));
+ownerRoutes.post("/logout",ownerCtr.logout);
+ownerRoutes.delete('/delete/:id', authMiddleware(['owner']), propertyCtr.deletePropertyById.bind(propertyCtr));
+ownerRoutes.get("/conversation",authMiddleware(['owner']),chatCtr.getConversation.bind(chatCtr));
+ownerRoutes.post("/message",authMiddleware(['owner']),chatCtr.sendMessage.bind(chatCtr));
+ownerRoutes.patch("/messages/mark-as-read", authMiddleware(["owner"]),chatCtr.markMessagesAsRead.bind(chatCtr));
 
-ownerRoutes.get("/conversations",authMiddleware(['owner']),chatController.listConversations);
+ownerRoutes.get("/conversations",authMiddleware(['owner']),chatCtr.listConversations.bind(chatCtr));
+ownerRoutes.get("/notifications", authMiddleware(["owner"]), notificationCtr.getNotifications.bind(notificationCtr));
 
 export default ownerRoutes;
 

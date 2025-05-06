@@ -3,31 +3,58 @@ import { INotificationService } from "./interfaces/INotificationServices";
 import { INotification } from "../models/notification.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import mongoose from "mongoose";
+import { Types } from 'mongoose';
+import { INotificationRepository } from "../repositories/interfaces/INotificationRepository";
 
-class NotificationService implements INotificationService {
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+
+@injectable()
+export class NotificationService implements INotificationService {
+  constructor(
+    @inject(TYPES.NotificationRepository)
+      private notificationRepository: INotificationRepository
+    
+  ){}
+
+
   async createNotification(
     recipient: string,
     recipientModel: string,
     type: string,
-    message: string
+    message: string,
+    otherId: string | null
   ): Promise<{ message: string; status: number; data: INotification }> {
-    const notification = await notificationRepository.create({
-      recipient: new mongoose.Types.ObjectId(recipient),
+    
+    const recipientObjectId = new Types.ObjectId(recipient);
+  
+    let otherIdObjectId: Types.ObjectId | null = null;
+  
+    if (otherId && Types.ObjectId.isValid(otherId)) {
+      otherIdObjectId = new Types.ObjectId(otherId); 
+    }
+  
+    const notification = await this.notificationRepository.create({
+      recipient: recipientObjectId,
       recipientModel,
       type,
       message,
+      otherId: otherIdObjectId, 
       read: false,
     });
+  
     return {
       message: MESSAGES.SUCCESS.NOTIFICATION_CREATED,
       status: STATUS_CODES.CREATED,
       data: notification,
     };
   }
+
+
   async getNotifications(
     recipientId: string
   ): Promise<{ message: string; status: number; data: INotification[] }> {
-    const notifications = await notificationRepository.findByRecipient(
+    const notifications = await this.notificationRepository.findByRecipient(
       recipientId
     );
     return {
@@ -39,7 +66,7 @@ class NotificationService implements INotificationService {
   async markAsRead(
     notificationId: string
   ): Promise<{ message: string; status: number; data: INotification | null }> {
-    const updatedNotification = await notificationRepository.update(
+    const updatedNotification = await this.notificationRepository.update(
       notificationId,
       { read: true }
     );
@@ -51,4 +78,4 @@ class NotificationService implements INotificationService {
   }
 }
 
-export default new NotificationService();
+export default  NotificationService;

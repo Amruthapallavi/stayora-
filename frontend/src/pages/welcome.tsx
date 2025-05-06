@@ -46,8 +46,8 @@ const Welcome: React.FC = () => {
           <h1 className="text-3xl font-bold text-yellow-600">Stayora</h1>
           <div className="flex items-center space-x-6 text-white font-medium">
             <Link to="/" className="hover:text-yellow-400 transition">Home</Link>
-            <Link to="/about" className="hover:text-yellow-400 transition">About</Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition">Contact</Link>
+            {/* <Link to="/about" className="hover:text-yellow-400 transition">About</Link> */}
+            {/* <Link to="/contact" className="hover:text-yellow-400 transition">Contact</Link> */}
             <div className="relative">
       <button
         className="flex items-center space-x-2 hover:text-yellow-600"

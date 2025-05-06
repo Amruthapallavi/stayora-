@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { notifySuccess, notifyError } from "../../utils/notifications";
 import { useState } from 'react';
@@ -115,6 +115,9 @@ const UserSignup = () => {
                   placeholder="Confirm your password"
                   className="w-full mt-2 p-2 border rounded-lg focus:outline-none focus:ring-4 focus:ring-[#a0815c] transition duration-300" required
                 />
+              </div>
+              <div className="text-left mt-2">
+                <p className="text-black-600 text-sm ">Already have an account?<Link to='/user/login' className="text-blue-600" > Login </Link></p>
               </div>
               <button
                 type="submit"

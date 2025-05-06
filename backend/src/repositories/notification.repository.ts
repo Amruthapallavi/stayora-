@@ -17,4 +17,4 @@ class NotificationRepository
   }
 }
 
-export default new NotificationRepository();
+export default NotificationRepository;

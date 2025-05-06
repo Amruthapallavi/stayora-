@@ -1,16 +1,38 @@
 import { Types } from "mongoose";
 import { IProperty } from "../models/property.model";
-import featureRepository from "../repositories/feature.repository";
-import ownerRepository from "../repositories/owner.repository";
-import propertyRepository from "../repositories/property.repository";
+// import featureRepository from "../repositories/feature.repository";
+// import ownerRepository from "../repositories/owner.repository";
+// import propertyRepository from "../repositories/property.repository";
 import { IPropertyService } from "./interfaces/IPropertyService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
-import adminRepository from "../repositories/admin.repository";
+// import adminRepository from "../repositories/admin.repository";
+// import userRepository from "../repositories/user.repository";
+// import bookingRepository from "../repositories/booking.repository";
+import { IPropertyRepository } from "../repositories/interfaces/IPropertyRepository";
+import { inject, injectable } from "inversify";
+import  TYPES  from "../config/DI/types";
+import { IFeatureRepository } from "../repositories/interfaces/IFeatureRepository";
+import { IUserRepository } from "../repositories/interfaces/IUserRepository";
+import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
+import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
 
 
-
-class propertyService implements IPropertyService{
-
+@injectable()
+export class PropertyService implements IPropertyService {
+  constructor(
+    @inject(TYPES.PropertyRepository)
+      private propertyRepository: IPropertyRepository,
+      @inject(TYPES.FeatureRepository)
+      private featureRepository: IFeatureRepository,
+      @inject(TYPES.UserRepository)
+      private userRepository: IUserRepository,
+      @inject(TYPES.OwnerRepository)
+      private ownerRepository: IOwnerRepository,
+      @inject(TYPES.BookingRepository)
+      private bookingRepository: IBookingRepository
+      
+    
+  ){}
     async createProperty(req: {
         data: Partial<IProperty> & {
           selectedFeatures?: string[];
@@ -22,7 +44,14 @@ class propertyService implements IPropertyService{
         try {
           const { data, ownerId, images } = req;
           console.log(data, "from service addproperty");
-      
+      //     const type=data.type;
+      //     if(!type){
+      //       return {status:400,message:"Property type is missing"}
+      //     }
+      //   const propertiesWithSameType=  await propertyRepository.propertiesWithSameType(ownerId,type)
+      //  if(propertiesWithSameType.length>=3){
+        
+      //  }
           if (!ownerId) {
             return { status: 400, message: "Owner ID is missing" };
           }
@@ -54,7 +83,7 @@ class propertyService implements IPropertyService{
               : data.mapLocation;
       
           if (data.title && parsedMapLocation?.lat && parsedMapLocation?.lng) {
-            const similarProperties = await propertyRepository.findSimilarProperties(
+            const similarProperties = await this.propertyRepository.findSimilarProperties(
               data.title.trim(),
               {
                 latitude: parsedMapLocation.lat,
@@ -79,7 +108,7 @@ class propertyService implements IPropertyService{
             ? [data.selectedFeatures]
             : [];
       
-          const featureDocs = await featureRepository.getFeatureNamesByIds(
+          const featureDocs = await this.featureRepository.getFeatureNamesByIds(
             selectedFeatureIds
           );
       
@@ -117,7 +146,7 @@ class propertyService implements IPropertyService{
             images: images || [],
           };
       
-          await propertyRepository.create(propertyData);
+          await this.propertyRepository.create(propertyData);
       
           return { status: 201, message: "Property added successfully" };
         } catch (error) {
@@ -131,7 +160,7 @@ class propertyService implements IPropertyService{
           ownerId: string
         ): Promise<{ properties: any[]; status: number; message: string }> {
           try {
-            const properties = await ownerRepository.findOwnerProperty(ownerId);
+            const properties = await this.ownerRepository.findOwnerProperty(ownerId);
         
             return {
               properties: properties || [], 
@@ -152,7 +181,7 @@ class propertyService implements IPropertyService{
            async deletePropertyById(id: string): Promise<{ status: number; message: string }> {
                   try {
                     console.log("delete")
-                    await propertyRepository.deletePropertyById(id);
+                    await this.propertyRepository.deletePropertyById(id);
                 
                     return {
                       status: STATUS_CODES.OK,
@@ -168,7 +197,7 @@ class propertyService implements IPropertyService{
                 }
             async getAllProperties(): Promise<{ properties: IProperty[]; status: number; message: string }> {
                 try {
-                  const properties = await propertyRepository.findAllPropertiesWithOwnerData();
+                  const properties = await this.propertyRepository.findAllPropertiesWithOwnerData();
               
                   return {
                     properties: properties || [], 
@@ -190,7 +219,7 @@ class propertyService implements IPropertyService{
                 data: Partial<IProperty>
               ): Promise<{ data: IProperty | null; status: number; message: string }> {
                 try {
-                  const updatedProperty = await propertyRepository.update(id, data);
+                  const updatedProperty = await this.propertyRepository.update(id, data);
               
                   if (!updatedProperty) {
                     return {
@@ -217,7 +246,7 @@ class propertyService implements IPropertyService{
 
               async getFilteredProperties(filters: any) {
                 try {
-                  const properties = await propertyRepository.findFilteredProperties(filters);
+                  const properties = await this.propertyRepository.findFilteredProperties(filters);
                   console.log("properties filtered",properties)
                   if (!properties) {
                     return {
@@ -233,9 +262,153 @@ class propertyService implements IPropertyService{
                 }
               }
               
+                async approveProperty(id: string): Promise<{ status: number; message: string }> {
+                  try {
+                    await this.propertyRepository.approveProperty(id);
+                
+                    return {
+                      status: STATUS_CODES.OK,
+                      message: "Property approved successfully",
+                    };
+                  } catch (error) {
+                    console.error("Error approving property:", error);
+                    return {
+                      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                      message: MESSAGES.ERROR.SERVER_ERROR,
+                    };
+                  }
+                }
+
+                
+                  async blockUnblockProperty(id: string, status: string): Promise<{ status: number; message: string }> {
+                    try {
+                      await this.propertyRepository.blockUnblockProperty(id, status);
+                  
+                      return {
+                        status: STATUS_CODES.OK,
+                        message: `Property status updated to ${status}`,
+                      };
+                    } catch (error) {
+                      console.error("Error updating property status:", error);
+                      return {
+                        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                        message: MESSAGES.ERROR.SERVER_ERROR,
+                      };
+                    }
+                  }
+                  
+                  async deleteProperty(id: string): Promise<{ status: number; message: string }> {
+                    try {
+                      await this.propertyRepository.deleteProperty(id);
+                  
+                      return {
+                        status: STATUS_CODES.OK,
+                        message: "Property deleted successfully",
+                      };
+                    } catch (error) {
+                      console.error("Error deleting property:", error);
+                      return {
+                        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                        message: MESSAGES.ERROR.SERVER_ERROR,
+                      };
+                    }
+                  }
+                 
+                  
+                
+                async rejectProperty(id: string, reason: string): Promise<{ message: string; status: number }> {
+                  try {
+                    const property = await this.propertyRepository.findById(id);
+                    if (!property) {
+                      return {
+                        message: "property not found",
+                        status: STATUS_CODES.NOT_FOUND,
+                      };
+                    }
+                
+                    const updatedData:Partial<IProperty>={
+                      isRejected:true,
+                      rejectedReason:reason,
+                      status:"rejected",
+                    }
+                    // const ownerId=new mongoose.Types.ObjectId(property.ownerId);
+                    // const owner=await ownerRepository.findById(ownerId);
+                
+                    // await ownerRepository.update(id, {
+                    //   govtIdStatus: "rejected",
+                    //   rejectionReason: reason,
+                    // });
+                
+                
+                    // await Mail.sendRejectionMail(owner.email, reason);
+                        const response=  await this.propertyRepository.update(id, updatedData);
+                        console.log(response);
+                
+                    return {
+                      message: "Rejected successfully & email sent",
+                      status: STATUS_CODES.OK,
+                    };
+                  } catch (error) {
+                    console.error("Error rejecting owner:", error);
+                    return {
+                      message: "Internal Server Error",
+                      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                    };
+                  }
+                }
+                async getPropertyById(id: string): Promise<{ property: any; ownerData: any;booking:any; status: number; message: string }> {
+                  try {
+                    const property = await this.propertyRepository.findPropertyById(id) as IProperty;
+              
+                    if (!property) {
+                      throw new Error("Property not available");
+                    }
+                    
+                    if (!property) {
+                      return {
+                        property: null,
+                        booking:null,
+                        ownerData: null,
+                        status: STATUS_CODES.NOT_FOUND,
+                        message: "Property not found"
+                      };
+                    }
+                
+                    const ownerId = property.ownerId.toString(); 
+                    const owner = await this.userRepository.findOwnerById(ownerId);
+                
+                    const ownerData = owner
+                    ? {
+                        name: owner.name,
+                        phone: owner.phone,
+                        email: owner.email
+                      }
+                    : null;
+                    const booking = await this.bookingRepository.findPropertyBookings(id);
+                    console.log(booking,"for admin pag")
+                    return {
+                      property,
+                      booking,
+                      ownerData,
+                      status: STATUS_CODES.OK,
+                      message: "Property fetched successfully"
+                    };
+                
+                  } catch (error) {
+                    console.error("Error in getPropertyById:", error);
+                    return {
+                      property: null,
+                      ownerData: null,
+                      booking:null,
+                      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+                      message: MESSAGES.ERROR.SERVER_ERROR,
+                    };
+                  }
+                }
+              
       
       
       
 }
 
-export default new propertyService();
+export default PropertyService;

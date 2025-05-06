@@ -10,24 +10,8 @@ import { useAuthStore } from "../../stores/authStore";
 import { TooltipProvider } from "../../components/ui/tooltip";
 import useDarkMode from "../../components/Theme";
 
-// Mock data for charts
-// const userActivityData = [
-//   { month: 'Jan', users: 400, bookings: 240 },
-//   { month: 'Feb', users: 300, bookings: 139 },
-//   { month: 'Mar', users: 500, bookings: 380 },
-//   { month: 'Apr', users: 780, bookings: 390 },
-//   { month: 'May', users: 600, bookings: 430 },
-//   { month: 'Jun', users: 850, bookings: 590 },
-// ];
 
-// const revenueData = [
-//   { month: 'Jan', revenue: 4000 },
-//   { month: 'Feb', revenue: 3000 },
-//   { month: 'Mar', revenue: 5000 },
-//   { month: 'Apr', revenue: 7800 },
-//   { month: 'May', revenue: 6000 },
-//   { month: 'Jun', revenue: 8500 },
-// ];
+
 type RevenueEntry = {
   month: string;
   revenue: number;
@@ -36,8 +20,8 @@ const AdminDashboard = () => {
 
   const { darkMode, toggleDarkMode } = useDarkMode();
  const {getDashboardData}=useAuthStore();
- const [dashboardData, setDashboardData] = useState<any>(null);  // Change 'any' to the actual type if you know it
- const [revenueData, setRevenueData] = useState<RevenueEntry[]>([]);  // Change 'any' to the actual type if you know it
+ const [dashboardData, setDashboardData] = useState<any>(null); 
+ const [revenueData, setRevenueData] = useState<RevenueEntry[]>([]);  
 
  const [error, setError] = useState<string | null>(null);
   // const toggleDarkMode = () => {
@@ -54,8 +38,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await getDashboardData()  // Adjust the API URL as needed
-        setDashboardData(response.data);  // Assuming the response structure is like { data: {...} }
+        const response = await getDashboardData() 
+        setDashboardData(response.data);  
         setRevenueData(response.data?.revenueData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -100,7 +84,6 @@ console.log(dashboardData,"dash")
       gradientTo: "indigo-600",
       details: [
         { label: "Active ", value:dashboardData?.activeOwners, color: "green" },
-        // { label: "Verified", value: dashboardData?.verifiedUsres, color: "yellow" },
         { label: "Blocked", value: dashboardData?.blockedOwners, color: "red" },
       ] 
     },

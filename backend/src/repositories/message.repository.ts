@@ -24,7 +24,6 @@ class messageRepository
         .populate("receiver") 
         .sort({ createdAt: 1 });
   
-      console.log("Populated messages:", messages);
       return messages;
     } catch (error) {
       console.error("Error fetching conversation:", error);
@@ -123,6 +122,7 @@ class messageRepository
     ]);
     return result;
   }
+  
   async markMessagesAsRead(otherUserId: string, userId: string): Promise<number> {
     const result = await Message.updateMany(
       {
@@ -140,4 +140,4 @@ class messageRepository
   
 }
 
-export default new messageRepository();
+export default messageRepository;

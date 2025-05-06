@@ -11,17 +11,7 @@ import { notifyError } from '../../utils/notifications';
 import OwnerLayout from '../../components/owner/OwnerLayout';
 import { IProperty } from '../../types/IProperty';
 
-// interface Property {
-//   id: string;
-//   title: string;
-//   type: string;
-//   bedrooms: number;
-//   bathrooms: number;
-//   city: string;
-//   state: string;
-//   rentPerMonth: number;
-//   images: string[];
-// }
+
 
 
 const Properties = () => {

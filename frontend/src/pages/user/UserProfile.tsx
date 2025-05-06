@@ -139,7 +139,6 @@ const Profile = () => {
     }
   
     try {
-      console.log(profileForm);
       await updateUser(user.id,profileForm);
       notifySuccess("Profile updated Successfully");
       setProfileForm(userData);
@@ -186,7 +185,6 @@ const Profile = () => {
       return;
     }
   try{
-    console.log(user.id,currentPassword,newPassword)
    const response= await changePassword({
       userId: user.id,
       oldPass:currentPassword,

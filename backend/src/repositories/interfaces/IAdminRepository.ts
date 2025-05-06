@@ -9,19 +9,27 @@ import { IProperty } from "../../models/property.model";
 import { Types } from "mongoose";
 
 export interface IAdminRepository extends IBaseRepository<IUser> {
-  updateRefreshToken(adminId: string | Types.ObjectId, refreshToken: string): Promise<IUser | null>;
-
   findByEmail(email: string): Promise<IUser | null>;
-  findAllUsers(): Promise<IUser[] | null>;
-  findAllOwners(): Promise<IOwner[] | null>;
-  findService(id:string): Promise<IService | null>;
-  findFeatures(): Promise<IFeature[] | null>;
-  findUser(id: string): Promise<IUser | null>;
-  findOwner(id: string): Promise<IOwner | null>;
-  deleteOwner(id: string): Promise<IOwner | null>;
-  blockUnblockProperty(id: string,status:string): Promise<IProperty | null>;
-  deleteProperty(id: string): Promise<IProperty | null>;
-  findAllBookings(): Promise<IBookingReport[]>;
+  findAllUsers(): Promise<IUser[]>;
+  findAllOwners(): Promise<IOwner[]>;
+  findUser(userId: string): Promise<IUser | null>;
+  findOwner(ownerId: string): Promise<IOwner | null>;
+  deleteOwner(ownerId: string): Promise<IOwner | null>;
+  updateRefreshToken(adminId: string | Types.ObjectId, refreshToken: string): Promise<IUser | null>;
+  getUserRegistrations(): Promise<
+    { _id: { month: number; year: number }; count: number }[]
+  >;
+  getOwnerRegistrations(): Promise<
+    { _id: { month: number; year: number }; count: number }[]
+  >;
+  getBookingStats(): Promise<
+    { _id: { month: number; year: number }; count: number; revenue: number }[]
+  >;
+  
 
 
 }
+
+
+
+  
