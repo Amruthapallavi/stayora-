@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createAuthSlice } from '../stores/slices/authSlice';
 
-import { AppState, AuthState } from '../types/storeTypes';
+import { AppState } from '../types/storeTypes';
 import { createPropertySlice } from './slices/propertySlice';
 import { createChatSlice } from './slices/chatSlice';
 import { createFeatureSlice } from './slices/featureSlice';

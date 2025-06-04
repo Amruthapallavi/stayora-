@@ -16,7 +16,6 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
   ArrowLeft,
-  Edit,
   MapPin,
   BedDouble,
   Bath,
@@ -25,11 +24,9 @@ import {
   Calendar,
   DollarSign,
   Trash2,
-  Share2,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
-import Map from "../../components/owner/map";
 import {
   Dialog,
   DialogContent,

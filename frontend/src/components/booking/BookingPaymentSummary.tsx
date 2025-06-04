@@ -78,14 +78,14 @@ const BookingPaymentSummary = ({
             </div>
             <span
               className={`font-semibold ${
-                paymentStatus.toLowerCase() === "completed"
+                paymentStatus?.toLowerCase() === "completed"
                   ? "text-green-600"
-                  : paymentStatus.toLowerCase() === "pending"
+                  : paymentStatus?.toLowerCase() === "pending"
                   ? "text-yellow-600"
                   : "text-red-600"
               }`}
             >
-              {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+              {paymentStatus?.charAt(0).toUpperCase() + paymentStatus?.slice(1)}
             </span>
           </div>
         </div>

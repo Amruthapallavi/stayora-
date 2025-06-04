@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { AppState, AuthState } from '../../types/storeTypes';
+import { AppState } from '../../types/storeTypes';
 import { chatState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';

@@ -8,6 +8,6 @@ class ReviewRepository extends BaseRepository<IReview> implements IReviewReposit
     }
 
 
-}
+} 
 
 export default ReviewRepository;

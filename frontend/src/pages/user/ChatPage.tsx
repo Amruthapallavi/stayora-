@@ -14,7 +14,6 @@ import {
 import { Card } from "../../components/ui/card";
 import {
   CardContent,
-  //  CardDescription,
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
@@ -354,15 +353,11 @@ const ChatPage = () => {
       const newMessage = response.data;
       await reloadData();
       console.log(newMessage, "new msg");
-      // Emit to socket
       if (socket) {
         socket.emit("sendMessage", newMessage, room);
       }
 
-      // Append to messages
-      // setMessages(prev => [...prev, newMessage]);
 
-      // Update conversation list
       setConversations((prev) => {
         const updatedConversations = [...prev];
         const index = updatedConversations.findIndex(
@@ -418,7 +413,6 @@ const ChatPage = () => {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <UserLayout>
@@ -658,19 +652,21 @@ const ChatPage = () => {
                     <p>No messages yet. Start the conversation!</p>
                   </div>
                 ) : (
-                  messages.map((msg, i) => {
-                    const senderId =
-                      typeof msg.sender === "string"
-                        ? msg.sender
-                        : msg.sender._id;
-                    const isOwnMessage =
-                      senderId === (user?.userId || user?.id);
-                    const showAvatar =
-                      i === 0 ||
-                      (messages[i - 1] &&
-                        (typeof messages[i - 1].sender === "string"
-                          ? messages[i - 1].sender
-                          : messages[i - 1].sender._id) !== senderId);
+                 messages.map((msg, i) => {
+  const senderId =
+    typeof msg.sender === "string" ? msg.sender : msg.sender._id;
+
+  const isOwnMessage = senderId === (user?.userId || user?.id);
+
+  const previousSender = messages[i - 1]?.sender;
+  const previousSenderId =
+    typeof previousSender === "string"
+      ? previousSender
+      : previousSender?._id;
+
+  const showAvatar = i === 0 || previousSenderId !== senderId;
+
+ 
 
                     return (
                       <div

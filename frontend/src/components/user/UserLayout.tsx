@@ -12,6 +12,7 @@ export default function UserLayout({ children }: { children: ReactNode }) {
       <main className="pt-[90px] px-4 sm:px-6 md:px-8 transition-all duration-300">
         {children}
       </main>
+      <Footer/>
     </div>
   );
 }

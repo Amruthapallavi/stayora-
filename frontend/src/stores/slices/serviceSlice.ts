@@ -1,6 +1,6 @@
 
 import { StateCreator } from 'zustand';
-import { AppState, AuthState } from '../../types/storeTypes';
+import { AppState } from '../../types/storeTypes';
 import { serviceState } from '../../types/storeTypes';
 import { adminService } from '../../api/services/adminService';
 import { userService } from '../../api/services/userService';

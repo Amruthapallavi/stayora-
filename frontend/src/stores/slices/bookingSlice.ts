@@ -1,10 +1,11 @@
 import { StateCreator } from 'zustand';
-import { AppState, AuthState } from '../../types/storeTypes';
+import { AppState } from '../../types/storeTypes';
 import { bookingState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { adminService } from '../../api/services/adminService';
 import { userService } from '../../api/services/userService';
 import { razorpayService } from '../../api/services/paymentService';
+import { IBookingDetailsResponse } from '../../types/booking';
 
 export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = (set, get) => ({
 
@@ -21,30 +22,31 @@ export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = 
         }
       },
     
-      bookingDetails: async (bookingId: string) => {
-        const { authType } = get();
-        if (!authType) return false;
-        try {
-          let response;
-          switch (authType) {
-            case "admin":
-              response = await adminService.bookingDetails(bookingId);
-              break;
-            case "user":
-              response = await userService.bookingDetails(bookingId);
-              break;
-            case "owner":
-              response = await ownerService.bookingDetails(bookingId);
-              break;
-            default:
-              return [];
-          }
-          return response;
-        } catch (error) {
-          console.error("Error checking user status", error);
-          return false;
-        }
-      },
+    bookingDetails: async (bookingId: string): Promise<IBookingDetailsResponse> => {
+  const { authType } = get();
+  if (!authType) throw new Error("No auth type");
+
+  let response;
+
+  switch (authType) {
+    case "admin":
+      response = await adminService.bookingDetails(bookingId);
+      break;
+    case "user":
+      response = await userService.bookingDetails(bookingId);
+      break;
+    case "owner":
+      response = await ownerService.bookingDetails(bookingId);
+      break;
+    default:
+      throw new Error("Invalid auth type");
+  }
+
+  if (!response) throw new Error("No response from booking service");
+
+  return response as IBookingDetailsResponse;
+},
+
         listAllBookings: async () => {
               try {
                 const { authType } = get();

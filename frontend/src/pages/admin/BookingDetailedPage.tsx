@@ -11,7 +11,6 @@ import { notifyError } from '../../utils/notifications';
 import { IOwner } from '../../types/owner';
 import { IUser } from '../../types/user';
 import AdminLayout from '../../components/admin/AdminLayout';
-import * as moment from 'moment';
 import OwnerDetailsModal from '../../components/admin/OwnerDetailsModal';
 
 const BookingDetail = () => {

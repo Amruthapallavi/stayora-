@@ -1,12 +1,18 @@
-export interface INotification{
-    recipient: string;
-    recipientModel: string;
-    type: string;
-    message: string;
-    read: boolean;
-    otherId?: string | null;  
-    createdAt: Date;
-  
+
+
+export interface INotification {
+  recipient: string;
+  recipientModel: string;
+  type: string;
+  message: string;
+  read: boolean;
+  otherId?: string | null;
+  createdAt: Date;
+}
+
+export interface INotificationApiResponse {
+  data: INotification[];
+  message: string;
 }
 
 export interface Conversation {

@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { AppState, AuthState } from '../../types/storeTypes';
+import { AppState } from '../../types/storeTypes';
 import { propertyState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';
@@ -158,7 +158,7 @@ export const createPropertySlice: StateCreator<AppState, [], [], propertyState> 
                 }
       
                 if (authType === "admin") {
-                  return await adminService.getAllProperties(page, limit,search);
+               return await adminService.getAllProperties(page, limit, search || "");
                 }
       
                 throw new Error("Invalid authType");

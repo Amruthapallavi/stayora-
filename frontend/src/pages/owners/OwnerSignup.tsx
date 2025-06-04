@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Lock, User, Phone, IdCard, UploadCloud } from "lucide-react";
+import { Mail, Lock, User, Phone, UploadCloud } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { notifySuccess, notifyError } from "../../utils/notifications";

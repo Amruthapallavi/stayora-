@@ -1,7 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
 import { notifySuccess, notifyError } from "../../utils/notifications";
-import { useState } from 'react';
+import { useState } from "react";
 
 const UserSignup = () => {
   const navigate = useNavigate();
@@ -16,27 +16,32 @@ const UserSignup = () => {
     confirmPassword: "",
   });
 
-  const handleChange = (e:any) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError("");
 
     try {
-      await signup(formData, "user");
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
+
+      await signup(formDataToSend, "user");
       notifySuccess("Signup successful. Please verify your email.");
       navigate("/user/verify-otp", {
         state: { email: formData.email, authType: "user" },
       });
-    } catch (err:any) {
+    } catch (err: any) {
       const errMsg =
         err.response?.data?.message || "Failed to sign up. Please try again.";
       setError(errMsg);
       notifyError(errMsg);
-    } 
+    }
   };
 
   return (
@@ -56,9 +61,13 @@ const UserSignup = () => {
       <div className="flex justify-center my-12">
         <div className="w-full max-w-lg">
           <h2 className="text-xl font-semibold mb-6 border-b-2 pb-2">Signup</h2>
-          
-          {error && <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">{error}</div>}
-          
+
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">
+              {error}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label className="block mb-2 font-medium">
@@ -142,9 +151,10 @@ const UserSignup = () => {
               SIGN UP
             </button>
           </form>
-          
+
           <p className="mt-4 text-gray-600">
-            Already have an account? <span className="text-[#C3A37F] cursor-pointer">Signin</span>
+            Already have an account?{" "}
+            <span className="text-[#C3A37F] cursor-pointer">Signin</span>
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@ export interface IUser {
     name: string;
     email: string;
     phone: string;
-    createdAt?:Date,
+createdAt: string | Date;
     address?: {
       houseNo?: string;
       street?: string;
@@ -12,7 +12,7 @@ export interface IUser {
       state?: string;
       pincode?: string;
     };
-    status:"Active"|"Blocked";
+status: string;
     
     isVerified:boolean;
   }

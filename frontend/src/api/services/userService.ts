@@ -1,7 +1,7 @@
 import { userApi } from "../api";
 import { IUser } from "../../types/user";
 import { IProperty, IPropertyDetails } from "../../types/property";
-import { IBooking, IBookingResponse } from "../../types/booking";
+import { IBooking, IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
 import { IServiceResponse } from "../../types/service";
 import { WalletData } from "../../types/wallet";
 
@@ -82,7 +82,7 @@ export const userService = {
     const response = await userApi.get(`/bookings?page=${page}&limit=${limit}`);
     return response.data;
   },
-  updateuser: async (id: string, formData: IUser) => {
+  updateuser: async (id: string, formData: Partial<IUser>) => {
     const response = await userApi.patch(`/profile/${id}`, { data: formData });
     return response.data;
   },
@@ -114,7 +114,7 @@ export const userService = {
 
     return response.data;
   },
-  bookingDetails: async (id: string): Promise<IBooking> => {
+  bookingDetails: async (id: string): Promise<IBookingDetailsResponse> => {
     const response = await userApi.get(`bookings/${id}`);
     return response.data;
   },

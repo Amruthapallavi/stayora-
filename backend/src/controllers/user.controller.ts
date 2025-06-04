@@ -374,33 +374,30 @@ export class UserController implements IUserController {
     }
   }
 
-  async getUserBookings(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = (req as any).userId;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 5;
+ async getUserBookings(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as any).userId;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 5;
 
-      const result = await this.userService.getUserBookings(
-        userId,
-        page,
-        limit
-      );
+    const result = await this.userService.getUserBookings(userId, page, limit);
 
-      if (!result.bookings || result.bookings.length === 0) {
-        res.status(404).json({ message: "No bookings found" });
-      }
-
-      res.status(200).json({
-        status: "success",
-        bookings: result.bookings,
-        totalPages: result.totalPages,
-        currentPage: page,
-      });
-    } catch (err) {
-      console.error("Get bookings failed:", err);
-      res.status(500).json({ message: "Internal server error" });
+    if (!result.bookings || result.bookings.length === 0) {
+      res.status(404).json({ message: "No bookings found" });
+      return;
     }
+
+    res.status(200).json({
+      status: "success",
+      bookings: result.bookings,
+      totalPages: result.totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    console.error("Get bookings failed:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
+}
 
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {

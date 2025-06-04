@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Eye, CheckCircle, Unlock, X, Ban, Trash2, PlusCircle, Filter, FilterX } from "lucide-react";
+import { Search, Eye, CheckCircle, X, Ban, Trash2, PlusCircle, Filter, FilterX } from "lucide-react";
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';

@@ -7,7 +7,6 @@ import {
   ArrowDownRight,
   Plus,
   History,
-  DollarSign,
   IndianRupee
 } from 'lucide-react';
 import { ScrollArea } from "../../components/ui/scroll-area";
@@ -15,20 +14,23 @@ import { useAuthStore } from "../../stores/authStore";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import UserLayout from "../../components/user/UserLayout";
+import { IWalletWithTotals } from "../../types/wallet";
 
 const UserWalletPage = () => {
-  const user = useAuthStore((state) => state.user); // assuming user contains `_id`
+  const user = useAuthStore((state) => state.user); 
   const fetchWalletData = useAuthStore((state) => state.fetchWalletData);
-  const [walletData, setWalletData] = useState(null);
+const [walletData, setWalletData] = useState<IWalletWithTotals | null>(null);
   const [transactions,setTransactions]=useState<any[]>([]);
   useEffect(() => {
     const getWallet = async () => {
       if (user?.id) {
-        const response = await fetchWalletData(user.id); // calling the store function with userId
+        const response = await fetchWalletData(user.id); 
         console.log(response,"waller")
-        setTransactions(response?.data.transactionDetails);
+if (response?.data?.transactionDetails) {
+  setTransactions(response.data.transactionDetails);
+}
         if (response?.data) {
-          setWalletData(response?.data); // set the fetched wallet data to local state
+          setWalletData(response?.data); 
         }
       }
     };

@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { debounce } from 'lodash';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+// import { debounce } from 'lodash';
 
-import { Building, MapPin, BedDouble, Bath, Home } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import UserLayout from '../../components/user/UserLayout';
-import HeroSection from '../../components/user/HeroSection';
-import CTASection from '../../components/user/CTASection';
-import PopularLocations from '../../components/user/PopularLocations';
-import {  IProperty, PropertyRes } from '../../types/property';
-import Pagination from '../../components/user/UserPagination';
-
+import { Building, MapPin, BedDouble, Bath, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
+import UserLayout from "../../components/user/UserLayout";
+import HeroSection from "../../components/user/HeroSection";
+import CTASection from "../../components/user/CTASection";
+import PopularLocations from "../../components/user/PopularLocations";
+import { IProperty } from "../../types/property";
+import Pagination from "../../components/user/UserPagination";
 
 const PropertyListing = () => {
   const { filteredProperties } = useAuthStore();
@@ -20,57 +19,56 @@ const PropertyListing = () => {
   const [allProperties, setAllProperties] = useState<IProperty[]>([]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  
+
   const [searchFilters, setSearchFilters] = useState({
     location: "",
     type: "",
     bedrooms: "",
     priceRange: [0, 30000] as [number, number],
   });
-  
+
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
-const limit = 6;
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 6;
 
-const handlePageChange = (page: number) => {
-  setCurrentPage(page);
-  window.scrollTo(0, 0);
-};
+  // const handlePageChange = (page: number) => {
+  //   setCurrentPage(page);
+  //   window.scrollTo(0, 0);
+  // };
 
-useEffect(() => {
-  async function fetchProperties(page: number, limit: number) {
-    setLoading(true);
-    try {
-      const response = await getAllProperties(page, limit);
+  useEffect(() => {
+    async function fetchProperties(page: number, limit: number) {
+      setLoading(true);
+      try {
+        const response = await getAllProperties(page, limit);
 
-      if (response && Array.isArray(response.properties)) {
-        setAllProperties(response.properties);
-        setProperties(response.properties);
-        setTotalPages(response.totalPages || 1); 
-        if (response.currentPage !== undefined) {
-  setCurrentPage(response.currentPage);
-    } else {
-  setCurrentPage(1);
-}
-      } else {
+        if (response && Array.isArray(response.properties)) {
+          setAllProperties(response.properties);
+          setProperties(response.properties);
+          setTotalPages(response.totalPages || 1);
+          if (response.currentPage !== undefined) {
+            setCurrentPage(response.currentPage);
+          } else {
+            setCurrentPage(1);
+          }
+        } else {
+          setAllProperties([]);
+          setProperties([]);
+          setTotalPages(1);
+          setCurrentPage(1);
+        }
+      } catch (error) {
+        console.error("Error fetching properties:", error);
         setAllProperties([]);
         setProperties([]);
         setTotalPages(1);
-        setCurrentPage(1);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching properties:", error);
-      setAllProperties([]);
-      setProperties([]);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
     }
-  }
 
-  fetchProperties(currentPage, limit);
-}, [currentPage, getAllProperties]);
-
+    fetchProperties(currentPage, limit);
+  }, [currentPage, getAllProperties]);
 
   const handleFilterChange = (key: string, value: any) => {
     setSearchFilters({
@@ -78,13 +76,13 @@ useEffect(() => {
       [key]: value,
     });
   };
-  
-//   const debouncedSearch = useCallback(
-//   debounce(() => {
-//     handleSearch();
-//   }, 500), 
-//   [searchFilters]
-// );
+
+  //   const debouncedSearch = useCallback(
+  //   debounce(() => {
+  //     handleSearch();
+  //   }, 500),
+  //   [searchFilters]
+  // );
 
   const handleSearch = async () => {
     setLoading(true);
@@ -110,7 +108,7 @@ useEffect(() => {
     setProperties(allProperties);
     setCurrentPage(1);
   };
-  
+
   if (loading) {
     return (
       <UserLayout>
@@ -123,22 +121,25 @@ useEffect(() => {
       </UserLayout>
     );
   }
-    
+
   return (
     <UserLayout>
       <div className="min-h-screen bg-gray-50">
-        <HeroSection 
+        <HeroSection
           searchFilters={searchFilters}
           handleFilterChange={handleFilterChange}
           handleSearch={handleSearch}
-        /> 
-        
+        />
+
         <div className="container mx-auto px-4 py-16">
           {properties.length > 0 && (
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Featured Properties</h2>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                Featured Properties
+              </h2>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                Discover our selection of premium rental properties in top locations
+                Discover our selection of premium rental properties in top
+                locations
               </p>
               <div className="flex justify-end mt-4">
                 <select
@@ -161,7 +162,7 @@ useEffect(() => {
               </div>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {properties.length > 0 ? (
               properties.map((property) => (
@@ -181,10 +182,15 @@ useEffect(() => {
                     </div>
                   </div>
                   <div className="p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{property.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {property.title}
+                    </h3>
                     <div className="flex items-center text-[#1f2937] mb-3">
                       <MapPin size={16} className="text-[#b68451] mr-1" />
-                      <span>{property?.city}, {property?.district}, {property?.state}</span>
+                      <span>
+                        {property?.city}, {property?.district},{" "}
+                        {property?.state}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm text-[#1f2937] mb-4">
                       <div className="flex items-center">
@@ -196,7 +202,8 @@ useEffect(() => {
                         <span>{property.bathrooms} Baths</span>
                       </div>
                       <div className="flex items-center">
-                        {(property.type === "Villa" || property.type === "Home") ? (
+                        {property.type === "Villa" ||
+                        property.type === "Home" ? (
                           <Home size={16} className="mr-1" />
                         ) : (
                           <Building size={16} className="mr-1" />
@@ -217,9 +224,13 @@ useEffect(() => {
               <div className="col-span-full text-center text-gray-500 text-lg py-8">
                 <div className="text-center py-20">
                   <div className="text-4xl mb-4">😢</div>
-                  <h3 className="text-xl font-semibold mb-2">No properties found</h3>
-                  <p className="text-gray-600 mb-6">Try adjusting your search filters</p>
-                  <button 
+                  <h3 className="text-xl font-semibold mb-2">
+                    No properties found
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Try adjusting your search filters
+                  </p>
+                  <button
                     onClick={resetFilters}
                     className="bg-[#b68451] hover:bg-[#a06d39] text-white px-4 py-2 rounded-md"
                   >
@@ -229,22 +240,22 @@ useEffect(() => {
               </div>
             )}
           </div>
-          
+
           {/* Pagination */}
-               <Pagination
-  currentPage={currentPage}
-  totalPages={totalPages}
-  onPageChange={(page) => setCurrentPage(page)}
-/>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </div>
 
-        <PopularLocations/>
+        <PopularLocations />
 
         {/* Features Section */}
         <section className="bg-gray-100/70 py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <motion.h2 
+              <motion.h2
                 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -260,7 +271,7 @@ useEffect(() => {
                 transition={{ duration: 0.7 }}
                 viewport={{ once: true }}
               ></motion.div>
-              <motion.p 
+              <motion.p
                 className="text-gray-600 max-w-2xl mx-auto text-lg"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -270,26 +281,29 @@ useEffect(() => {
                 The best way to find and rent your next property
               </motion.p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
                   title: "Verified Properties",
-                  description: "All properties on our platform are verified by our team to ensure quality and authenticity.",
+                  description:
+                    "All properties on our platform are verified by our team to ensure quality and authenticity.",
                   icon: "🏠",
                 },
                 {
                   title: "Easy Communication",
-                  description: "Direct and seamless communication between tenants and property owners.",
+                  description:
+                    "Direct and seamless communication between tenants and property owners.",
                   icon: "💬",
                 },
                 {
                   title: "Secure Payments",
-                  description: "Secure and transparent payment system for rent and security deposits.",
+                  description:
+                    "Secure and transparent payment system for rent and security deposits.",
                   icon: "🔒",
                 },
               ].map((feature, index) => (
-                <motion.div 
+                <motion.div
                   key={index}
                   className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-shadow"
                   initial={{ opacity: 0, y: 20 }}
@@ -301,7 +315,9 @@ useEffect(() => {
                     <div className="text-4xl mb-4 bg-golden-ultralight p-4 rounded-full">
                       {feature.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-3">{feature.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-800 mb-3">
+                      {feature.title}
+                    </h3>
                     <p className="text-gray-600">{feature.description}</p>
                   </div>
                 </motion.div>
@@ -310,9 +326,7 @@ useEffect(() => {
           </div>
         </section>
 
-        <CTASection/>
-
-     
+        <CTASection />
       </div>
     </UserLayout>
   );

@@ -1,12 +1,6 @@
 import { IBooking } from "./booking";
 import { IOwner } from "./owner";
 
-// export interface IOwner {
-//     _id: string;
-//     name: string;
-//     email: string;
-//     phone: string;
-//   }
   
   export interface IProperty {
     
@@ -85,6 +79,7 @@ export interface IPropertyDetails{
     description: string;
     address: string;
     city: string;
+    district:string;
     state: string;
     pincode: number;
     bedrooms: number;

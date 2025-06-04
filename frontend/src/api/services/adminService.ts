@@ -1,5 +1,5 @@
 import { IFeature } from "../../types/feature";
-import { IBooking, IBookingDetailedData } from "../../types/booking";
+import { IBooking, IBookingDetailedData, IBookingDetailsResponse } from "../../types/booking";
 import { IOwner, OwnersResponse } from "../../types/owner";
 import { IProperty, IPropertyDetails } from "../../types/property";
 import { adminApi } from "../api";
@@ -36,7 +36,7 @@ export const adminService = {
 
     return response.data;
   },
-  bookingDetails: async (id: string): Promise<IBookingDetailedData> => {
+  bookingDetails: async (id: string): Promise<IBookingDetailsResponse> => {
     const response = await adminApi(`/bookings/${id}`);
     return response.data;
   },
@@ -80,6 +80,7 @@ export const adminService = {
   },
   listFeatures: async () => {
     const response = await adminApi.get("/features");
+    console.log(response,"features from admin")
     return response.data.features;
   },
   addFeature: async (featureData: any) => {

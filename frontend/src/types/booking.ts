@@ -185,23 +185,23 @@ export interface IMapLocation {
   };
 }
 
-export interface IOwnerData {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: string;
-  isVerified: boolean;
-  isSubscribed: boolean;
-  govtId: string;
-  govtIdStatus: string;
-  rejectionReason: string | null;
-  subscriptionStart: string | null;
-  subscriptionEnd: string | null;
-  updatedAt: string;
-  createdAt: string;
-  address?: string; 
-}
+// export interface IOwnerData {
+//   id: string;
+//   name: string;
+//   email: string;
+//   phone: string;
+//   status: string;
+//   isVerified: boolean;
+//   isSubscribed: boolean;
+//   govtId: string;
+//   govtIdStatus: string;
+//   rejectionReason: string | null;
+//   subscriptionStart: string | null;
+//   subscriptionEnd: string | null;
+//   updatedAt: string;
+//   createdAt: string;
+//   address?: string; 
+// }
 
 export interface IBookingRes {
   _id: string;
@@ -262,6 +262,121 @@ export interface IBookingRes {
 
 
 
+//common
+export interface IBookingDetailsResponse {
+  bookingData: IBookingData;
+  userData: IUserData;
+  ownerData?: IOwner; 
+}
+
+interface IBookingData {
+  _id: string;
+  bookingId: string;
+  bookingStatus: string;
+  paymentId: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  moveInDate: string;
+  endDate: string;
+  isCancelled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  rentPerMonth: number;
+  rentalPeriod: number;
+  totalCost: number;
+  refundAmount: number;
+  addOnCost: number;
+  addOn: any[]; // You can define a proper interface if addons have a structure
+  ownerId: string;
+  userId: string;
+  propertyId: IPropertyDetails;
+  propertyName: string;
+  propertyImages: string[];
+}
+
+interface IPropertyDetails {
+  _id: string;
+  title: string;
+  type: string;
+  furnishing: string;
+  description: string;
+  rentPerMonth: number;
+  minLeasePeriod: number;
+  maxLeasePeriod: number;
+  features: string[];
+  otherFeatures: string[];
+  cancellationPolicy: string;
+  rules: string;
+  averageRating: number;
+  totalReviews: number;
+  isBooked: boolean;
+  isRejected: boolean;
+  category: string | null;
+  status: string;
+  address: string;
+  street: string;
+  houseNumber: string;
+  city: string;
+  district: string;
+  state: string;
+  pincode: number;
+  bathrooms: number;
+  bedrooms: number;
+  mapLocation: {
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  images: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface IUserData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  isVerified: boolean;
+  status: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  address: {
+    houseNo: string;
+    street: string;
+    city: string;
+    district: string;
+    state: string;
+    pincode: string;
+  };
+}
+
+export interface IOwnerData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  isVerified: boolean;
+  isSubscribed: boolean;
+  govtId: string;
+  govtIdStatus: string;
+  subscriptionStart: string | null;
+  subscriptionEnd: string | null;
+  rejectionReason: string | null;
+  address?: {
+    houseNo?: string;
+    street?: string;
+    city?: string;
+    district?: string;
+    state?: string;
+    pincode?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 
 

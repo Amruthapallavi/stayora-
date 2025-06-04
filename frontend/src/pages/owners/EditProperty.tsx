@@ -115,7 +115,7 @@ const EditProperty = () => {
         
         const featuresResponse = await listAllFeatures();
         console.log(featuresResponse,"feature response")
-        setAllFeatures(featuresResponse?.features);
+        setAllFeatures(featuresResponse);
         
       } catch (error) {
         console.error('Error loading property data:', error);
@@ -349,20 +349,22 @@ const EditProperty = () => {
     try {
       setSaving(true);
     
-      const updatedProperty: Partial<IProperty> = {
-        ...formData,
-        bedrooms: Number(formData.bedrooms),
-        bathrooms: Number(formData.bathrooms),
-        pincode: Number(formData.pincode),
-        rentPerMonth: Number(formData.rentPerMonth),
-        minLeasePeriod: Number(formData.minLeasePeriod),
-        maxLeasePeriod: Number(formData.maxLeasePeriod),
-        features: selectedFeatures,
-        otherFeatures,
-        images, 
-      };
+     const updatedProperty: Partial<IProperty> = {
+  ...formData,
+  bedrooms: Number(formData.bedrooms),
+  bathrooms: Number(formData.bathrooms),
+  pincode: Number(formData.pincode),
+  rentPerMonth: Number(formData.rentPerMonth),
+  minLeasePeriod: Number(formData.minLeasePeriod),
+  maxLeasePeriod: Number(formData.maxLeasePeriod),
+  features: selectedFeatures,
+  otherFeatures,
+  images,
+  furnishing: formData.furnishing as "Fully-Furnished" | "Semi-Furnished" | "Not Furnished" | undefined,
+};
+
     
-      await updateProperty(id || '', updatedProperty, newImageFiles); 
+      await updateProperty(id || '', updatedProperty); 
     
       notifySuccess("Property updated successfully");
       navigate(`/owner/property/${id}`);

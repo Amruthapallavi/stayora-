@@ -90,71 +90,72 @@ const totalPages = Math.ceil(bookings.length / bookingsPerPage);
   };
   
   
-  const columns = [
-    { 
-      header: 'Booking ID', 
-      accessor: 'bookingId' as keyof IBooking,
-    },
-    { 
-      header: 'Property', 
-      accessor: 'propertyName' as keyof IBooking,
-    },
-    { 
-      header: 'Guest', 
-      accessor: 'userName' as keyof IBooking,
-    },
-    {
-        header: 'Move-in-date',
-        accessor: (booking: IBooking) =>
-          new Date(booking.moveInDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          }),
-      },
-      {
-        header: 'End-date',
-        accessor: (booking: IBooking) =>
-          new Date(booking.endDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          }),
-      },
-      
-    { 
-      header: 'Status', 
-      accessor: (booking: IBooking) => <StatusBadge status={booking.bookingStatus} />
-    },
-    { 
-      header: 'Payment', 
-      accessor: (booking: IBooking) => <StatusBadge status={booking.paymentStatus} />
-    },
-    { 
-      header: 'Total', 
-      accessor: (booking: IBooking) => `₹${booking.totalCost.toLocaleString()}`
-    },
-    { 
-      header: 'Actions', 
-      accessor: (booking: IBooking) => (
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/admin/bookings/${booking._id}`);
-          }}
-        >
-          View
-        </Button>
-      ),
-      className: "text-right"
-    },
-  ];
+ const columns = [
+  { 
+    header: 'Booking ID', 
+    accessor: 'bookingId' as keyof ISimpleBooking, // Use ISimpleBooking here
+  },
+  { 
+    header: 'Property', 
+    accessor: 'propertyName' as keyof ISimpleBooking,
+  },
+  { 
+    header: 'Guest', 
+    accessor: 'userName' as keyof ISimpleBooking,
+  },
+  {
+    header: 'Move-in-date',
+    accessor: (booking: ISimpleBooking) =>
+      new Date(booking.moveInDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+  },
+  {
+    header: 'End-date',
+    accessor: (booking: ISimpleBooking) =>
+      new Date(booking.endDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+  },
+  { 
+    header: 'Status', 
+    accessor: (booking: ISimpleBooking) => <StatusBadge status={booking.bookingStatus} />
+  },
+  { 
+    header: 'Payment', 
+    accessor: (booking: ISimpleBooking) => <StatusBadge status={booking.paymentStatus} />
+  },
+  { 
+    header: 'Total', 
+    accessor: (booking: ISimpleBooking) => `₹${booking.totalCost.toLocaleString()}`
+  },
+  { 
+    header: 'Actions', 
+    accessor: (booking: ISimpleBooking) => (
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/admin/bookings/${booking._id}`);
+        }}
+      >
+        View
+      </Button>
+    ),
+    className: "text-right"
+  },
+];
 
-  const handleRowClick = (booking: IBooking) => {
-    navigate(`/admin/bookings/${booking._id}`);
-  };
+
+function handleRowClick(booking: ISimpleBooking) {
+  navigate(`/admin/bookings/${booking._id}`);
+}
+
 
   return (
     <AdminLayout>
@@ -200,12 +201,13 @@ const totalPages = Math.ceil(bookings.length / bookingsPerPage);
         </div>
       </div>
       
-      <DataTable 
-        data={currentBookings} 
-        columns={columns} 
-        onRowClick={handleRowClick}
-        emptyMessage="No bookings found matching your search."
-      />
+    <DataTable<ISimpleBooking>
+  data={currentBookings} // currentBookings should be ISimpleBooking[]
+  columns={columns}
+  onRowClick={handleRowClick}
+  emptyMessage="No bookings found matching your search."
+/>
+
       
     </div>
     <div>

@@ -1,23 +1,24 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import { MessageSquare, X, Star } from 'lucide-react';
-import BookingHeader from '../../components/booking/BookingHeader';
-import BookingPropertyDetails from '../../components/booking/BookingPropertyDetails';
-import BookingOwnerCard from '../../components/booking/BookingOwnerCard';
-import BookingPaymentSummary from '../../components/booking/BookingPaymentSummary';
-import { notifyError, notifySuccess } from '../../utils/notifications';
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
-import { IOwner } from '../../types/owner';
+import { MessageSquare, X, Star } from "lucide-react";
+import BookingHeader from "../../components/booking/BookingHeader";
+import BookingPropertyDetails from "../../components/booking/BookingPropertyDetails";
+import BookingOwnerCard from "../../components/booking/BookingOwnerCard";
+import BookingPaymentSummary from "../../components/booking/BookingPaymentSummary";
+import { notifyError, notifySuccess } from "../../utils/notifications";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "../../stores/authStore";
+import { IOwner } from "../../types/owner";
 import Swal from "sweetalert2";
+import Footer from "../../components/user/Footer";
 
 const UserBookingDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { bookingDetails, cancelBooking,submitReview } = useAuthStore();
+  const { bookingDetails, cancelBooking, submitReview } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<any>(null);
-  const [ownerData, setOwnerData] = useState<IOwner | null>(null);
+  const [ownerData, setOwnerData] = useState<IOwner | null | undefined>(null);
   const [showCancelReason, setShowCancelReason] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [reviewText, setReviewText] = useState("");
@@ -29,7 +30,7 @@ const UserBookingDetails = () => {
   useEffect(() => {
     if (!id) {
       notifyError("Booking ID is missing");
-      navigate('/owner/bookings');
+      navigate("/owner/bookings");
       return;
     }
 
@@ -42,7 +43,7 @@ const UserBookingDetails = () => {
           setOwnerData(bookingData.ownerData);
         } else {
           notifyError("Booking not found");
-          navigate('/owner/bookings');
+          navigate("/owner/bookings");
         }
       } catch (error) {
         console.error("Error fetching booking:", error);
@@ -76,7 +77,9 @@ const UserBookingDetails = () => {
         navigate("/user/bookings");
       } catch (err) {
         console.error("Cancel Booking Error:", err);
-        notifyError((err as any)?.response?.data?.message || "Failed to cancel booking");
+        notifyError(
+          (err as any)?.response?.data?.message || "Failed to cancel booking"
+        );
       }
     }
   };
@@ -91,19 +94,24 @@ const UserBookingDetails = () => {
 
     try {
       setSubmittingReview(true);
-      console.log(booking._id,reviewRating,reviewText)
-      const response= await submitReview(booking._id,reviewRating,reviewText)
-    //   if (!response.ok) {
-    //   throw new Error("Failed to submit review");
-    // }
+      console.log(booking._id, reviewRating, reviewText);
+      const response = await submitReview(
+        booking._id,
+        reviewRating,
+        reviewText
+      );
+      //   if (!response.ok) {
+      //   throw new Error("Failed to submit review");
+      // }
 
-    notifySuccess("Review submitted successfully!");
-    setReviewText("");
-    setReviewRating(0);
+      notifySuccess("Review submitted successfully!");
+      setReviewText("");
+      setReviewRating(0);
     } catch (error) {
-      console.log(error,"err")
-      console.error("Error submitting review:", error);
-notifyError(error?.response?.data.message || "Failed to submit review.");
+      const e = error as any;
+      const message =
+        e?.response?.data?.message || e?.message || "Failed to submit review.";
+      notifyError(message);
     } finally {
       setSubmittingReview(false);
     }
@@ -132,8 +140,12 @@ notifyError(error?.response?.data.message || "Failed to submit review.");
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-700">Booking Not Found</h2>
-          <p className="text-gray-500 mt-2">The booking you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-semibold text-gray-700">
+            Booking Not Found
+          </h2>
+          <p className="text-gray-500 mt-2">
+            The booking you're looking for doesn't exist.
+          </p>
           <Link to="/bookings">
             <Button className="mt-4">View All Bookings</Button>
           </Link>
@@ -168,7 +180,9 @@ notifyError(error?.response?.data.message || "Failed to submit review.");
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#b38e5d]/20 to-[#b38e5d]/30 rounded-full -translate-y-16 translate-x-16 group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#b38e5d]/15 to-[#b38e5d]/25 rounded-full translate-y-12 -translate-x-12 group-hover:scale-110 transition-transform duration-700" />
 
-                <h1 className="text-xl font-semibold mb-4 border-b pb-2">Add-on Services</h1>
+                <h1 className="text-xl font-semibold mb-4 border-b pb-2">
+                  Add-on Services
+                </h1>
 
                 {booking.addOn && booking.addOn.length > 0 ? (
                   <ul className="space-y-3">
@@ -177,13 +191,19 @@ notifyError(error?.response?.data.message || "Failed to submit review.");
                         key={service.serviceId || index}
                         className="flex items-center justify-between border p-3 rounded-md bg-gray-50"
                       >
-                        <div className="text-sm font-medium text-gray-800">{service.serviceName}</div>
-                        <div className="text-sm text-gray-600">₹{service.serviceCost}</div>
+                        <div className="text-sm font-medium text-gray-800">
+                          {service.serviceName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          ₹{service.serviceCost}
+                        </div>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No add-on services added.</p>
+                  <p className="text-sm text-gray-500">
+                    No add-on services added.
+                  </p>
                 )}
               </Card>
             </div>
@@ -192,14 +212,18 @@ notifyError(error?.response?.data.message || "Failed to submit review.");
             {booking.bookingStatus === "completed" && (
               <div className="mt-8">
                 <Card className="p-6 rounded-2xl bg-white shadow-lg space-y-4">
-                  <h2 className="text-2xl font-semibold mb-4">Submit Your Review</h2>
+                  <h2 className="text-2xl font-semibold mb-4">
+                    Submit Your Review
+                  </h2>
                   <div className="flex items-center space-x-2 mb-3">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
                         size={28}
                         className={`cursor-pointer transition-colors duration-200 ${
-                          reviewRating >= star ? "text-yellow-400" : "text-gray-300"
+                          reviewRating >= star
+                            ? "text-yellow-400"
+                            : "text-gray-300"
                         }`}
                         onClick={() => setReviewRating(star)}
                       />

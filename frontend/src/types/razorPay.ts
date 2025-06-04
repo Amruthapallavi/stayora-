@@ -8,7 +8,7 @@ export interface RazorpayOrderResponse {
   
   export interface RazorpayVerifyResponse {
     success: boolean;
-    booking: IBooking; // Assuming you have a `Booking` interface/type defined
+    booking: IBooking; 
   }
   
 

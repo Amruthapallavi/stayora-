@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import { CheckCircle, MessageSquare, X, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import BookingHeader from '../../components/booking/BookingHeader';
 import BookingPropertyDetails from '../../components/booking/BookingPropertyDetails';
 import BookingOwnerCard from '../../components/booking/BookingOwnerCard';
@@ -9,12 +9,9 @@ import BookingPaymentSummary from '../../components/booking/BookingPaymentSummar
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { IOwner } from '../../types/owner';
 import Swal from "sweetalert2";
 import { IUser } from '../../types/user';
 
-// import Map from '../../components/Map';
-// import type { ExtendedBookingDetails } from '../../types/booking';
 
 const BookingDetails = () => {
 
@@ -24,10 +21,7 @@ const BookingDetails = () => {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<any>(null);
   const [userData, setUserData] = useState<IUser | null>(null);
-  const [showCancelReason, setShowCancelReason] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [message, setMessage] = useState('');
   const [processing, setProcessing] = useState(false);
 
  const navigate=useNavigate();
@@ -42,6 +36,7 @@ const BookingDetails = () => {
       try {
         setLoading(true);
         const bookingData = await bookingDetails(id);
+        console.log(bookingData,"booking data from owner")
         if (bookingData) {
           setBooking(bookingData.bookingData);
           setUserData(bookingData.userData);
@@ -90,9 +85,9 @@ const handleCancelBooking = async () => {
   }
 };
 
-  const handleContactHost = () => {
-    notifySuccess('Message sent to host');
-  };
+  // const handleContactHost = () => {
+  //   notifySuccess('Message sent to host');
+  // };
 const handleConfirmBooking=()=>{
 
 }
@@ -148,6 +143,8 @@ const handleConfirmBooking=()=>{
               addOnservice={booking.addOn}
               addOnCost={booking.addOnCost}
               totalAmount={booking.totalCost}
+              paymentMethod={booking.paymentDetails?.method}        
+  paymentStatus={booking.paymentDetails?.paymentStatus} 
             />
     {booking.bookingStatus === 'pending' && (
                 <Card className="p-4">

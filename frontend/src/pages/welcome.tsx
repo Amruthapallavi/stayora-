@@ -5,14 +5,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa";
 import { useAuthStore } from "../stores/authStore";
 import { useState, useRef } from "react";
-import { Home, Search, Building, MapPin, User, LogIn, Info, ChevronDown, Mail, Phone } from "lucide-react";
+import { Search, Building, MapPin, User, LogIn, Info, Mail, Phone } from "lucide-react";
 import { Button } from "../components/ui/button";
 
   
 
 const Welcome: React.FC = () => {
   const  { user,isAuthenticated,authType,logout} =useAuthStore();
-  //  const [showDropdown, setShowDropdown] = React.useState(false);
  const navigate=useNavigate();
   useEffect(() => {
     axios
@@ -23,11 +22,11 @@ const Welcome: React.FC = () => {
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
-    if (ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  // const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+  //   if (ref.current) {
+  //     ref.current.scrollIntoView({ behavior: 'smooth' });
+  //   }
+  // };
   const handleProfileClick = () => {
     if (authType === "admin") {
       navigate("/admin/dashboard");

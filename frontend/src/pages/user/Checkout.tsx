@@ -21,28 +21,20 @@ import {
   PopoverTrigger,
 } from "../../components/ui/popover";
 import { Calendar } from "../../components/ui/calendar";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "../../components/ui/select";
+
 import { format, addMonths } from "date-fns";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 
-// import { cartService } from "@/services/CartService";
-// import { BookingDetails } from "@/types/booking";
 import { useAuthStore } from "../../stores/authStore";
 import UserLayout from "../../components/user/UserLayout";
 import { notifyError } from "../../utils/notifications";
 import RazorpayPaymentButton from "../../components/RazorpayPayment";
 import { IBooking } from "../../types/booking";
+import { IService } from "../../types/service";
 
 interface CheckoutProps {}
-
 
 const CheckoutPage: React.FC<CheckoutProps> = () => {
   const {
@@ -61,7 +53,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [searchParams] = useSearchParams();
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState<IService[]>([]);
   const [error, setError] = useState("");
 
   const steps = [
@@ -88,13 +80,17 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
 
   useEffect(() => {
     const loadCartData = async () => {
-      if (!propertyId) return; // Safety check
+      if (!propertyId) return;
       const cartData = await getCartDetails(propertyId);
       if (cartData) {
         setBookingDetails(cartData);
-        if (cartData.moveInDate) setMoveInDate(cartData.moveInDate);
+        if (cartData.moveInDate) {
+          setMoveInDate(new Date(cartData.moveInDate));
+        }
         if (cartData.rentalPeriod) setRentalPeriod(cartData.rentalPeriod);
-        if (cartData.endDate) setEndDate(cartData.endDate);
+        if (cartData.endDate) {
+          setEndDate(new Date(cartData.endDate));
+        }
         if (cartData.selectedAddOns) setSelectedAddOns(cartData.selectedAddOns);
       }
     };
@@ -104,7 +100,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await listServices(); // your API endpoint
+        const response = await listServices();
         setServices(response.services);
       } catch (error) {
         console.error("Failed to fetch services", error);
@@ -117,34 +113,33 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   }, []);
   useEffect(() => {
     const completed = localStorage.getItem("bookingCompleted") === "true";
-  
+
     if (completed) {
       localStorage.removeItem("bookingCompleted");
       setCurrentStep(4);
     } else {
-      setCurrentStep(1); // 👈 Always reset if nothing completed
+      setCurrentStep(1);
     }
   }, []);
-  
-  
-  
-  
+
   const handleStepChange = async (step: number) => {
-    if (currentStep === 4) return; 
+    if (currentStep === 4) return;
 
     if (step >= 1 && step <= 4) {
-      // Step 1: Save booking dates
       if (currentStep === 1 && step > currentStep) {
         setIsLoading(true);
         if (moveInDate && endDate) {
           try {
-
-            await saveBookingDates(
-              moveInDate,
-              rentalPeriod,
-              endDate,
-              propertyId
-            );
+            if (propertyId) {
+              await saveBookingDates(
+                moveInDate,
+                rentalPeriod,
+                endDate,
+                propertyId
+              );
+            } else {
+              console.error("propertyId is null or undefined");
+            }
           } catch (error) {
             setIsLoading(false);
             console.error("Failed to save booking dates", error);
@@ -161,12 +156,15 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
         setIsLoading(false);
       }
 
-      // Step 2: Save selected add-ons
       if (currentStep === 2 && step > currentStep) {
         setIsLoading(true);
 
         try {
-          await saveAddOns(selectedAddOns, propertyId);
+          if (propertyId !== null) {
+            await saveAddOns(selectedAddOns, propertyId);
+          } else {
+            console.error("propertyId is null");
+          }
         } catch (error) {
           setIsLoading(false);
           console.error("Failed to save add-ons", error);
@@ -175,7 +173,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
         setIsLoading(false);
       }
 
-      // Move to the new step
       setCurrentStep(step);
     }
   };
@@ -196,7 +193,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
     }
   };
 
-  // Calculate total rental price
   const calculateTotalPrice = () => {
     if (!rentalPeriod) return 0;
 
@@ -214,7 +210,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
     return total;
   };
   const getAmountInPaise = () => {
-    return Math.round(calculateTotalPrice() * 100); // ₹ to paise
+    return Math.round(calculateTotalPrice() * 100);
   };
 
   const handleCompleteBooking = async (booking: IBooking) => {
@@ -222,7 +218,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
       setIsLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setBookingData(booking);
-      localStorage.setItem("bookingCompleted", "true"); 
+      localStorage.setItem("bookingCompleted", "true");
       setIsLoading(false);
       handleStepChange(4);
     } catch (error) {
@@ -230,9 +226,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
       toast.error("Failed to complete booking");
     }
   };
-  
-
- 
 
   return (
     <UserLayout>
@@ -280,24 +273,25 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                         Move-in Date
                       </label>
                       <Popover>
-                      <PopoverTrigger asChild>
-  <button className="flex items-center w-full px-4 py-2 border border-[#d1d5db] rounded-md bg-[#ffffff] text-left focus:outline-none focus:ring-2 focus:ring-[#b38e5d] focus:border-[#b38e5d]">
-    <CalendarIcon className="mr-2 h-4 w-4 text-[#b38e5d]" />
-    <span className="flex-1">
-      {moveInDate
-        ? format(moveInDate, "MMMM d, yyyy")
-        : "Select move-in date"}
-    </span>
-  </button>
-</PopoverTrigger>
+                        <PopoverTrigger asChild>
+                          <button className="flex items-center w-full px-4 py-2 border border-[#d1d5db] rounded-md bg-[#ffffff] text-left focus:outline-none focus:ring-2 focus:ring-[#b38e5d] focus:border-[#b38e5d]">
+                            <CalendarIcon className="mr-2 h-4 w-4 text-[#b38e5d]" />
+                            <span className="flex-1">
+                              {moveInDate
+                                ? format(moveInDate, "MMMM d, yyyy")
+                                : "Select move-in date"}
+                            </span>
+                          </button>
+                        </PopoverTrigger>
 
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
-
                             selected={moveInDate}
                             onSelect={(date) => setMoveInDate(date)}
-                            disabled={(date) => date < new Date() || currentStep === 4} // ✅ disable calendar
+                            disabled={(date) =>
+                              date < new Date() || currentStep === 4
+                            } 
                             initialFocus
                             className="p-3 pointer-events-auto"
                           />
@@ -310,8 +304,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                       </label>
                       <input
                         type="number"
-                        disabled={currentStep === 4} 
-
+                        disabled={currentStep === 4}
                         min={min}
                         max={max}
                         value={rentalPeriod}
@@ -370,17 +363,16 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                           <div className="flex items-center gap-2">
                             <Map className="text-[#b38e5d]" size={16} />
                             <span className="text-sm text-gray-600">
-                              Location: {bookingDetails?.property?.city}
+                              Type: {bookingDetails?.property?.type}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
                             <MoveRight className="text-[#b38e5d]" size={16} />
                             <span className="text-sm text-gray-600">
-  View: Latitude {bookingDetails?.property?.mapLocation?.coordinates?.latitude}, 
-  Longitude {bookingDetails?.property?.mapLocation?.coordinates?.longitude}
-</span>
-
+                              Location : {bookingDetails?.property?.city}{" "}
+                              {bookingDetails?.property?.district}
+                            </span>
                           </div>
                         </div>
 
@@ -540,13 +532,11 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                             Click below to pay securely with Razorpay
                           </p>
                           <RazorpayPaymentButton
-  amount={getAmountInPaise()}
-  productId={bookingDetails?.property._id}
-  onSuccess={handleCompleteBooking}
-  onFailure={() => setCurrentStep(6)} // set a state for failed view
-/>
-
-
+                            amount={getAmountInPaise()}
+                            productId={bookingDetails?.property._id}
+                            onSuccess={handleCompleteBooking}
+                            onFailure={() => setCurrentStep(6)} 
+                          />
                         </div>
                       </TabsContent>
 
@@ -578,7 +568,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                         Back
                       </button>
                       <button
-                        onClick={()=>handleCompleteBooking}
+                        onClick={() => handleCompleteBooking}
                         className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
                         disabled={isLoading}
                       >
@@ -621,7 +611,9 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                           <span className="text-gray-600">
                             Booking Reference:
                           </span>
-                          <span className="font-medium">{bookingData?.bookingId}</span>
+                          <span className="font-medium">
+                            {bookingData?.bookingId}
+                          </span>
                         </p>
                         <p className="flex justify-between">
                           <span className="text-gray-600">Move-in Date:</span>
@@ -663,51 +655,50 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                   </div>
                 )}
 
-{currentStep === 6 && (
-  <div className="border rounded-lg overflow-hidden p-6 text-center">
-    <div className="mb-6">
-      <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-10 w-10 text-red-600"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </div>
-      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-        Booking Failed
-      </h3>
-      <p className="text-gray-600">
-        Your payment was not completed. Please try again.
-      </p>
-    </div>
+                {currentStep === 6 && (
+                  <div className="border rounded-lg overflow-hidden p-6 text-center">
+                    <div className="mb-6">
+                      <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-10 w-10 text-red-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+                        Booking Failed
+                      </h3>
+                      <p className="text-gray-600">
+                        Your payment was not completed. Please try again.
+                      </p>
+                    </div>
 
-    <div className="flex justify-center gap-4">
-    <Link
-  to={`/user/property/${propertyId}`}
-  className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
->
-  Try Again
-</Link>
+                    <div className="flex justify-center gap-4">
+                      <Link
+                        to={`/user/property/${propertyId}`}
+                        className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
+                      >
+                        Try Again
+                      </Link>
 
-      <Link
-        to="/user/home"
-        className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
-      >
-        Return Home
-      </Link>
-    </div>
-  </div>
-)}
-
+                      <Link
+                        to="/user/home"
+                        className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
+                      >
+                        Return Home
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

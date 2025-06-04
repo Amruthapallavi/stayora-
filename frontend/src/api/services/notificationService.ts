@@ -5,6 +5,7 @@ export const notificationService = {
     if (role === "owner") {
 
       const response = await ownerApi.get("/notifications");
+      console.log(response,"for noyi")
       return response.data;
     } else {
       const response = await userApi.get("/notifications");

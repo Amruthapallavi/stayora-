@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/admin/Sidebar";
 import { Wifi, AirVent, ParkingCircle, ShieldCheck, Tv, ThermometerSun, Leaf } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../stores/authStore";
@@ -29,10 +28,9 @@ const AdminFeatures = () => {
   const [features, setFeatures] = useState<IFeature[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [isEditing, setIsEditing] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [newFeature, setNewFeature] = useState({
     _id:"",

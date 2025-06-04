@@ -10,3 +10,4 @@ export interface IServiceRepository extends IBaseRepository<IService>{
 }
 
     
+ 

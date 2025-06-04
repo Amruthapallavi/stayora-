@@ -1,7 +1,6 @@
 import { StateCreator } from 'zustand';
 import { AppState, AuthState } from '../../types/storeTypes';
 import { authService} from '../../api/services/authService'; 
-// import { createJSONStorage } from 'zustand/middleware';
 import { userService } from '../../api/services/userService';
 import { ownerService } from '../../api/services/ownerService';
 
@@ -127,6 +126,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthState> = (set, 
           response = await authService.OwnerForgotPassword({ email });
           break;
       }
+      return response;
     } catch (error) {
       console.error("error", error);
       throw error;

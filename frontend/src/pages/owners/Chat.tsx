@@ -1,9 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { BellDot, MessageCircle } from "lucide-react";
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import {  useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { notifyError, notifySuccess } from '../../utils/notifications';
+import { notifyError,
+  //  notifySuccess
+   } from '../../utils/notifications';
 import io from 'socket.io-client';
 import ConversationList from "../../components/chat/ConversationList";
 import PropertySummary from "../../components/chat/PropertySummary";
@@ -27,7 +29,7 @@ const OwnerChatPage = () => {
     const [notifications,setNotifications]= useState<any[]>([]);
     const selectedConvObject = conversations.find(c => c._id === selectedConversation);
     const ownerId = selectedConvObject?.partner?._id; 
-    const propertyId = selectedConvObject?.propertyId; 
+    // const propertyId = selectedConvObject?.propertyId; 
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
     const {markNotificationAsRead}=useAuthStore();
@@ -40,7 +42,7 @@ const OwnerChatPage = () => {
         setLoadingConversations(true); 
     
         try {
-          const userId = user.userId || user.id; 
+          // const userId = user.userId || user.id; 
           const res = await listConversations(); 
     console.log(res,"for chat")
           setConversations(
@@ -79,6 +81,7 @@ console.log(onlineUsers,"users online")
       const fetchNotifications = async () => {
         try {
          const res= await getNotifications();
+         console.log(res,"for chat notifications")
          setNotifications(res.data);
         } catch (err) {
           console.error("Failed to fetch notifications", err);
@@ -148,13 +151,15 @@ console.log(onlineUsers,"users online")
     const handleReceiveMessage = (newMessage: Message) => {
       const myId = user?.userId || user?.id;
       const senderId = typeof newMessage.sender === 'string' ? newMessage.sender : newMessage.sender._id;
-      const receiverId = typeof newMessage.receiver === 'string' ? newMessage.receiver : newMessage.receiver._id;
+const receiverId =
+  typeof newMessage.receiver === "string"
+    ? newMessage.receiver
+    : (newMessage.receiver as { _id: string })._id;
     
       const isSentByMe = senderId === myId;
       const chatPartnerId = isSentByMe ? receiverId : senderId;
       const isRelevantToCurrentChat = selectedConversation === chatPartnerId;
     
-      // Only add to messages if it's relevant and not already there
       if (!isSentByMe && isRelevantToCurrentChat && !messages.some(msg => msg._id === newMessage._id)) {
         setMessages(prev => [...prev, newMessage]);
       }

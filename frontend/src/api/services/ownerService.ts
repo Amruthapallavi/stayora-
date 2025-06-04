@@ -1,6 +1,6 @@
 // import axios from "axios";
 
-import { IBooking, IOwnerBookingDetails } from "../../types/booking";
+import { IBooking, IBookingDetailsResponse, IOwnerBookingDetails } from "../../types/booking";
 import { IOwner } from "../../types/owner";
 import {
   IProperty,
@@ -18,7 +18,8 @@ export const ownerService = {
   },
   listFeatures: async () => {
     const response = await ownerApi.get("/features");
-    return response.data;
+    console.log(response,"features from owner")
+    return response.data.features;
   },
   listAllBookings: async (ownerId: string,page:number,limit:number) => {
     const response = await ownerApi.get(`/bookings?page=${page}&limit=${limit}`, { params: { ownerId } });
@@ -94,7 +95,7 @@ export const ownerService = {
     const response = await ownerApi(`/property/${id}`);
     return response.data;
   },
-  bookingDetails: async (id: string): Promise<IOwnerBookingDetails> => {
+  bookingDetails: async (id: string): Promise<IBookingDetailsResponse> => {
     const response = await ownerApi(`/bookings/${id}`);
     return response.data;
   },

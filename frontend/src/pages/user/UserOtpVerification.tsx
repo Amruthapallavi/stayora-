@@ -11,10 +11,10 @@ const OtpVerification = () => {
 
   const { verifyOtp, resendOtp } = useAuthStore();
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
-  const [email, setEmail] = useState<string>(""); 
+  const [email, setEmail] = useState<string>("");
   const [showOtp, setShowOtp] = useState(false);
   const [resendTimer, setResendTimer] = useState(10);
-  
+
   useEffect(() => {
     if (location.state?.email) {
       setEmail(location.state.email);
@@ -29,7 +29,7 @@ const OtpVerification = () => {
     }
   }, [location, navigate]);
   const handleChange = (index: number, value: string) => {
-    if (isNaN(Number(value))) return; // Only allow numbers
+    if (isNaN(Number(value))) return;
     const updatedOtp = [...otp];
     updatedOtp[index] = value.slice(0, 1);
     setOtp(updatedOtp);
@@ -40,23 +40,23 @@ const OtpVerification = () => {
   };
 
   const handleSubmit = async () => {
-
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
-        setError("Please enter OTP.");
-        notifyError("Please enter OTP.");
+      setError("Please enter OTP.");
+      notifyError("Please enter OTP.");
       return;
     }
     setIsLoading(true);
     try {
-      const response = await verifyOtp( email, otpValue,"user");
+      const response = await verifyOtp(email, otpValue, "user");
+      
       notifySuccess("OTP verification successful. Please Login to continue");
-      navigate('/user/login')
+      navigate("/user/login");
     } catch (error) {
       setError("OTP verification failed. Try again.");
       notifyError("OTP verification failed. Try again.");
       console.error(error);
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -64,8 +64,7 @@ const OtpVerification = () => {
   const handleResend = async () => {
     if (resendTimer > 0) return;
     try {
-
-      await resendOtp(email,"user");
+      await resendOtp(email, "user");
       notifySuccess("OTP resend successful!");
       setResendTimer(10);
     } catch (error) {
@@ -126,18 +125,18 @@ const OtpVerification = () => {
           onClick={handleSubmit}
           disabled={isLoading}
           className={`w-full py-3 text-white font-semibold rounded-lg transition ${
-            isLoading ? "bg-[#b8860b] hover:bg-[#a6750a] cursor-not-allowed" : "bg-[#b8860b] hover:bg-[#a6750a] "
+            isLoading
+              ? "bg-[#b8860b] hover:bg-[#a6750a] cursor-not-allowed"
+              : "bg-[#b8860b] hover:bg-[#a6750a] "
           }`}
         >
           {isLoading ? "Verifying..." : "Verify OTP"}
         </button>
 
         {/* Resend OTP */}
-         <div className="mt-6 text-center">
+        <div className="mt-6 text-center">
           {resendTimer > 0 ? (
-            <span className="text-gray-600">
-              Resend OTP in {resendTimer}s
-            </span>
+            <span className="text-gray-600">Resend OTP in {resendTimer}s</span>
           ) : (
             <button
               onClick={handleResend}
@@ -146,7 +145,7 @@ const OtpVerification = () => {
               Resend OTP
             </button>
           )}
-        </div> 
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { AppState, AuthState } from '../../types/storeTypes';
+import { AppState } from '../../types/storeTypes';
 import { adminState } from '../../types/storeTypes';
 import { adminService } from '../../api/services/adminService';
 import { ownerService } from '../../api/services/ownerService';
@@ -216,17 +216,17 @@ export const createAdminSlice: StateCreator<AppState, [], [], adminState> = (set
 
       deleteUser: async (id, authType) => {
         try {
-          let response;
+           let response;
+
           switch (authType) {
-            case "user":
-              // response = await authService.deleteUser({ id });
-              break;
+            
             case "owner":
-              response = await adminService.deleteOwner(id);
+            response = await adminService.deleteOwner(id);
               break;
             default:
               throw new Error("Invalid auth type");
           }
+          return response;
         } catch (error) {
           console.error("error", error);
           throw error;

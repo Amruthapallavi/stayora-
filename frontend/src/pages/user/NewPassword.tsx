@@ -75,8 +75,8 @@ const NewPassword = () => {
     }
 
     try {
-      await resetPassword(email, newPassword,"user");
-      
+      await resetPassword(email, newPassword, "user");
+
       notifySuccess("Password updated successfully. Please log in.");
       navigate("/user/login");
     } catch (error) {
@@ -99,27 +99,36 @@ const NewPassword = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3]">
       <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full">
-        <h2 className="text-3xl font-bold mb-4 text-center text-gray-800">{isOtpVerified ? "Set New Password" : "Verify Email"}</h2>
+        <h2 className="text-3xl font-bold mb-4 text-center text-gray-800">
+          {isOtpVerified ? "Set New Password" : "Verify Email"}
+        </h2>
 
         {!isOtpVerified ? (
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmitOtp(); }}>
-            <p>Please enter otp sended to <b>{email || "your email"}</b></p> <br />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmitOtp();
+            }}
+          >
+            <p>
+              Please enter otp sended to <b>{email || "your email"}</b>
+            </p>{" "}
+            <br />
             <div className="flex justify-center gap-3 mb-6">
               {otp.map((value, index) => (
                 <input
                   key={index}
                   id={`otp-input-${index}`}
-                  type={showOtp?"text":"password"}
+                  type={showOtp ? "text" : "password"}
                   value={value}
                   onChange={(e) => handleChange(index, e.target.value)}
                   maxLength={1}
-                  autoFocus={index === 0} 
+                  autoFocus={index === 0}
                   disabled={isOtpVerified}
                   className="w-12 h-12 text-center text-xl font-semibold text-[#b8860b] bg-[#e2d1c3] rounded-lg border border-[#b8860b] focus:outline-none"
                 />
               ))}
             </div>
-
             <div className="flex items-center justify-center mb-6">
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -130,7 +139,6 @@ const NewPassword = () => {
                 <span>Show OTP</span>
               </label>
             </div>
-
             <button
               type="submit"
               disabled={isOtpVerified}
@@ -140,7 +148,12 @@ const NewPassword = () => {
             </button>
           </form>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); handlePasswordSubmit(); }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePasswordSubmit();
+            }}
+          >
             <input
               type="password"
               placeholder="New Password"

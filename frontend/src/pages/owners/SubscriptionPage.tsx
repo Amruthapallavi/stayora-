@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BadgeDollarSign, BadgePercent, Star, StarOff, WalletCards, CheckCircle2, XCircle } from "lucide-react";
+import { BadgeDollarSign, Star, StarOff, WalletCards, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { toast } from "sonner";

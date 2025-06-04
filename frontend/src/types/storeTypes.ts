@@ -1,4 +1,4 @@
-import { INotification } from "./notification";
+import { INotification, INotificationApiResponse } from "./notification";
 import { IAdminDashboardData } from "./admin";
 import { IResponse } from "./response";
 import { IUser, IUserResponse } from "./user";
@@ -7,6 +7,7 @@ import { IProperty, IPropertyDetails, PropertyResponse } from "./property";
 import {
   IBookingAdminResponse,
   IBookingDetailedData,
+  IBookingDetailsResponse,
   IBookingResponse,
   IOwnerBookingDetails,
   IOwnerBookingRes,
@@ -25,7 +26,7 @@ export interface AuthState {
   isAuthenticated: boolean;
 
   login: (email: string, password: string, authType: AuthType) => Promise<void>;
-  signup: (userData: IUser | IOwner, authType: AuthType) => Promise<void>;
+signup: (data: FormData, authType: AuthType) => Promise<any>
   verifyOtp: (email: string, otp: string, authType: AuthType) => Promise<void>;
   resendOtp: (email: string, authType: AuthType) => Promise<void>;
   forgotPassword: (email: string, authType: AuthType) => Promise<void>;
@@ -58,7 +59,7 @@ export interface propertyState {
   getPropertyById(propertyId: String): Promise<IPropertyDetails>;
   deletePropertyById(propertyId: String): Promise<IResponse>;
 getProperties: (page: number, limit: number, searchTerm: string) => Promise<PropertyResponse>;
-  updateProperty: (propertyId: string, formData: IProperty) => Promise<void>;
+updateProperty: (propertyId: string, formData: Partial<IProperty>) => Promise<void>;
   getAllProperties: (page: number,limit:number,search?:string) => Promise<PropertyResponse>;
   filteredProperties: (data: any) => Promise<any>;
   submitReview:(bookingId:string,reviewRate:number,reviewText:string)=>Promise<void>;
@@ -70,7 +71,7 @@ export interface chatState {
   sendMessage: (data: any) => Promise<any>;
   getConversation: (sender: string, receiver: string) => Promise<any>;
   listConversations: () => Promise<any>;
-  getNotifications: () => Promise<INotification>;
+  getNotifications: () => Promise<INotificationApiResponse>;
   markMessagesAsRead: (convId: string, userId: string) => Promise<void>;
   markNotificationAsRead: (notificationId: string) => Promise<any>;
 }
@@ -80,7 +81,7 @@ export interface bookingState {
   cancelBooking: (bookingId: string, reason: string) => Promise<IResponse>;
   bookingDetails: (
     bookingId: string
-  ) => Promise<IBookingDetailedData | IOwnerBookingDetails>;
+  ) => Promise<IBookingDetailsResponse>;
   createRazorpayOrder: (
     amount: number,
     productId: string
@@ -102,7 +103,7 @@ export interface bookingState {
 export interface adminState {
   getUserData: (id: any, authType: AuthType) => Promise<any>;
   updateOwner: (id: string, formData: Partial<IOwner>) => Promise<void>;
-  updateUser: (id: any, formData: IUser) => Promise<void>;
+  updateUser: (id: any, formData: Partial<IUser>) => Promise<void>;
   listAllOwners: (page:number,limit:number,searchTerm:string) => Promise<OwnersResponse>;
   listAllUsers: (page:number,limit:number,searchQuery:string) => Promise<IUserResponse>;
   updateUserStatus: (userId: string, currentStatus: string) => Promise<IResponse>;

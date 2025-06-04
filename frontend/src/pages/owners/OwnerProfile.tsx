@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// import Sidebar from "../../components/owner/Sidebar";
 import { User, Lock, UploadCloud, ShieldAlert } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import { BadgeCheck } from "lucide-react";
@@ -15,7 +14,7 @@ export default function OwnerProfile() {
   const [activeForm, setActiveForm] = useState<string | null>(null);
   const [userData, setUserData] = useState<{ user: IOwner } | null>(null);
   
-  const { updateOwner, changePassword, user, getUserData, isAuthenticated } =
+  const { updateOwner, changePassword, user, getUserData } =
     useAuthStore();
     const [updatedUser, setUpdatedUser] = useState<ProfileFormType>({
       name: "",
