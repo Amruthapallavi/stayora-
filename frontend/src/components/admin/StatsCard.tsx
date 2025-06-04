@@ -1,18 +1,9 @@
 import { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "../lib/utils";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../../components/ui/hover-card";
+
 import { DialogTitle, DialogDescription } from "../../components/ui/dialog"; // make sure these are imported
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../../components/ui/tooltip";
 import {
   Dialog,
   DialogContent,

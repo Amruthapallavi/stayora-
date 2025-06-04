@@ -1,7 +1,7 @@
 import { userApi } from "../api";
 import { IUser } from "../../types/user";
-import { IProperty, IPropertyDetails } from "../../types/property";
-import { IBooking, IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
+import {  IPropertyDetails } from "../../types/property";
+import {  IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
 import { IServiceResponse } from "../../types/service";
 import { WalletData } from "../../types/wallet";
 

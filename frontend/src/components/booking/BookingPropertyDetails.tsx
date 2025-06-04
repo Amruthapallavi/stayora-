@@ -1,5 +1,4 @@
 import { Card } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
 import { Calendar, Clock, Home, IndianRupee, MapPin, Wifi, Car, Coffee, Tv, Shield, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import PropertyMap from "../user/PropertyMap";

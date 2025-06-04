@@ -45,3 +45,23 @@ export interface RazorpayOrderResponse {
   }
   
   
+  export interface RazorpayPaymentButtonProps {
+    amount: number; 
+    productId:string;
+    onSuccess: (booking: IBooking) => void; 
+    onFailure: () => void; 
+  }
+  
+ export interface RazorpayOrderResponse {
+    id: string;
+    amount: number;
+    currency: string;
+    bookingId?:string;
+  }
+  
+ export interface RazorpayResponse {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+    bookingId?:string;
+  }

@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import UserLayout from "../../components/user/UserLayout";
 import PropertyMap from "../../components/user/PropertyMap";
-import { IProperty, Property } from "../../types/property";
+import { IProperty } from "../../types/property";
 
 interface owner {
   name: string;

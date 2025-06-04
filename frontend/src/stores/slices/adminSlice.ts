@@ -6,7 +6,7 @@ import { ownerService } from '../../api/services/ownerService';
 import { authService } from '../../api/services/authService';
 import { userService } from '../../api/services/userService';
 
-export const createAdminSlice: StateCreator<AppState, [], [], adminState> = (set, get) => ({
+export const createAdminSlice: StateCreator<AppState, [], [], adminState> = (_set, get) => ({
 
 
      getDashboardData: async () => {

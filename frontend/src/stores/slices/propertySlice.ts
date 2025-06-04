@@ -5,7 +5,7 @@ import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';
 import { adminService } from '../../api/services/adminService';
 
-export const createPropertySlice: StateCreator<AppState, [], [], propertyState> = (set, get) => ({
+export const createPropertySlice: StateCreator<AppState, [], [], propertyState> = (_set, get) => ({
   
        getProperties: async (page:number,limit:number,searchTerm:string) => {
           try {

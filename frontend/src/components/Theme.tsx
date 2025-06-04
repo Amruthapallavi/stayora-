@@ -3,19 +3,17 @@ import { useEffect, useState } from 'react';
 export default function useDarkMode() {
   const [darkMode, setDarkMode] = useState(false);
 
-  // Check for stored preference in localStorage
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme');
     if (storedTheme === 'dark') {
       setDarkMode(true);
-      document.documentElement.classList.add('dark'); // Add 'dark' class to root
+      document.documentElement.classList.add('dark'); 
     } else {
       setDarkMode(false);
-      document.documentElement.classList.remove('dark'); // Ensure no 'dark' class
+      document.documentElement.classList.remove('dark'); 
     }
   }, []);
 
-  // Update the class on the root element when darkMode changes
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');

@@ -5,7 +5,7 @@ import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';
 import { notificationService } from '../../api/services/notificationService';
 
-export const createChatSlice: StateCreator<AppState, [], [], chatState> = (set, get) => ({
+export const createChatSlice: StateCreator<AppState, [], [], chatState> = (_set, get) => ({
 
          sendMessage: async (data) => {
             try {

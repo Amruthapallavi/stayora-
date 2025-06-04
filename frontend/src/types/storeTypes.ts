@@ -24,7 +24,7 @@ export interface AuthState {
   isAuthenticated: boolean;
 
   login: (email: string, password: string, authType: AuthType) => Promise<void>;
-signup: (data: FormData, authType: AuthType) => Promise<any>
+ signup: (data: FormData, authType: AuthType) => Promise<any>
   verifyOtp: (email: string, otp: string, authType: AuthType) => Promise<void>;
   resendOtp: (email: string, authType: AuthType) => Promise<void>;
   forgotPassword: (email: string, authType: AuthType) => Promise<void>;

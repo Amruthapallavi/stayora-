@@ -7,7 +7,7 @@ import { userService } from '../../api/services/userService';
 import { razorpayService } from '../../api/services/paymentService';
 import { IBookingDetailsResponse } from '../../types/booking';
 
-export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = (set, get) => ({
+export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = (_set, get) => ({
 
       ownerPropertyBookings: async (ownerId: string,page:number,limit:number) => {
         try {

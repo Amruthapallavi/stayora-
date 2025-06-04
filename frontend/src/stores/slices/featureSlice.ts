@@ -3,7 +3,7 @@ import { AppState, featureState } from '../../types/storeTypes';
 import { adminService } from '../../api/services/adminService';
 import { ownerService } from '../../api/services/ownerService';
 
-export const createFeatureSlice: StateCreator<AppState, [], [], featureState> = (set, get) => ({
+export const createFeatureSlice: StateCreator<AppState, [], [], featureState> = (_set, get) => ({
 
        listAllFeatures: async () => {
         try {

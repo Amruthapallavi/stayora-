@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
-import type { Socket } from 'socket.io-client';
-
 import { notifyError } from '../../utils/notifications';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -38,7 +36,9 @@ const ChatBox: React.FC<Props> = ({ user, receiverId, propertyId, className }) =
   
   const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
   const [sending, setSending] = useState(false);
-  const [chatPartner, setChatPartner] = useState<ChatPartner | null>(null);
+  const [
+    chatPartner,
+     setChatPartner] = useState<ChatPartner | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +82,7 @@ const ChatBox: React.FC<Props> = ({ user, receiverId, propertyId, className }) =
         setLoading(true);
         const senderId = user.userId || user.id;
         const result = await getConversation(senderId, receiverId);
-console.log(result,"check")
+        console.log(chatPartner,"chatpartner")
         if (result && result.data) {
           setMessages(result.data || []);
           if (result.data.partner) {
@@ -130,7 +130,12 @@ console.log(result,"check")
       setSending(false);
     }
   };
-
+if(loading){
+  return(
+    <div>
+    </div>
+  )
+}
   return (
     <div className={`flex flex-col border rounded p-4 bg-white ${className}`}>
       <div className="flex-1 overflow-y-auto mb-4 space-y-2">

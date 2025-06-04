@@ -1,6 +1,6 @@
 import { IFeature } from "../../types/feature";
-import { IBooking, IBookingDetailedData, IBookingDetailsResponse } from "../../types/booking";
-import { IOwner, OwnersResponse } from "../../types/owner";
+import {  IBookingDetailsResponse } from "../../types/booking";
+import { OwnersResponse } from "../../types/owner";
 import { IProperty, IPropertyDetails } from "../../types/property";
 import { adminApi } from "../api";
 

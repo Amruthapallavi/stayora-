@@ -1,4 +1,3 @@
-import { IAddOn } from "./booking";
 import { IProperty } from "./property";
 
 

@@ -5,7 +5,7 @@ import { serviceState } from '../../types/storeTypes';
 import { adminService } from '../../api/services/adminService';
 import { userService } from '../../api/services/userService';
 
-export const createServiceSlice: StateCreator<AppState, [], [], serviceState> = (set, get) => ({
+export const createServiceSlice: StateCreator<AppState, [], [], serviceState> = (_set, get) => ({
 
 
 

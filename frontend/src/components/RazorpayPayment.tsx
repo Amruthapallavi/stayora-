@@ -1,28 +1,8 @@
 import { loadRazorpayScript } from "../utils/loadRazorpayScript";
 import { useAuthStore } from "../stores/authStore";
 import { RazorpayOptions } from "./hooks/RazorPay";
-import { IBooking } from "../types/booking";
+import { RazorpayOrderResponse, RazorpayPaymentButtonProps, RazorpayResponse } from "../types/razorPay";
 
-interface RazorpayPaymentButtonProps {
-  amount: number; // in paise
-  productId:string;
-  onSuccess: (booking: IBooking) => void; // <-- update here
-  onFailure: () => void; 
-}
-
-interface RazorpayOrderResponse {
-  id: string;
-  amount: number;
-  currency: string;
-  bookingId?:string;
-}
-
-interface RazorpayResponse {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-  bookingId?:string;
-}
 
 const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, productId, onSuccess, onFailure }) => {
   const createRazorpayOrder = useAuthStore((state) => state.createRazorpayOrder);

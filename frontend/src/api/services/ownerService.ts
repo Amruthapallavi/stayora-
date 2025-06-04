@@ -1,6 +1,6 @@
 // import axios from "axios";
 
-import { IBooking, IBookingDetailsResponse, IOwnerBookingDetails } from "../../types/booking";
+import {  IBookingDetailsResponse } from "../../types/booking";
 import { IOwner } from "../../types/owner";
 import {
   IProperty,
