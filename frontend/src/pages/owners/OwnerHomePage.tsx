@@ -44,10 +44,10 @@ const Dashboard = () => {
     occupancyRate: 0,
   });
 const limit=6;
-let page=1;
+const page=1;
 let search='';
   useEffect(() => {
-    loadProperties(limit,page=1,search);
+    loadProperties(limit,page,search);
     
   }, []);
 
