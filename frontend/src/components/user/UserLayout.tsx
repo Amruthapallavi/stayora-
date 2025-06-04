@@ -1,5 +1,6 @@
 import  { ReactNode } from "react";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 
 export default function UserLayout({ children }: { children: ReactNode }) {
   return (

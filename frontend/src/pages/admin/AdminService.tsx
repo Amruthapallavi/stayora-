@@ -1,22 +1,13 @@
 import { useEffect, useState } from "react";
 import { Eye, CheckCircle, Ban, PlusCircle, X } from "lucide-react";
-import Sidebar from "../../components/admin/Sidebar";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import AdminLayout from "../../components/admin/AdminLayout";
+import { Service } from "../../types/service";
 
-type Service = {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  contactMail: string;
-  contactNumber: string;
-  status: "active" | "disabled";
-};
+
 
 const AdminServices = () => {
   const navigate = useNavigate();
@@ -24,15 +15,23 @@ const AdminServices = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [services, setServices] = useState<Service[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [newService, setNewService] = useState({
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [newService, setNewService] = useState<{
+    name: string;
+    description: string;
+    price: number;
+    image: string;
+    contactMail: string;
+    contactNumber: string;
+  }>({
     name: "",
     description: "",
-    price: "",
+    price: 0, 
     image: "",
     contactMail: "",
     contactNumber: "",
   });
+  
 
   useEffect(() => {
     loadServices();

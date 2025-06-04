@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
-import ownerService from "../services/owner.service";
-import propertyService from "../services/property.service";
 import { IPropertyController } from "./interfaces/IPropertyController";
 import { STATUS_CODES } from "../utils/constants";
-import adminService from "../services/admin.service";
 import { IPropertyService } from "../services/interfaces/IPropertyService";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
+import { PaginationQueryDTO } from "../DTO/PaginationDTO";
 
 @injectable()
 export class PropertyController implements IPropertyController {
@@ -22,7 +20,6 @@ export class PropertyController implements IPropertyController {
     
 async createProperty(req: Request, res: Response): Promise<void> {
     try {
-      console.log("from controller");
   
       const data = req.body;
       const ownerId = (req as any).userId; 
@@ -47,10 +44,15 @@ async createProperty(req: Request, res: Response): Promise<void> {
   async getPropertyByOwner(req:Request,res:Response):Promise<void>{
     try {
       const ownerId = (req as any).userId; 
-    
-    const result = await this.propertyService.getPropertyByOwner(ownerId);
+      const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+const searchTerm = typeof req.query.search === 'string' ? req.query.search : '';
+    const result = await this.propertyService.getPropertyByOwner(ownerId,page,limit,searchTerm);
         res.status(result.status).json({
           properties: result.properties,
+           totalPages: result.totalPages,
+      currentPage: result.currentPage,
+      totalProperties: result.totalProperties,
         });
     } catch (error) {
       console.error(error);
@@ -71,10 +73,17 @@ async createProperty(req: Request, res: Response): Promise<void> {
     }
     async getAllProperties(req:Request,res:Response):Promise<void>{
     try {
-    
-    const result = await this.propertyService.getAllProperties();
+const { page, limit, search }: PaginationQueryDTO = {
+  page: parseInt(req.query.page as string) || 1,
+  limit: parseInt(req.query.limit as string) || 10,
+  search: typeof req.query.search === 'string' ? req.query.search : '',
+};
+
+    const result = await this.propertyService.getAllProperties(page,limit,search);
         res.status(result.status).json({
           properties: result.properties,
+          currentPage:result.currentPage,
+          totalPages:result.totalPages
         });
     } catch (error) {
       console.error(error);
@@ -162,10 +171,25 @@ async rejectProperty(req:Request,res:Response): Promise<void>{
       }
      }
 
-    
-  
-}
+  async addReview(req: Request, res: Response): Promise<void> {
+  try {
+    const { bookingId, rating, reviewText } = req.body;
+    console.log(bookingId, rating, reviewText, "for rating");
 
+    const result = await this.propertyService.addReview(bookingId, rating, reviewText);
+    res.status(result.status).json({
+      message: result.message,
+    });
+
+  } catch (error) {
+    console.error("Error adding review:", error);
+
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      error: error instanceof Error ? error.message : "Failed to add review",
+    });
+  }
+}
+}
 
 
 export default PropertyController;

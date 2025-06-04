@@ -2,6 +2,9 @@ import { Response } from "express";
 import { IOwner } from "../../models/owner.model";
 import { IProperty } from "../../models/property.model";
 import mongoose from "mongoose";
+import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
+import RazorpayVerifyPayload from "./IBookingService";
+import verifySubscriptionPayload from "../../DTO/BookingResponseDTO";
 
 export interface SignupData {
   name: string;
@@ -50,7 +53,7 @@ interface IOwnerService {
     password: string,
     res: Response
   ): Promise<{
-    owner: IOwner;
+    owner: OwnerResponseDTO;
     token: string;
     refreshToken: string;
     message: string;
@@ -59,9 +62,10 @@ interface IOwnerService {
 
   resetPassword(email: string, newPassword: string): Promise<{ message: string; status: number }>;
 
-  getProfileData(id: string): Promise<{ user: any; status: number; message: string }>;
+  getProfileData(id: string): Promise<{ user: OwnerResponseDTO |null; status: number; message: string }>;
 
   getDashboardData(ownerId: string): Promise<{ data: any; status: number; message: string }>;
+  changePassword(userId: string, oldPassword: string, newPassword: string): Promise<{ status: number; message: string }>;
 
   updateProfile(
     id: string,
@@ -70,11 +74,26 @@ interface IOwnerService {
 
   addProperty(req: IAddPropertyInput): Promise<{ message: string; status: number }>;
 
-  getOwnerStatus(id: string): Promise<{ user: any | null; status: number; message: string }>;
+  getOwnerStatus(id: string): Promise<{ user: OwnerResponseDTO | null; status: number; message: string }>;
 
-  getPropertyById(id: string): Promise<{ property: any; status: number; message: string }>;
+  getPropertyById(id: string): Promise<{ property: IProperty |null; status: number; message: string }>;
 
-  fetchWalletData(id: string): Promise<{ message: string; status: number; data: IWalletWithTotals | null }>;
+  fetchWalletData(id: string): Promise<{ message: string; status: number; data: IWalletWithTotals  }>;
+   subscription(
+    price: number,
+    planName: string,
+    ownerId: string,
+    allowedProperties:number
+  ): Promise<{
+    id: string;
+    amount: number;
+    currency: string;
+  }>;
+ verifySubscription(
+    payload: verifySubscriptionPayload
+  ): Promise<{
+    isValid: boolean;
+  }>;
 }
 
 export default IOwnerService;

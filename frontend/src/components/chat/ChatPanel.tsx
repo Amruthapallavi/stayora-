@@ -5,7 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import io from 'socket.io-client';
 import Notification from "./Notifications";
 import { v4 as uuidv4 } from 'uuid';
-import { IUser } from "../../types/user.interface";
+import { IUser } from "../../types/user";
 import { MessageCircle } from "lucide-react";
 import { cn } from "../lib/utils";
 

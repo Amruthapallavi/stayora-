@@ -6,7 +6,7 @@ import { useAuthStore } from "../../stores/authStore";
 import UserLayout from "../../components/user/UserLayout";
 import CTASection from "../../components/user/CTASection";
 import PopularLocations from "../../components/user/PopularLocations";
-import Property from "../../types/IProperty";
+import Property from "../../types/property";
 import { FaBath, FaBed, FaMapMarkerAlt, FaRupeeSign } from "react-icons/fa";
 
 const UserHomePage = () => {
@@ -200,29 +200,7 @@ const UserHomePage = () => {
         <PopularLocations/>
         <CTASection/>
 
-        {/* Footer */}
-        <footer className="bg-yellow-700 text-white py-8">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div>
-              <h4 className="font-bold mb-2">Explore</h4>
-              <p>Houses</p>
-              <p>Categories</p>
-              <p>About Us</p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-2">Contact Us</h4>
-              <p>Email: contact@stayora.com</p>
-              <p>Phone: +1-234-567-890</p>
-              <p>Location: Bangalore, India</p>
-            </div>
-            <div>
-              <h4 className="font-bold mb-2">Get Started</h4>
-              <p>Login</p>
-              <p>Register</p>
-              <p>Find Homes</p>
-            </div>
-          </div>
-        </footer>
+     
       </div>
       </UserLayout>
     );

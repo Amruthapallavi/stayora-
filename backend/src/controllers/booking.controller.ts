@@ -5,6 +5,7 @@ import { IBookingController } from "./interfaces/IBookingController";
 import { injectable,inject } from "inversify";
 import TYPES from "../config/DI/types";
 import { IBookingService } from "../services/interfaces/IBookingService";
+import { CreateBookingDTO, VerifyPaymentDTO } from "../DTO/booking/bookingControllerDTO";
 
 @injectable()
 export class BookingController implements IBookingController {
@@ -16,11 +17,10 @@ export class BookingController implements IBookingController {
     
     async createBooking(req: Request, res: Response): Promise<void> {
       try {
-        const { amount } = req.body;
-      const productId= req.params.id;
-      const userId = (req as any).userId;
+      const { amount }: CreateBookingDTO = req.body;
+        const productId= req.params.id;
+        const userId = (req as any).userId;
     
-      console.log(productId);
         if (!amount || typeof amount !== "number") {
            res.status(400).json({ message: "Invalid amount" });
         }
@@ -37,7 +37,12 @@ export class BookingController implements IBookingController {
     
     async verifyPayment(req: Request, res: Response): Promise<void> {
       try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
+const {
+  razorpay_order_id,
+  razorpay_payment_id,
+  razorpay_signature,
+  bookingId,
+}: VerifyPaymentDTO = req.body;
     
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
            res.status(400).json({ message: "Missing payment verification fields" });
@@ -69,13 +74,18 @@ export class BookingController implements IBookingController {
 
     async listBookingsByOwner(req:Request, res:Response):Promise<void>{
       try {
-         
-        const ownerId = req.query.ownerId as string;
-        console.log(ownerId)
-        const result = await this.bookingService.listBookingsByOwner(ownerId);
-        res.status(result.status).json({
-          bookings: result.bookings,
-        });
+      const ownerId = req.query.ownerId as string;
+const page = parseInt(req.query.page as string) || 1;
+const limit = parseInt(req.query.limit as string) || 10;
+
+const result = await this.bookingService.listBookingsByOwner(ownerId, page, limit);
+
+res.status(result.status).json({
+  bookings: result.bookings,
+  currentPage: result.currentPage,
+  totalPages: result.totalPages
+});
+
       } catch (error) {
         console.error(error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
@@ -98,6 +108,26 @@ export class BookingController implements IBookingController {
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           error: error instanceof Error ? error.message : "Failed to fetch booking data",
         });
+      }
+    }
+    async cancelBooking(req:Request,res:Response):Promise<void>{
+      try {
+        const bookingId= req.params.id;
+        const reason:string=req.body.reason;
+        if(!bookingId  ){
+            res.status(STATUS_CODES.BAD_REQUEST).json({
+              error: "booking not found",
+            });
+            return;
+          }
+          console.log(bookingId,"id")
+          const result = await this.bookingService.cancelBooking(bookingId,reason);
+        res.status(result.status).json({
+          message:result.message,
+        })
+      } catch (error) {
+        console.log(error);
+        throw error;
       }
     }
     async userBookingDetails(req:Request,res:Response):Promise<void>{
@@ -137,7 +167,6 @@ export class BookingController implements IBookingController {
      async AllbookingDetails(req:Request,res:Response):Promise<void>{
           try {
             const bookingId=req.params.id;
-            console.log("from controller")
             const result = await this.bookingService.AllbookingDetails(bookingId);
             res.status(result.status).json({
               bookingData: result.bookingData,

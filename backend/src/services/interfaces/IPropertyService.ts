@@ -1,3 +1,5 @@
+import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
+import { IBooking } from "../../models/booking.model";
 import { IProperty } from "../../models/property.model";
 
 export interface ICreatePropertyInput {
@@ -13,16 +15,21 @@ export interface ICreatePropertyInput {
 export interface IPropertyService {
   createProperty(req: ICreatePropertyInput): Promise<{ status: number; message: string }>;
 
-  getPropertyByOwner(ownerId: string): Promise<{
-    properties: any[];
+  getPropertyByOwner(ownerId: string,page:number,limit:number,searchTerm?:string): Promise<{
+    properties: IProperty[];
+    totalPages:number,
+              totalProperties:number,
+              currentPage:number,
     status: number;
     message: string;
   }>;
 
   deletePropertyById(id: string): Promise<{ status: number; message: string }>;
 
-  getAllProperties(): Promise<{
+  getAllProperties(page:number,limit:number,searchTerm?:string): Promise<{
     properties: IProperty[];
+    currentPage:number;
+    totalPages:number;
     status: number;
     message: string;
   }>;
@@ -36,8 +43,12 @@ export interface IPropertyService {
     message: string;
   }>;
 
-  getFilteredProperties(filters: any): Promise<any>;
-
+  getFilteredProperties(filters: any): Promise<IProperty[]>;
+addReview(
+  bookingId: string,
+  rating: number,
+  reviewText: string
+): Promise<{ status: number; message: string }>;
   approveProperty(id: string): Promise<{ status: number; message: string }>;
 
   blockUnblockProperty(id: string, status: string): Promise<{
@@ -53,9 +64,9 @@ export interface IPropertyService {
   }>;
 
   getPropertyById(id: string): Promise<{
-    property: any;
-    ownerData: any;
-    booking: any;
+    property: IProperty;
+    ownerData: OwnerResponseDTO |null;
+    booking: IBooking;
     status: number;
     message: string;
   }>;

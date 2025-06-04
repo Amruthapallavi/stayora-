@@ -1,6 +1,4 @@
 import Feature, { IFeature } from "../models/features.model";
-import featureRepository from "../repositories/feature.repository";
-import ownerRepository from "../repositories/owner.repository";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import IFeatureService, { FeatureData } from "./interfaces/IFeatureService";
 import { inject, injectable } from "inversify";
@@ -19,7 +17,6 @@ export class FeatureService implements IFeatureService {
         try {
           const features = await this.featureRepository.findFeatures();
     
-        console.log(features)
         return {
           features,
           status: STATUS_CODES.OK,
@@ -48,7 +45,6 @@ export class FeatureService implements IFeatureService {
           }
           const result=await this.featureRepository.deleteFeature( id);
           
-          console.log(result)
           return {
             message: "Successfully deleted",
             status: STATUS_CODES.OK,
@@ -96,7 +92,6 @@ export class FeatureService implements IFeatureService {
           async addFeature(featureData: FeatureData): Promise<{ message: string; status: number }> {
             try {
               let { name, description,icon } = featureData;
-              console.log(icon,"icon");
               
         
               if (!name || !description ) {

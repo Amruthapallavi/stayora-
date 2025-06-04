@@ -29,7 +29,10 @@ export const ROLES = {
       CONVERSATIONS_FETCHED:"Chat fetched Successfully",
       NOTIFICATION_CREATED:"Notification created successfully",
       NOTIFICATIONS_FETCHED:"Notification fetched successfully",
-      NOTIFICATION_UPDATED:"Notification updated successfully"
+      NOTIFICATION_UPDATED:"Notification updated successfully",
+      STATUS_UPDATED:"Status Updated Successfully",
+      DELETED_SUCCESSFUL:"Deleted Successfully",
+      APPROVE_SUCCESSFUL:"Approved Successfully",
     },
     ERROR: {
       INVALID_CREDENTIALS: "Invalid credentials",

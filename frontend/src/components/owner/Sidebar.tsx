@@ -1,14 +1,38 @@
-import { useState } from "react";
-import { Home, User, Settings, LogOut, Menu, Building2, Plus, Calendar, Wallet, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, User, Settings, LogOut, Menu, Building2, Plus, Calendar, Wallet, MessageCircle, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 
-const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Dispatch<React.SetStateAction<boolean>> }) => {
-  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false); // Toggle for Properties sublist
+type NavItemProps = {
+  icon: React.ReactNode;
+  text: string;
+  path: string;
+  isOpen: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+};
+
+const NavItem = ({ icon, text, path, isOpen, onClick }: NavItemProps) => {
+  return (
+    <Link to={path} onClick={onClick} className="flex items-center gap-2 p-2 hover:bg-gray-500 rounded-md">
+      {icon}
+      {isOpen && <span>{text}</span>}
+    </Link>
+  );
+};
+
+type SidebarProps = {
+  isOpen: boolean;
+  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
+  const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, getUserData, logout } = useAuthStore();
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -21,22 +45,35 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
     }
   };
 
+  useEffect(() => {
+    if (!user) return;
+  
+    const fetchOwnerData = async () => {
+      try {
+        const response = await getUserData(user.id, "owner");
+        if (response && response.user) {
+          user.isSubscribed = response.user.isSubscribed;
+        }
+      } catch (error) {
+        console.error("Failed to fetch owner data:", error);
+      }
+    };
+  
+    fetchOwnerData();
+  }, [user?.id]);
+  
+
   return (
     <div className="flex">
       <header className="flex justify-between items-center p-4 border-b">
-  <h1 className="text-xl font-semibold">Tick-Track</h1>
-  <div className="flex items-center gap-4">
-    {/* Add other icons/menus if any */}
-  </div>
-</header>
+        <h1 className="text-xl font-semibold"></h1>
+        <div className="flex items-center gap-4"></div>
+      </header>
 
-      {/* Sidebar */}
       <motion.aside
-  animate={{ width: isOpen ? "250px" : "80px" }}
-  className="fixed top-0 left-0 h-screen bg-[#A98E60] text-white p-4 flex flex-col z-50"
->
-
-        {/* Toggle Button */}
+        animate={{ width: isOpen ? "250px" : "80px" }}
+        className="fixed top-0 left-0 h-screen bg-[#A98E60] text-white p-4 flex flex-col z-50"
+      >
         <button
           className="absolute top-4 right-4 text-white"
           onClick={() => setIsOpen(!isOpen)}
@@ -44,8 +81,11 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
           <Menu size={24} />
         </button>
 
-        {/* Profile Section */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center mt-10">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="flex flex-col items-center mt-10"
+        >
           <img
             src="https://static.vecteezy.com/system/resources/previews/020/213/738/original/add-profile-picture-icon-upload-photo-of-social-media-user-vector.jpg"
             alt="Owner"
@@ -55,16 +95,24 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
             <div className="mt-2 text-center">
               <p className="text-sm font-bold">{isAuthenticated ? user?.name || "John Doe" : "Guest"}</p>
               {isAuthenticated && <p className="text-xs text-yellow-200">{user?.email}</p>}
+              
+              {/* Subscription Status Badge */}
+              {user && !user.isSubscribed && (
+                <Badge 
+                  variant="outline" 
+                  className="mt-2 bg-gradient-to-r from-rose-400 to-orange-300 text-white border-none animate-pulse"
+                >
+                  Unsubscribed
+                </Badge>
+              )}
             </div>
           )}
         </motion.div>
 
-        {/* Navigation Links */}
-        <nav className="mt-10 flex flex-col gap-2">
+        <nav className="mt-10 flex flex-col gap-2 flex-grow">
           <NavItem icon={<Home />} text="Dashboard" path="/owner/dashboard" isOpen={isOpen} />
           <NavItem icon={<User />} text="Profile" path="/owner/profile" isOpen={isOpen} />
           
-          {/* Properties (Expandable) */}
           <div>
             <button 
               onClick={() => setIsPropertiesOpen(!isPropertiesOpen)} 
@@ -81,27 +129,51 @@ const Sidebar = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: React.Disp
             )}
           </div>
 
-          {/* Bookings */}
           <NavItem icon={<Calendar />} text="Bookings" path="/owner/bookings" isOpen={isOpen} />
           <NavItem icon={<MessageCircle />} text="Chats & Notifications" path="/owner/chat" isOpen={isOpen} />
-
-          {/* Settings & Logout */}
           <NavItem icon={<Wallet />} text="Wallet & Transactions" path="/owner/wallet" isOpen={isOpen} />
-
           <NavItem icon={<Settings />} text="Settings" path="/settings" isOpen={isOpen} />
-          <NavItem icon={<LogOut />} text="Logout" isOpen={isOpen} onClick={handleLogout} />
+          <NavItem 
+            icon={<LogOut />} 
+            text="Logout" 
+            path="/logout" 
+            isOpen={isOpen} 
+            onClick={handleLogout} 
+          />
         </nav>
+
+        {/* Subscribe Now Section */}
+        {user && !user.isSubscribed && (
+          <div className={`mt-auto mb-4 ${isOpen ? '' : 'flex justify-center'}`}>
+            {isOpen ? (
+              <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-lg shadow-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Star className="h-4 w-4 text-yellow-300" />
+                  <span className="text-sm font-medium">Upgrade your account!</span>
+                </div>
+                <Link to="/owner/subscription">
+                  <Button 
+                    className="w-full bg-white hover:bg-white/90 text-purple-700 font-medium transition transform hover:scale-105"
+                    size="sm"
+                  >
+                    Subscribe Now
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <Link to="/subscribe">
+                <Button 
+                  size="icon" 
+                  className="bg-purple-600 hover:bg-purple-700 transition transform hover:scale-110"
+                >
+                  <Star className="h-4 w-4 text-yellow-300" />
+                </Button>
+              </Link>
+            )}
+          </div>
+        )}
       </motion.aside>
     </div>
-  );
-};
-
-const NavItem = ({ icon, text, path, isOpen, onClick }: any) => {
-  return (
-    <Link to={path} onClick={onClick} className="flex items-center gap-2 p-2 hover:bg-gray-500 rounded-md">
-      {icon}
-      {isOpen && <span>{text}</span>}
-    </Link>
   );
 };
 

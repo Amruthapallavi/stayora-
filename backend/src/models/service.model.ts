@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { ServiceStatus } from "./status/status";
 
 export interface IService extends Document {
   name: string;
   description: string;
   price: number;
   availability: boolean;
-  status: "active" | "disabled";
+  status: ServiceStatus;
   image: string; 
   contactMail:string;
   contactNumber:string;
@@ -22,7 +23,7 @@ const serviceSchema: Schema = new Schema(
     contactNumber: { type: String, trim: true, default: null },
 
     availability: { type: Boolean, default: true }, 
-    status: { type: String, enum: ["active", "disabled"], default: "active" },
+    status: { type: String, enum: Object.values(ServiceStatus), default: ServiceStatus.Active },
     image: { type: String }, 
   },
   { timestamps: true }

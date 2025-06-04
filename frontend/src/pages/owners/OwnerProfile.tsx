@@ -5,7 +5,11 @@ import { useAuthStore } from "../../stores/authStore";
 import { BadgeCheck } from "lucide-react";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import OwnerLayout from "../../components/owner/OwnerLayout";
-import { IOwner, ProfileFormType } from "../../types/IOwner";
+import { IOwner, ProfileFormType } from "../../types/owner";
+import { toast } from "react-toastify";
+import { Input } from "../../components/ui/input";
+import { CardContent, CardFooter } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 
 export default function OwnerProfile() {
   const [activeForm, setActiveForm] = useState<string | null>(null);
@@ -27,8 +31,6 @@ export default function OwnerProfile() {
       email: "",
     });
     
-
-      
     useEffect(() => {
       if (userData?.user) {
         setUpdatedUser({
@@ -47,28 +49,37 @@ export default function OwnerProfile() {
       }
     }, [userData?.user]);
     
-      
-
   useEffect(() => {
     if (user?.id) {
-
       getUserData(user.id, "owner")
         .then((data) => {
           setUserData(data);
-
         })
         .catch((error) => {
           console.error("Error fetching user data:", error);
         });
-
     }
   }, [user?.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUpdatedUser((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    
+    // Check if this is an address field
+    if (["houseNo", "street", "city", "district", "state", "pincode"].includes(name)) {
+      setUpdatedUser((prev) => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [name]: value,
+        },
+      }));
+    } else {
+      // Regular field
+      setUpdatedUser((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
   
   const handleUpdateProfile = async (
@@ -76,7 +87,7 @@ export default function OwnerProfile() {
     userId: string
   ) => {
     e.preventDefault();
-  
+     userId=user.id;
     if (!userId || !updatedUser.phone || !updatedUser.name) {
       notifyError("All fields are required.");
       return;
@@ -87,24 +98,68 @@ export default function OwnerProfile() {
       notifySuccess("Profile updated successfully");
       window.location.reload();
     } catch (err) {
-      notifyError(err.response?.data?.message || "Failed to update profile.");
+   const error = err as any;
+  notifyError(error.response?.data?.message || "Failed to update profile.");    }
+  
+    setActiveForm(null);
+  };
+    const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+   const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+  
+    // Trim inputs to check for spaces-only
+    if (
+      !currentPassword.trim() ||
+      !newPassword.trim() ||
+      !confirmPassword.trim()
+    ) {
+      notifyError("Fields cannot contain only spaces!");
+      return;
     }
   
-    setActiveForm(null);
-  };
+    if (newPassword !== confirmPassword) {
+      notifyError("Passwords do not match!");
+      return;
+    }
   
- 
-  
-  const handleChangePassword = (e: any) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    changePassword({
-      oldPassword: formData.get("oldPassword"),
-      newPassword: formData.get("newPassword"),
+    if (newPassword.length < 4) {
+      toast.error("Password must be at least 3 characters long!");
+      return;
+    }
+  try{
+   const response= await changePassword({
+      userId: user.id,
+      oldPass:currentPassword,
+      newPass:newPassword,
     });
-    setActiveForm(null);
+  console.log(response,"for passwod")
+    notifySuccess("password successfully updated");  
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (err: any) {
+      console.log(err.response.data,"error");
+      notifyError(err.response.data.message);
+      // toast.error(err.response?.data?.message || "Failed to update password");
+    }
   };
- 
+  
 
   return (
     <OwnerLayout>
@@ -184,59 +239,159 @@ export default function OwnerProfile() {
 
   {/* Right Side - Form Section */}
   <div className="w-full md:w-2/3 bg-white p-6 rounded-lg shadow-lg text-[#2D2D2D] border border-[#A98E60]">
-    {activeForm === "editProfile" && (
-      <form onSubmit={(e) => handleUpdateProfile(e, userData!.user._id!)} className="flex flex-col gap-3 mb-4">
-      <h2 className="text-xl font-semibold mb-2 text-[#A98E60]">Edit Profile</h2>
-        <input
-          type="text"
-          name="name"
-          defaultValue={userData?.user?.name || ""}
-          onChange={handleInputChange}
-          placeholder="Full Name"
-          className="p-2 border border-[#A98E60] bg-gray-100 rounded"
-        />
-        <input
-          type="tel"
-          name="phone"
-          defaultValue={userData?.user?.phone || ""}
-          onChange={handleInputChange}
-          placeholder="Phone"
-          className="p-2 border border-[#A98E60] bg-gray-100 rounded"
-        />
-        <input
-          type="text"
-          name="address"
-          defaultValue={userData?.user?.address.city || ""}
-          onChange={handleInputChange}
-          placeholder="Address"
-          className="p-2 border border-[#A98E60] bg-gray-100 rounded"
-        />
-        <div className="flex gap-2">
-          <button type="submit" className="bg-[#A98E60] hover:bg-[#916D40] py-2 px-4 rounded text-white transition w-full">
-            Save Changes
-          </button>
-          <button type="button" onClick={() => setActiveForm(null)} className="bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded text-white">
-            Cancel
-          </button>
-        </div>
-      </form>
-    )}
+  {activeForm === "editProfile" && (
+  <form onSubmit={(e) => handleUpdateProfile(e, userData!.user.id!)} className="flex flex-col gap-3 mb-4">
+    <h2 className="text-xl font-semibold mb-2 text-[#A98E60]">Edit Profile</h2>
 
-    {activeForm === "changePassword" && (
-      <form onSubmit={handleChangePassword} className="flex flex-col gap-3 mb-4">
+    <input
+      type="text"
+      name="name"
+      value={updatedUser.name}
+      onChange={handleInputChange}
+      placeholder="Full Name"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="tel"
+      name="phone"
+      value={updatedUser.phone}
+      onChange={handleInputChange}
+      placeholder="Phone"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="houseNo"
+      value={updatedUser.address.houseNo}
+      onChange={handleInputChange}
+      placeholder="House Number"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="street"
+      value={updatedUser.address.street}
+      onChange={handleInputChange}
+      placeholder="Street"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="city"
+      value={updatedUser.address.city}
+      onChange={handleInputChange}
+      placeholder="City"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="district"
+      value={updatedUser.address.district}
+      onChange={handleInputChange}
+      placeholder="District"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="state"
+      value={updatedUser.address.state}
+      onChange={handleInputChange}
+      placeholder="State"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <input
+      type="text"
+      name="pincode"
+      value={updatedUser.address.pincode}
+      onChange={handleInputChange}
+      placeholder="Pincode"
+      className="p-2 border border-[#A98E60] bg-gray-100 rounded"
+    />
+
+    <div className="flex gap-2">
+      <button
+        type="submit"
+        className="bg-[#A98E60] hover:bg-[#916D40] py-2 px-4 rounded text-white transition w-full"
+      >
+        Save Changes
+      </button>
+      <button
+        type="button"
+        onClick={() => setActiveForm(null)}
+        className="bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded text-white"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+)}
+
+
+    {activeForm === "changePassword" && 
+      <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3 mb-4">
         <h2 className="text-xl font-semibold mb-2 text-[#A98E60]">Change Password</h2>
-        <input type="password" name="oldPassword" placeholder="Old Password" className="p-2 border border-[#A98E60] bg-gray-100 rounded" />
-        <input type="password" name="newPassword" placeholder="New Password" className="p-2 border border-[#A98E60] bg-gray-100 rounded" />
-        <div className="flex gap-2">
-          <button type="submit" className="bg-red-500 hover:bg-red-600 py-2 px-4 rounded text-white">
-            Update Password
-          </button>
-          <button type="button" onClick={() => setActiveForm(null)} className="bg-gray-600 hover:bg-gray-500 py-2 px-4 rounded text-white">
-            Cancel
-          </button>
-        </div>
+         <CardContent className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
+                          <Input 
+                            id="currentPassword"
+                            name="currentPassword"
+                            type="password"
+                            value={passwordForm.currentPassword}
+                            onChange={handlePasswordChange}
+                            placeholder="Enter your current password"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
+                          <Input 
+                            id="newPassword"
+                            name="newPassword"
+                            type="password"
+                            value={passwordForm.newPassword}
+                            onChange={handlePasswordChange}
+                            placeholder="Enter your new password"
+                          />
+                          <p className="text-xs text-gray-500">Password must be at least 4 characters long</p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                          <Input 
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            type="password"
+                            value={passwordForm.confirmPassword}
+                            onChange={handlePasswordChange}
+                            placeholder="Confirm your new password"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                                <CardFooter className="flex justify-end">
+                    <Button
+  type="submit"
+  className="bg-[#b38e5d] hover:bg-[#8b6b3b]"
+  disabled={
+    !passwordForm.currentPassword.trim() ||
+    !passwordForm.newPassword.trim() ||
+    !passwordForm.confirmPassword.trim()
+  }
+>
+  Update Password
+</Button>
+</CardFooter>
       </form>
-    )}
+    }
 
     {/* Not Verified Section */}
     {userData?.user?.govtIdStatus === "approved" ? (

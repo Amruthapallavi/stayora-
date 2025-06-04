@@ -39,9 +39,9 @@ import { useAuthStore } from "../../stores/authStore";
 import UserLayout from "../../components/user/UserLayout";
 import { notifyError } from "../../utils/notifications";
 import RazorpayPaymentButton from "../../components/RazorpayPayment";
-import { IBooking } from "../../types/IBooking";
+import { IBooking } from "../../types/booking";
 
-// interface CheckoutProps {}
+interface CheckoutProps {}
 
 
 const CheckoutPage: React.FC<CheckoutProps> = () => {
@@ -75,7 +75,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const propertyName = searchParams.get("propertyName");
   const min = bookingDetails?.property?.minLeasePeriod;
   const max = bookingDetails?.property?.maxLeasePeriod;
-  const [rentalPeriod, setRentalPeriod] = useState<number>(min); // default to min
+  const [rentalPeriod, setRentalPeriod] = useState<number>(min);
   const [rentalPeriodError, setRentalPeriodError] = useState<string>("");
   const [bookingData, setBookingData] = useState<IBooking | null>(null);
 
@@ -377,8 +377,10 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                           <div className="flex items-center gap-2">
                             <MoveRight className="text-[#b38e5d]" size={16} />
                             <span className="text-sm text-gray-600">
-                              View: {bookingDetails?.property?.mapLocation}
-                            </span>
+  View: Latitude {bookingDetails?.property?.mapLocation?.coordinates?.latitude}, 
+  Longitude {bookingDetails?.property?.mapLocation?.coordinates?.longitude}
+</span>
+
                           </div>
                         </div>
 

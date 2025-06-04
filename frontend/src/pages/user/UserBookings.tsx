@@ -1,4 +1,3 @@
-// import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Clock, User, Home, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
@@ -6,12 +5,12 @@ import { Button } from '../../components/ui/button';
 import UserLayout from '../../components/user/UserLayout';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { IBooking } from '../../types/IBooking';
+import { IBooking, IBookingList, IBookingResponse } from '../../types/booking';
 
 const Bookings = () => {
 
     const {userBookings}= useAuthStore();
-    const [bookings, setBookings] = useState<IBooking[]>([]);
+    const [bookings, setBookings] = useState<IBookingList[]>([]);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -19,7 +18,8 @@ const Bookings = () => {
     useEffect(() => {
       const fetchBookings = async () => {
         try {
-          const response = await userBookings(currentPage); 
+          const response:IBookingResponse = await userBookings(currentPage); 
+          console.log(response,"for list booking")
           setBookings(response.bookings);
           setTotalPages(response.totalPages);
         } catch (error) {
@@ -59,7 +59,7 @@ const Bookings = () => {
             <h2 className="text-2xl font-semibold text-gray-800 mb-2">No Bookings Yet</h2>
             <p className="text-gray-600 mb-6">You haven't made any property bookings yet.</p>
             <Link 
-              to="/" 
+              to="/user/properties" 
               className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
             >
               Browse Properties
@@ -72,22 +72,24 @@ const Bookings = () => {
                 <div className="flex flex-col md:flex-row">
                   <div className="w-full md:w-1/4">
                     <img 
-                      src={booking.propertyImages[0]} 
-                      alt={booking.propertyName} 
+                      src={booking.propertyId?.images[0]} 
+                      alt={booking.propertyId?.title} 
                       className="w-full h-40 md:h-full object-cover"
                     />
                   </div>
                   <div className="p-6 flex-1">
                     <div className="flex flex-wrap justify-between items-start mb-4">
                       <div>
-                        <h2 className="text-xl font-bold text-gray-800">{booking.propertyName}</h2>
+                        <h2 className="text-xl font-bold text-gray-800">{booking.propertyId?.title}</h2>
                         <div className="flex items-center text-gray-600 text-sm mt-1">
                           <MapPin className="h-4 w-4 mr-1 text-[#b38e5d]" />
-                          {/* {booking.address} */}
+                          {booking.propertyId?.city} ,{booking.propertyId?.district},{booking.propertyId?.state}
+
+
                         </div>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        booking.bookingStatus === 'Confirmed' 
+                        booking.bookingStatus === 'confirmed' || booking.bookingStatus ==='completed' 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
@@ -124,7 +126,7 @@ const Bookings = () => {
                     <div className="flex justify-between items-center pt-4 mt-4 border-t">
                       <div>
                         <p className="text-sm text-gray-600">Total Amount</p>
-                        <p className="text-lg font-bold text-[#b38e5d]">${booking?.totalCost.toLocaleString()}</p>
+                        <p className="text-lg font-bold text-[#b38e5d]">₹{booking?.totalCost.toLocaleString()}</p>
                       </div>
                       <div className="space-x-3">
                         <Button variant="outline" className="border-[#b38e5d] text-[#b38e5d] hover:bg-[#f8f5f0]">

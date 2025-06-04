@@ -15,31 +15,7 @@ export class ChatController implements IChatController {
       private chatService: IChatService
     
   ){}
-    // async getChat(req: Request, res: Response): Promise<void> {
-    //     try {
-    //       const { sender, receiver } = req.query;
-    //     //   if (!sender || !receiver) {
-    //     //     throw new Error("Sender and receiver are required");
-    //     //   }
-    //       console.log(req.body,"this is from chat controller");
-    //     //   const result = await chatService.getConversation(
-    //     //     String(sender),
-    //     //     String(receiver)
-    //     //   );
-    //     //   res.status(result.status).json({
-    //     //     message: result.message,
-    //     //     data: result.data,
-    //     //   });
-    //     } catch (error) {
-    //       console.error("error fetching conversation:", error);
-    //       res.status(STATUS_CODES.BAD_REQUEST).json({
-    //         error:
-    //           error instanceof Error
-    //             ? error.message
-    //             : "Failed to fetch conversation",
-    //       });
-    //     }
-    //   }
+   
       async sendMessage(req: Request, res: Response): Promise<void> {
         try {
             const senderId=req.body.userId;

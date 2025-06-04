@@ -14,14 +14,56 @@ class propertyRepository
   async findPropertyById(id: string): Promise<IProperty | null> {
     return await Property.findById(id);
   }
-  async findAllPropertiesWithOwnerData() {
-    return await Property.find()
-      .sort({ createdAt: -1 }) 
-      .populate("ownerId", "-password");
-  }
-  
+async findAllPropertiesWithOwnerData(
+  page: number,
+  limit: number,
+  searchTerm: string
+): Promise<{ properties: IProperty[]; totalPages: number }> {
+  const skip = (page - 1) * limit;
+
+  // Create a case-insensitive regex filter
+  const searchFilter = searchTerm
+    ? {
+        $or: [
+          { title: { $regex: searchTerm, $options: "i" } },
+          { description: { $regex: searchTerm, $options: "i" } },
+          { location: { $regex: searchTerm, $options: "i" } },
+        ],
+      }
+    : {};
+
+  const [properties, totalCount] = await Promise.all([
+    Property.find(searchFilter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("ownerId", "-password"),
+
+    Property.countDocuments(searchFilter),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return { properties, totalPages };
+}
+
+
   async propertiesWithSameType(id:string,type:string):Promise<IProperty[] |[]>{
     return await Property.find({ownerId:id,type:type})
+  }
+  async updateRatingAndReviewCount(
+    propertyId: string,
+    averageRating: number,
+    totalReviews: number
+  ): Promise<IProperty | null> {
+    return await Property.findByIdAndUpdate(
+      propertyId,
+      {
+        averageRating,
+        totalReviews,
+      },
+      { new: true } 
+    );
   }
   async updatePropertyById(id: Types.ObjectId, updateData: Partial<IProperty>): Promise<IProperty | null> {
     const updatedProperty = await Property.updateOne({ _id: id }, updateData);

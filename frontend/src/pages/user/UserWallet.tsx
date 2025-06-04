@@ -25,6 +25,7 @@ const UserWalletPage = () => {
     const getWallet = async () => {
       if (user?.id) {
         const response = await fetchWalletData(user.id); // calling the store function with userId
+        console.log(response,"waller")
         setTransactions(response?.data.transactionDetails);
         if (response?.data) {
           setWalletData(response?.data); // set the fetched wallet data to local state
@@ -108,7 +109,7 @@ const UserWalletPage = () => {
             <IndianRupee className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">{transaction.bookingId}</p>
+            <p className="font-medium text-gray-900">{transaction.transactionId}</p>
             <p className="text-sm text-gray-500">  {format(new Date(transaction.date), 'dd MMM yyyy, h:mm a')}
             </p>
           </div>

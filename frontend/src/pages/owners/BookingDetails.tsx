@@ -9,8 +9,9 @@ import BookingPaymentSummary from '../../components/booking/BookingPaymentSummar
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { IOwner } from '../../types/IOwner';
+import { IOwner } from '../../types/owner';
 import Swal from "sweetalert2";
+import { IUser } from '../../types/user';
 
 // import Map from '../../components/Map';
 // import type { ExtendedBookingDetails } from '../../types/booking';
@@ -22,7 +23,7 @@ const BookingDetails = () => {
   const {bookingDetails, cancelBooking}=useAuthStore();
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<any>(null);
-  const [userData, setUserData] = useState<IOwner | null>(null);
+  const [userData, setUserData] = useState<IUser | null>(null);
   const [showCancelReason, setShowCancelReason] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -75,9 +76,13 @@ const handleCancelBooking = async () => {
   if (confirm.isConfirmed) {
     try {
 
-       const response = await cancelBooking(id,cancelReason);
-      notifySuccess(response?.message);
-      navigate("/user/bookings")
+      if (id) {
+        const response = await cancelBooking(id, cancelReason);
+        notifySuccess(response?.message);
+        navigate("/user/bookings");
+      } else {
+        Swal.fire("Error!", "Booking ID is missing.", "error");
+      }
     } catch (err) {
       console.error("Cancel Booking Error:", err);
       Swal.fire("Error!", "Something went wrong.", "error");
@@ -88,7 +93,9 @@ const handleCancelBooking = async () => {
   const handleContactHost = () => {
     notifySuccess('Message sent to host');
   };
+const handleConfirmBooking=()=>{
 
+}
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -129,12 +136,12 @@ const handleCancelBooking = async () => {
               propertyType={booking.propertyId?.type}
               monthlyRent={booking.rentPerMonth}
               amenities={booking.propertyId?.features}
-              location={booking.location}
+              mapLocation={booking.propertyId?.mapLocation}
             />
           </div>
 
           <div className="space-y-6">
-            <BookingOwnerCard owner={userData} />
+{userData && <BookingOwnerCard owner={userData} />}
             <BookingPaymentSummary
               monthlyRent={booking.rentPerMonth}
               duration={`${booking.rentalPeriod} months`}
@@ -168,7 +175,7 @@ const handleCancelBooking = async () => {
                <Button
                       variant="outline"
                       className="w-full text-blue-600 border-blue-600 hover:bg-red-50"
-                      // onClick={handleCancelBooking}
+                      onClick={()=> navigate('/owner/chat')}
                       // disabled={processing}
                     >
                       Contact Guest 

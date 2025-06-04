@@ -1,4 +1,6 @@
 
+import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
+import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { IBooking } from "../../models/booking.model";
 import { IOwner } from "../../models/owner.model";
 import { IUser } from "../../models/user.model";
@@ -25,10 +27,14 @@ export interface IBookingService {
   }>;
 
   listBookingsByOwner(
-    id: string
+    ownerId: string,
+    page:number,
+    limit:number
   ): Promise<{
     bookings: IBooking[];
     status: number;
+    totalPages:number;
+    currentPage:number;
     message: string;
   }>;
 
@@ -36,7 +42,7 @@ export interface IBookingService {
     id: string
   ): Promise<{
     bookingData: IBooking | null;
-    userData: IUser | null;
+    userData: UserResponseDTO | null;
     status: number;
     message: string;
   }>;
@@ -45,7 +51,7 @@ export interface IBookingService {
     id: string
   ): Promise<{
     bookingData: IBooking | null;
-    ownerData: IOwner | null;
+    ownerData: OwnerResponseDTO | null;
     status: number;
     message: string;
   }>;
@@ -64,11 +70,13 @@ export interface IBookingService {
     id: string
   ): Promise<{
     bookingData: IBooking | null;
-    ownerData: IOwner | null;
-    userData: IUser | null;
+    ownerData: OwnerResponseDTO | null;
+    userData: UserResponseDTO | null;
     status: number;
     message: string;
   }>;
+  cancelBooking(id: string, reason: string): Promise<{ status: number; message: string }>;
+
 }
 
 
@@ -81,4 +89,7 @@ export default interface RazorpayVerifyPayload {
     bookingId:string
     
   }
+  
+  
+
   

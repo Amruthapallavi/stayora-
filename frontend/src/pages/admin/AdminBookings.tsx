@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, FilterX, Filter } from 'lucide-react';
 import DataTable from '../../components/ui/DataTable';
 import StatusBadge from '../../components/ui/StatusBadge';
-import { IBooking } from '../../types/IBooking';
+import { IBooking, IBookingAdminResponse, ISimpleBooking } from '../../types/booking';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { 
@@ -18,10 +18,10 @@ import AdminLayout from '../../components/admin/AdminLayout';
 const AdminBookings = () => {
   const navigate = useNavigate();
   const {listAllBookings}= useAuthStore();
-  const [bookings, setBookings] = useState<IBooking[]>([]);
+  const [bookings, setBookings] = useState<ISimpleBooking[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [filteredBookings, setFilteredBookings] = useState<IBooking[]>(bookings);
+  const [filteredBookings, setFilteredBookings] = useState<ISimpleBooking[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const bookingsPerPage = 2;
 
@@ -46,9 +46,8 @@ const AdminBookings = () => {
 useEffect(() => {
   const fetchBookings = async () => {
     try {
-    const response=  await listAllBookings();
+    const response:IBookingAdminResponse=  await listAllBookings();
     setBookings(response.bookings);
-    // console.log(response,"fromdsdd")
     } catch (error) {
       console.error("Failed to fetch bookings:", error);
     }
@@ -76,13 +75,13 @@ const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
 const currentBookings = bookings.slice(indexOfFirstBooking, indexOfLastBooking);
 
 const totalPages = Math.ceil(bookings.length / bookingsPerPage);
-const goToNextPage = () => {
-  if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-};
+// const goToNextPage = () => {
+//   if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+// };
 
-const goToPrevPage = () => {
-  if (currentPage > 1) setCurrentPage(prev => prev - 1);
-};
+// const goToPrevPage = () => {
+//   if (currentPage > 1) setCurrentPage(prev => prev - 1);
+// };
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -91,7 +90,6 @@ const goToPrevPage = () => {
   };
   
   
-  // Fix TypeScript errors by ensuring accessor is either a key of Booking or a function
   const columns = [
     { 
       header: 'Booking ID', 

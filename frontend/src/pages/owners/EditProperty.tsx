@@ -12,64 +12,16 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { PlusCircle, Trash2, Save, ArrowLeft, Upload, Image as ImageIcon } from "lucide-react";
 import { notifySuccess, notifyError } from '../../utils/notifications';
 import { Link } from 'react-router-dom';
-import { IProperty } from '../../types/IProperty';
+import { Feature, FormData, FormErrors, IProperty } from '../../types/property';
 import OwnerLayout from '../../components/owner/OwnerLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 
-interface FormData {
-  title: string;
-  description: string;
-  type: string;
-  bedrooms: string;
-  bathrooms: string;
-  address: string;
-  houseNumber:string,
-  street:string,
-  city: string;
-  district: string;
-  state: string;
-  pincode: string;
-  country: string;
-  rentPerMonth: string;
-  minLeasePeriod: string;
-  maxLeasePeriod: string;
-  furnishing: string;
-  rules: string;
-  selectedImages: any[];
-  cancellationPolicy: string;
-}
-
-interface FormErrors {
-  title?: string;
-  description?: string;
-  type?: string;
-  bedrooms?: string;
-  bathrooms?: string;
-  address?: string;
-  city?: string;
-  district?: string;
-  state?: string;
-  houseNumber?:string,
-  street?:string,
-  pincode?: string;
-  rentPerMonth?: string;
-  minLeasePeriod?: string;
-  maxLeasePeriod?: string;
-  furnishing?: string;
-  selectedImages?: any[];
-}
-
-interface Feature {
-  _id: string;
-  name: string;
-}
 
 const EditProperty = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPropertyById, listAllFeatures, updateProperty } = useAuthStore();
 
-  // Property form state
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -83,7 +35,6 @@ const EditProperty = () => {
     district: "",
     state: "",
     pincode: "",
-    country: "",
     rentPerMonth: "",
     minLeasePeriod: "",
     maxLeasePeriod: "",
@@ -122,24 +73,20 @@ const EditProperty = () => {
   const [images, setImages] = useState<string[]>([]);
   const [saving, setSaving] = useState<boolean>(false);
   
-  // New state for image upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
-  // Load property data and features
   useEffect(() => {
     const loadPropertyAndFeatures = async () => {
       try {
         setLoading(true);
         
-        // Load property
         const propertyResponse = await getPropertyById(id || '');
         
         const propertyData = propertyResponse.Property;
         
-        // Set form data from property data
         setFormData({
           title: propertyData.title || "",
           description: propertyData.description || "",
@@ -153,7 +100,6 @@ const EditProperty = () => {
           district: propertyData.district || "",
           state: propertyData.state || "",
           pincode: String(propertyData.pincode) || "",
-          country: propertyData.country || "",
           rentPerMonth: String(propertyData.rentPerMonth) || "",
           minLeasePeriod: String(propertyData.minLeasePeriod) || "",
           maxLeasePeriod: String(propertyData.maxLeasePeriod) || "",
@@ -163,14 +109,13 @@ const EditProperty = () => {
           cancellationPolicy: propertyData.cancellationPolicy || "",
         });
         
-        // Set images and features
         setImages(propertyData.images || []);
         setSelectedFeatures(propertyData.features || []);
         setOtherFeatures(propertyData.otherFeatures || []);
         
-        // Load all available features
         const featuresResponse = await listAllFeatures();
-        setAllFeatures(featuresResponse.features);
+        console.log(featuresResponse,"feature response")
+        setAllFeatures(featuresResponse?.features);
         
       } catch (error) {
         console.error('Error loading property data:', error);
@@ -183,7 +128,6 @@ const EditProperty = () => {
     loadPropertyAndFeatures();
   }, [id, getPropertyById, listAllFeatures]);
   
-  // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     const updatedData = {
@@ -207,14 +151,12 @@ const EditProperty = () => {
     }
   };
   
-  // Handle select changes
   const handleSelectChange = (name: string, value: string) => {
     setFormData({
       ...formData,
       [name]: value
     });
     
-    // Clear error when field is updated
     if (formErrors[name as keyof FormErrors]) {
       setFormErrors({
         ...formErrors,
@@ -237,7 +179,6 @@ const EditProperty = () => {
   };
   
   
-  // Add other feature
   const addOtherFeature = () => {
     if (newFeature.trim() && !otherFeatures.includes(newFeature.trim())) {
       setOtherFeatures([...otherFeatures, newFeature.trim()]);
@@ -245,23 +186,19 @@ const EditProperty = () => {
     }
   };
   
-  // Remove other feature
   const removeOtherFeature = (feature: string) => {
     setOtherFeatures(otherFeatures.filter(f => f !== feature));
   };
   
-  // Add image URL
   const addImageUrl = (url: string) => {
     if (url.trim() && !images.includes(url.trim())) {
       setImages([...images, url.trim()]);
     }
   };
   
-  // Handle file change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create file preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setFilePreview(reader.result as string);
@@ -272,18 +209,14 @@ const EditProperty = () => {
     }
   };
   
-  // Add image file to the list
   const handleAddImageFile = () => {
     if (!selectedFile) return;
     
-    // Add file to the list of new image files
     setNewImageFiles([...newImageFiles, selectedFile]);
     
-    // Create a temporary URL for preview
     const tempUrl = URL.createObjectURL(selectedFile);
     setImages([...images, tempUrl]);
     
-    // Reset file input
     setSelectedFile(null);
     setFilePreview(null);
     if (fileInputRef.current) {
@@ -293,9 +226,7 @@ const EditProperty = () => {
     notifySuccess('Image added to property');
   };
   
-  // Remove image
   const removeImage = (index: number) => {
-    // If the image is from a new file, also remove it from newImageFiles
     if (index >= images.length - newImageFiles.length) {
       const newFileIndex = index - (images.length - newImageFiles.length);
       setNewImageFiles(newImageFiles.filter((_, i) => i !== newFileIndex));
@@ -304,12 +235,10 @@ const EditProperty = () => {
     setImages(images.filter((_, i) => i !== index));
   };
   
-  // Validate form
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
     let isValid = true;
     
-    // Validate required fields
     if (!formData.title || formData.title.length < 5) {
       errors.title = "Title must be at least 5 characters";
       isValid = false;
@@ -409,7 +338,6 @@ const EditProperty = () => {
     return isValid;
   };
   
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -431,10 +359,10 @@ const EditProperty = () => {
         maxLeasePeriod: Number(formData.maxLeasePeriod),
         features: selectedFeatures,
         otherFeatures,
-        images, // Use URLs or uploaded image names here depending on your backend
+        images, 
       };
     
-      await updateProperty(id || '', updatedProperty, newImageFiles); // Assuming this handles file uploads too
+      await updateProperty(id || '', updatedProperty, newImageFiles); 
     
       notifySuccess("Property updated successfully");
       navigate(`/owner/property/${id}`);
@@ -455,7 +383,7 @@ const EditProperty = () => {
     <OwnerLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link to={`/owner/view-property/${id}`} className="text-sm flex items-center text-gray-500 hover:text-gray-700">
+          <Link to={`/owner/properties`} className="text-sm flex items-center text-gray-500 hover:text-gray-700">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to Property Details
           </Link>
         </div>

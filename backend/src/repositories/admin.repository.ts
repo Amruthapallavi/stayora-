@@ -20,15 +20,75 @@ class AdminRepository
     return await Admin.findOne({ email: email, role: 'admin' });
   }
 
-  async findAllUsers(): Promise<IUser[]> {
-    return await User.find({ role: 'user' });
-  }
-  async findAllOwners(): Promise<IOwner[]> {
-    return await Owners.find().sort({ createdAt: -1 });
-  }
-  
-  
-   
+async findAllUsers(
+  page: number,
+  limit: number,
+  searchTerm?: string
+): Promise<{ users: IUser[]; totalUser: number; totalPages: number }> {
+  const skip = (page - 1) * limit;
+
+  const searchQuery = searchTerm
+    ? {
+        $or: [
+          { name: { $regex: searchTerm, $options: "i" } },
+          { email: { $regex: searchTerm, $options: "i" } },
+        ],
+        role: "user", 
+      }
+    : { role: "user" };
+
+  const users = await User.find(searchQuery)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  const totalUser = await User.countDocuments(searchQuery);
+  const totalPages = Math.ceil(totalUser / limit);
+
+  return { users, totalUser, totalPages };
+}
+async findAllOwners(
+  page: number,
+  limit: number,
+  searchTerm?: string
+): Promise<{ owners: IOwner[]; totalOwner: number; totalPages: number }> {
+  const skip = (page - 1) * limit;
+
+  const searchQuery = searchTerm
+    ? {
+        $or: [
+          { name: { $regex: searchTerm, $options: "i" } },
+          { email: { $regex: searchTerm, $options: "i" } },
+        ],
+      }
+    : {};
+
+  const owners = await Owners.find(searchQuery)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  const totalOwner = await Owners.countDocuments(searchQuery);
+  const totalPages = Math.ceil(totalOwner / limit);
+
+  return { owners, totalOwner, totalPages };
+}
+
+
+async subscriptionRevenue(): Promise<number> {
+  const result = await Owners.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: "$subscriptionPrice" }
+      }
+    }
+  ]);
+
+  return result[0]?.totalRevenue || 0;
+}
+
+ 
     async findUser(userId:string):Promise<IUser|null>{
       return await User.findOne({_id:userId});
     }

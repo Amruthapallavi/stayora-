@@ -15,66 +15,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import UserLayout from '../../components/user/UserLayout';
 import PropertyMap from '../../components/user/PropertyMap';
+import { IProperty, Property } from '../../types/property';
 
-// const newProperty={
-//     id: '1',
-//     title: 'Luxury Apartment in Downtown',
-//     type: 'Apartment',
-//     minLeasePeriod: 6,
-//     maxLeasePeriod: 24,
-//     bedrooms: 2,
-//     bathrooms: 2,
-//     address: '123 Main St',
-//     houseNumber: '123',
-//     street: 'Main St',
-//     city: 'New York',
-//     district: 'Manhattan',
-//     state: 'NY',
-//     pincode: '10001',
-//     rentPerMonth: 2500,
-//     furnishing: 'Fully-Furnished',
-//     description: 'Beautiful apartment in the heart of downtown with amazing city views.',
-//     rules: 'No smoking. No pets.',
-//     cancellationPolicy: '30 days notice required',
-//     features: ['1', '2', '3', '7', '9'],
-//     otherFeatures: ['Rooftop Access', 'City Views'],
-//     images: [
-//       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
-//       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
-//       'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2'
-//     ],
-//     mapLocation: { lat: 40.712776, lng: -74.005974 }
-//   }
- interface Property {
-    _id: string;
-    ownerId: string;
-    title: string;
-    type: string;
-    description: string;
-    address: string;
-    city: string;
-    state: string;
-    pincode: number;
-    bedrooms: number;
-    bathrooms: number;
-    furnishing: 'Fully-Furnished' | 'Semi-Furnished' | 'Unfurnished';
-    rentPerMonth: number;
-    images: string[];
-    minLeasePeriod: number;
-    maxLeasePeriod: number;
-    rules: string;
-    cancellationPolicy: string;
-    features: string[]; 
-    location: {
-      coordinates: {
-        latitude: number | null;
-        longitude: number | null;
-      };
-    };
-    isApproved: boolean;
-    createdAt: string; 
-    updatedAt: string; 
-  }
+
   
   interface owner{
     name:string,
@@ -85,7 +28,7 @@ import PropertyMap from '../../components/user/PropertyMap';
 const PropertyDetailedPage = () => {
   const { id } = useParams<{ id: string }>();
   const { getPropertyById, listAllFeatures } = useAuthStore();
-  const [property, setProperty] = useState<Property | null>(null);
+  const [property, setProperty] = useState<IProperty | null>(null);
   const [ownerData, setOwnerData] = useState<owner |null >(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -104,9 +47,10 @@ const PropertyDetailedPage = () => {
         notifyError('Property not found');
         return;
       }
+      console.log(propertyResponse,"user property")
     //   setProperty(propertyResponse.property);
     setProperty(propertyResponse.Property);
-    setOwnerData(propertyResponse.ownerData);
+setOwnerData(propertyResponse?.ownerData ?? null);
     // Load features
     //   const featuresResponse = await listAllFeatures();
     //   setFeatures(featuresResponse.features);
@@ -120,7 +64,8 @@ const PropertyDetailedPage = () => {
   };
 
   const handleBookNow = () => {
-    navigate(`/user/checkout?propertyId=${id}&propertyName=${encodeURIComponent(property.title)}`);
+  navigate(`/user/checkout?propertyId=${id}&propertyName=${encodeURIComponent(property.title)}`);
+
   };
   const handleChatWithOwner = () => {
     navigate(`/user/chat/${property?._id}/${property?.ownerId}`);
@@ -170,11 +115,39 @@ const PropertyDetailedPage = () => {
           {/* Property header */}
           <div className="mb-8 flex flex-col md:flex-row md:justify-between md:items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">{property.title}</h1>
-              <div className="flex items-center text-gray-600 mb-3">
-                <MapPin size={18} className="text-[#b38e5d] mr-2" />
-                <span>{property.address}</span>
-              </div>
+<div>
+  <h1 className="text-3xl font-bold text-gray-800 mb-2">{property.title}</h1>
+
+  {/* Show rating only if averageRating > 0 */}
+  {property.averageRating > 0 && (
+    <div className="flex items-center mb-3 text-yellow-500">
+      {/* Example: 5 stars with filled stars based on rating */}
+      {[...Array(5)].map((_, i) => (
+        <svg
+          key={i}
+          className={`w-5 h-5 ${i < Math.round(property.averageRating) ? 'fill-current' : 'text-gray-300'}`}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.176c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.286 3.967c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.38 2.455c-.784.57-1.838-.197-1.54-1.118l1.286-3.967a1 1 0 00-.364-1.118L3.622 9.394c-.783-.57-.38-1.81.588-1.81h4.176a1 1 0 00.95-.69l1.286-3.967z" />
+        </svg>
+      ))}
+
+      {/* Show rating value and total reviews */}
+      <span className="ml-2 text-gray-700 font-semibold">
+        {property.averageRating.toFixed(1)} ({property.totalReviews})
+      </span>
+    </div>
+  )}
+
+  <div className="flex items-center text-gray-600 mb-3">
+    <MapPin size={18} className="text-[#b38e5d] mr-2" />
+    <span>{property.address}</span>
+  </div>
+</div>
+            
             </div>
             <div className="mt-4 md:mt-0">
               <Button 
@@ -283,8 +256,8 @@ const PropertyDetailedPage = () => {
   transition={{ duration: 0.5, delay: 0.1 }}
 >
   <PropertyMap 
-    latitude={property.location.coordinates.latitude || 0} // Default to 0 if latitude is null
-    longitude={property.location.coordinates.longitude || 0} // Default to 0 if longitude is null
+latitude={property.mapLocation?.coordinates?.latitude ?? 0}
+    longitude={property.mapLocation?.coordinates.longitude || 0} // Default to 0 if longitude is null
     propertyTitle={property.title}
   />
 </motion.div>
@@ -313,7 +286,7 @@ const PropertyDetailedPage = () => {
               >
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Features & Amenities</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-3">
-                  {property.features?.map((feature, index) => (
+                  {property.features?.map((feature:any, index:any) => (
                     <div key={index} className="flex items-center">
                       <Check size={16} className="text-[#b38e5d] mr-2" />
                       <span className="text-gray-600">{feature}</span>
@@ -363,8 +336,16 @@ const PropertyDetailedPage = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="bg-white p-6 rounded-xl shadow-sm sticky top-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Contact Landlord</h3>
-                <form className="space-y-4">
+                 <h3 className="text-xl font-bold text-gray-800 mb-4">Contact Landlord</h3> 
+                  <Button 
+        onClick={handleChatWithOwner}
+        className="flex items-center gap-2 bg-[#b68451] text-[#ffff]"
+      >
+        <MessageSquare className="h-4 w-4 " />
+        Chat with Owner
+      </Button>
+                 
+                {/* <form className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-1">Your Name</label>
                     <input 
@@ -404,7 +385,7 @@ const PropertyDetailedPage = () => {
                   >
                     Send Message
                   </button>
-                </form>
+                </form>  */}
                 
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <p className="text-gray-600 text-sm text-center">

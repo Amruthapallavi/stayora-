@@ -1,11 +1,12 @@
 import { IBooking } from "../../models/booking.model";
 import { Document } from "mongoose";
 import { IBaseRepository } from "./IBaseRepository";
+import { IBookingData } from "../../DTO/BookingResponseDTO";
 
 export interface IBookingRepository extends IBaseRepository<IBooking>{
-  saveBooking(bookingData: any): Promise<IBooking>;
+  saveBooking(bookingData: IBookingData): Promise<IBooking>;
 
-  findOwnerBookings(ownerId: string): Promise<IBooking[]>;
+  findOwnerBookings(ownerId: string,page:number,limit:number): Promise<{bookings:IBooking[],totalPages:number}>;
 
   findBookings(userId: string): Promise<IBooking[]>;
 
@@ -43,7 +44,7 @@ export interface IBookingRepository extends IBaseRepository<IBooking>{
 
   findPropertyBookings(propertyId: string): Promise<IBooking[]>;
 
-  findAllBookings(skip: number, limit: number): Promise<any[]>;
+  findAllBookings(skip: number, limit: number): Promise<IBooking[]>;
 
   findBookingsToComplete(today: Date): Promise<IBooking[]>;
 

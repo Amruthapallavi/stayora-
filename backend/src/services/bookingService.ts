@@ -3,17 +3,10 @@ import crypto from "crypto";
 import { IBookingService, } from "./interfaces/IBookingService";
 import RazorpayVerifyPayload from "./interfaces/IBookingService";
 import dotenv from "dotenv";
-import userRepository from "../repositories/user.repository";
-import bookingRepository from "../repositories/booking.repository";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import Booking, { IBooking } from "../models/booking.model";
+import  { IBooking } from "../models/booking.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
-import ownerRepository from "../repositories/owner.repository";
-import { IOwner } from "../models/owner.model";
-import { IUser } from "../models/user.model";
-import walletRepository from "../repositories/wallet.repository";
-import notificationService from "./notification.service";
 import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
@@ -22,6 +15,15 @@ import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 import { INotificationService } from "./interfaces/INotificationServices";
 import { IProperty } from "../models/property.model";
+import mongoose from "mongoose";
+import { IPropertyRepository } from "../repositories/interfaces/IPropertyRepository";
+import { BookingStatus, PaymentStatus, PropertyStatus } from "../models/status/status";
+import { CreateBookingOrderResponseDTO, IResponse, VerifyBookingPaymentResponseDTO } from "../DTO/BookingResponseDTO";
+import { UserResponseDTO } from "../DTO/UserResponseDto";
+import { mapUsersToDTOs, mapUserToDTO } from "../mappers/userMapper";
+import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
+import { mapOwnerToDTO } from "../mappers/ownerMapper";
+import { generateTransactionId } from "../config/TransactionId";
 
 dotenv.config();
 
@@ -42,17 +44,14 @@ export class BookingService implements IBookingService {
       @inject(TYPES.WalletRepository)
       private walletRepository: IWalletRepository,
       @inject(TYPES.NotificationService)
-      private notificationService: INotificationService
+      private notificationService: INotificationService,
+      @inject(TYPES.PropertyRepository)
+      private propertyRepository: IPropertyRepository
 
 
     
   ){}
-  async createBookingOrder(amount: number,productId:string,userId:string): Promise<{
-    id: string;
-    amount: number;
-    currency: string;
-    bookingId:string;
-  }> {
+  async createBookingOrder(amount: number,productId:string,userId:string): Promise<CreateBookingOrderResponseDTO> {
     try {
       const options = {
         amount: amount , 
@@ -98,10 +97,7 @@ const ownerId = property.ownerId;
     }
   }
   
-  async verifyBookingPayment(payload: RazorpayVerifyPayload): Promise<{
-    isValid: boolean;
-    booking: IBooking | null;
-  }> {
+  async verifyBookingPayment(payload: RazorpayVerifyPayload): Promise<VerifyBookingPaymentResponseDTO> {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = payload;
   
@@ -116,14 +112,13 @@ const ownerId = property.ownerId;
         .digest("hex");
   
       const isValid = generatedSignature === razorpay_signature;
-      console.log(isValid);
   
       let booking: IBooking | null = null;
   
       if (isValid) {
         await this.bookingRepository.updateBookingDetails(bookingId, {
-          paymentStatus: "completed",
-          bookingStatus: "confirmed",
+          paymentStatus: PaymentStatus.Completed,
+          bookingStatus: BookingStatus.Confirmed,
           paymentId: razorpay_payment_id,
         });
   
@@ -167,18 +162,22 @@ const ownerId = property.ownerId;
             userNotificationMessage,
             booking._id?.toString() ?? null
           );
-        
+
+         const transactionId=generateTransactionId();
+
         await this.walletRepository.updateUserWalletTransaction(
           booking?.userId?.toString() ?? '',
           bookingId,
           booking?.totalCost ?? 0,
-          'debit'
+          'debit',
+          transactionId
         );
         await this.walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? '',
           bookingId,
           booking?.totalCost ?? 0,
-          'credit'
+          'credit',
+          transactionId
         );
         
         
@@ -195,13 +194,104 @@ const ownerId = property.ownerId;
     }
   }
 
+  async cancelBooking(
+    id: string,
+    reason: string
+  ): Promise<IResponse> {
+    try {
+      const booking = await this.bookingRepository.findById(id);
+      if (!booking) {
+        return {
+          status: STATUS_CODES.NOT_FOUND,
+          message: MESSAGES.ERROR.BOOKING_NOT_FOUND,
+        };
+      }
   
-    async listBookingsByOwner(id:string): Promise<{ bookings: IBooking[], status: number; message: string }> {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+  
+      const moveInDate = new Date(booking.moveInDate);
+      moveInDate.setHours(0, 0, 0, 0);
+  
+      const fiveDaysBeforeMoveIn = new Date(moveInDate);
+      fiveDaysBeforeMoveIn.setDate(fiveDaysBeforeMoveIn.getDate() - 5);
+  
+      if (today > fiveDaysBeforeMoveIn) {
+        return {
+          status: STATUS_CODES.BAD_REQUEST,
+          message: MESSAGES.ERROR.BOOKING_CANCEL_NOT_ALLOWED,
+        };
+      }
+  
+      const refundAmount =
+        booking.paymentMethod && booking.paymentMethod !== "COD"
+          ? booking.totalCost
+          : 0;
+  
+     const updateData: Partial<IBooking> = {
+  isCancelled: true,
+  cancellationReason: reason,
+  refundAmount: refundAmount,
+  bookingStatus: BookingStatus.Cancelled,
+  paymentStatus: PaymentStatus.Refunded,
+};
+  
+      const response = await this.bookingRepository.updateBookingDetails(id, updateData);
+  
+      const user = await this.userRepository.findById(booking.userId.toString());
+      const property = await this.propertyRepository.updatePropertyById(
+        new mongoose.Types.ObjectId(booking.propertyId.toString()),
+        { status: PropertyStatus.Active }
+      );
+   
+      const propertyName = property?.title || "the property";
+      const ownerName = "Owner"; 
+  
+      if (user) {
+        await this.notificationService.createNotification(
+          user._id.toString(),
+          "User",
+          "booking",
+          `Your booking for "${propertyName}" was cancelled by ${ownerName}. Reason: ${reason}`,
+          id
+        );
+      } else {
+        console.warn(`User not found for booking ${id}`);
+      }
+  
+      const allUsers = await this.userRepository.find({status:"Active"});
+      for (const u of allUsers) {
+        await this.notificationService.createNotification(
+          u._id.toString(),
+          "User",
+          "property",
+          `The property "${propertyName}" is now available for booking.`,
+          booking.propertyId.toString()
+        );
+      }
+ 
+      return {
+        status: STATUS_CODES.OK,
+        message: "Booking cancelled successfully",
+      };
+    } catch (error) {
+      console.error("Error while cancelling booking:", error);
+      return {
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: MESSAGES.ERROR.SERVER_ERROR,
+      };
+    }
+  }
+  
+  
+    async listBookingsByOwner(ownerId:string,page:number,limit:number): Promise<{ bookings: IBooking[], status: number; message: string ,totalPages:number,currentPage:number}> {
       try {
-        const bookings = await this.bookingRepository.findOwnerBookings(id);
+        const {bookings,totalPages} = await this.bookingRepository.findOwnerBookings(ownerId,page,limit);
   
       return {
         bookings,
+        currentPage:page,
+        totalPages,
         status: STATUS_CODES.OK,
         message:"successfully fetched"
       };
@@ -209,6 +299,8 @@ const ownerId = property.ownerId;
         console.error("Error in listServices:", error);
         return { 
           bookings:[], 
+          currentPage:page,
+          totalPages:page,
           message: MESSAGES.ERROR.SERVER_ERROR, 
           status: STATUS_CODES.INTERNAL_SERVER_ERROR 
       }
@@ -217,18 +309,20 @@ const ownerId = property.ownerId;
     
     async bookingDetails(id: string): Promise<{
       bookingData: IBooking | null;
-      userData:IUser | null;
+  userData: UserResponseDTO | null;
       status: number;
       message: string;
     }> {
       try {
         const bookingData = await this.bookingRepository.findBookingData(id);
-        let userData: IUser | null = null;
+    let userData: UserResponseDTO | null = null;
     
-        if (bookingData?.userId) {
-          userData = await this.userRepository.findById(bookingData.userId.toString());
-          console.log('Owner:', userData);
-        }
+         if (bookingData?.userId) {
+      const user = await this.userRepository.findById(bookingData.userId.toString());
+      if (user) {
+        userData = mapUserToDTO(user);
+      }
+    }
             return {
           bookingData,
           userData,
@@ -245,22 +339,24 @@ const ownerId = property.ownerId;
         };
       }
     }
+
     async userBookingDetails(id: string): Promise<{
       bookingData: IBooking | null;
-      ownerData: IOwner | null;
+      ownerData: OwnerResponseDTO | null;
       status: number;
       message: string;
     }> {
       try {
         const bookingData = await this.bookingRepository.findUserBookingData(id);
     
-        let ownerData: IOwner | null = null;
+        let ownerData: OwnerResponseDTO | null = null;
     
         if (bookingData?.ownerId) {
-          ownerData = await this.ownerRepository.findById(bookingData.ownerId.toString());
-          console.log('Owner:', ownerData);
+        const  owner = await this.ownerRepository.findById(bookingData.ownerId.toString());
+        if(owner){
+          ownerData=mapOwnerToDTO(owner)
         }
-    
+        }
         return {
           bookingData,
           ownerData,
@@ -305,23 +401,26 @@ const ownerId = property.ownerId;
         
       async AllbookingDetails(id: string): Promise<{
         bookingData: IBooking | null;
-        ownerData:IOwner |null;
-        userData:IUser | null;
+        ownerData:OwnerResponseDTO |null;
+        userData:UserResponseDTO | null;
         status: number;
         message: string;
       }> {
         try {
           const bookingData = await this.bookingRepository.findBookingData(id);
-          let userData: IUser | null = null;
-          let ownerData:IOwner |null=null;
-          if (bookingData?.userId) {
-            userData = await this.userRepository.findById(bookingData.userId.toString());
-            console.log('user:', userData);
-          }
-          console.log(bookingData?.ownerId,"ownerId")
+          let userData: UserResponseDTO | null = null;
+          let ownerData:OwnerResponseDTO |null=null;
+         if (bookingData?.userId) {
+      const user = await this.userRepository.findById(bookingData.userId.toString());
+      if (user) {
+        userData = mapUserToDTO(user);
+      }
+    }
           if (bookingData?.ownerId) {
-            ownerData = await this.ownerRepository.findById(bookingData.ownerId.toString());
-            console.log('Owner:', ownerData);
+            const owner = await this.ownerRepository.findById(bookingData.ownerId.toString());
+            if(owner){
+              ownerData=mapOwnerToDTO(owner);;
+            }
           }
               return {
             bookingData,
@@ -357,8 +456,8 @@ const ownerId = property.ownerId;
           addOnCost: cartItem.addOnCost,
           totalCost: cartItem.totalCost,
           paymentMethod,
-          paymentStatus: "pending",
-          bookingStatus: "pending",
+          paymentStatus: PaymentStatus.Pending,
+          bookingStatus: BookingStatus.Pending,
           bookingId: generateBookingId(),
         };
     
@@ -371,29 +470,6 @@ const ownerId = property.ownerId;
 };
 
 
-// const saveBookingFromCart = async (userId: string, cartItem: any, paymentMethod: string,ownerId:string) => {
-//   const bookingData = {
-//     userId,
-//     ownerId,
-//     propertyId: cartItem.propertyId,
-//     propertyName: cartItem.propertyName,
-//     propertyImages: cartItem.propertyImages,
-//     moveInDate: cartItem.moveInDate,
-//     rentalPeriod: cartItem.rentalPeriod,
-//     endDate: cartItem.endDate,
-//     rentPerMonth: cartItem.rentPerMonth,
-//     addOn: cartItem.addOn,
-//     addOnCost: cartItem.addOnCost,
-//     totalCost: cartItem.totalCost,
-//     paymentMethod: paymentMethod, 
-//     paymentStatus: "pending",     
-//     bookingStatus: "pending",     
-//     bookingId:generateBookingId(),
-//   };
-
-//   const savedBooking = await bookingRepository.saveBooking(bookingData);
-//   return savedBooking;
-// };
 
 export const generateBookingId = (): string => {
   const datePart = moment().format("YYYYMMDD");

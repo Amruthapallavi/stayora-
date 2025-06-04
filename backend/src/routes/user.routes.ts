@@ -21,7 +21,7 @@ const propertyCtr = container.get<PropertyController>(TYPES.PropertyController);
 const notificationCtr = container.get<NotificationController>(TYPES.NotificationController);
 
 
-userRoutes.post("/signup",  userCtr .register);
+userRoutes.post("/signup",  userCtr .register.bind(userCtr));
 userRoutes.post("/login",  userCtr .login.bind(userCtr));
 userRoutes.post("/verify-otp",  userCtr .verifyOTP.bind(userCtr));
 userRoutes.post("/resend-otp",  userCtr .resendOTP.bind(userCtr));
@@ -67,7 +67,7 @@ userRoutes.get("/bookings/:id",authMiddleware(["user"]),bookingCtr.userBookingDe
 userRoutes.post("/bookings/cancel/:id",authMiddleware(["user"]), userCtr .cancelBooking.bind(userCtr));
 userRoutes.patch("/change-password/:id",authMiddleware(["user"]), userCtr .changePassword.bind(userCtr));
 userRoutes.get("/wallet/:id",authMiddleware(["user"]), userCtr .fetchWalletData.bind(userCtr));
-
+userRoutes.post("/reviews",authMiddleware(['user']),propertyCtr.addReview.bind(propertyCtr));
 // userRoutes.get("/chat",authMiddleware(["user"]),chatController.getChat);
 userRoutes.post("/message",authMiddleware(['user']),chatCtr.sendMessage.bind(chatCtr));
 userRoutes.get("/conversation",authMiddleware(['user']),chatCtr.getConversation.bind(chatCtr));

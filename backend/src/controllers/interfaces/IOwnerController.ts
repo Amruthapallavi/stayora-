@@ -16,5 +16,8 @@ export interface IOwnerController {
   updateProperty(req: Request, res: Response): Promise<void>;
   refreshToken(req: Request, res: Response): Promise<void>;
   getDashboardData(req: Request, res: Response): Promise<void>;
+ changePassword(req:Request,res:Response):Promise<void>;
+ subscription(req:Request,res:Response):Promise<void>;
+ verifySubscription(req:Request,res:Response):Promise<void>;
 
 }

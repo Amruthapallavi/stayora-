@@ -8,4 +8,6 @@ export interface IBookingController {
   userBookingDetails(req: Request, res: Response): Promise<void>;
   listAllBookings(req: Request, res: Response): Promise<void>;
   AllbookingDetails(req: Request, res: Response): Promise<void>;
+  cancelBooking(req: Request, res: Response): Promise<void>;
+
 }

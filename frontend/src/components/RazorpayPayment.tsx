@@ -1,7 +1,7 @@
 import { loadRazorpayScript } from "../utils/loadRazorpayScript";
 import { useAuthStore } from "../stores/authStore";
 import { RazorpayOptions } from "./hooks/RazorPay";
-import { IBooking } from "../types/IBooking";
+import { IBooking } from "../types/booking";
 
 interface RazorpayPaymentButtonProps {
   amount: number; // in paise

@@ -1,4 +1,4 @@
-import { IOwner } from "../../types/IOwner";
+import { IOwner } from "../../types/owner";
 import { adminApi, ownerApi, userApi } from "../api";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -20,7 +20,6 @@ export const authService = {
     const response = await userApi.post("/resend-otp", { email }, {
         headers: { "Content-Type": "application/json" },
     });
-    console.log(response);
     return response.data;
 
   },
@@ -39,7 +38,6 @@ export const authService = {
     if (!id) throw new Error("Owner ID is required");
     try {
       const response = await ownerApi.get(`/check-status/${id}`);
-      console.log(response.data, " owner check successful");
       return response.data;
     } catch (error) {
       console.error("Error fetching owner status:", error);
@@ -59,14 +57,20 @@ export const authService = {
     const response = await userApi.post("/reset-password",data);
     return response.data;
   },
+    subscribe :async (planName:string,price:number,allowedProperties:number)=>{
+    const response = await ownerApi.post("/subscription",{planName,price,allowedProperties});
+    return response.data;
+  },
+  verifySubscription:async(paymentData:any)=>{
+  const response = await ownerApi.post("/verify-subscription",{paymentData});
+    return response.data;
+  },
   getGoogleAuthUrl: () => {
     return `${API_URL}/api/user/auth/google`;
   },
  
 
-// owner api is here to
   ownerSignup: async (ownerData: any) => {
-    console.log("signuupp")
     const response = await ownerApi.post("/signup", ownerData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -77,9 +81,7 @@ export const authService = {
     return response.data;
   },
   getOwnerData: async (id:string):Promise<{ user: IOwner }> => {
-    console.log("data passing")
     const response = await ownerApi.get(`/profile/${id}`);
-    console.log(response);
     return response.data;
   },
     ownerVerifyOtp: async (data: { email: string; otp: string }) => {
@@ -94,7 +96,6 @@ export const authService = {
     const response = await ownerApi.post("/resend-otp", { email }, {
         headers: { "Content-Type": "application/json" },
     });
-    console.log(response);
     return response.data;
 
   },

@@ -1,4 +1,4 @@
-import { IBooking } from "./IBooking";
+import { IBooking } from "./booking";
 
 export interface RazorpayOrderResponse {
     id: string;

@@ -1,5 +1,5 @@
 // import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { IProperty } from "../../types/IProperty";
+import { IProperty } from "../../types/property";
 import { Link } from "react-router-dom";
 
 interface PropertySummaryProps {

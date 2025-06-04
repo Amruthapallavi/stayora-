@@ -5,15 +5,14 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import io from 'socket.io-client';
-import { motion, AnimatePresence } from 'framer-motion';
 import ConversationList from "../../components/chat/ConversationList";
 import PropertySummary from "../../components/chat/PropertySummary";
 import Conversation from "../../components/chat/Conversation";
 import OwnerLayout from "../../components/owner/OwnerLayout";
-import { IUser, Message } from "../../types/user.interface";
+import { IUser, Message } from "../../types/user";
 import moment from "moment";
 
-
+ 
 const OwnerChatPage = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(
     null
@@ -29,36 +28,53 @@ const OwnerChatPage = () => {
     const selectedConvObject = conversations.find(c => c._id === selectedConversation);
     const ownerId = selectedConvObject?.partner?._id; 
     const propertyId = selectedConvObject?.propertyId; 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const chatContainerRef = useRef<HTMLDivElement>(null);
-    const navigate = useNavigate();
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
-   useEffect(() => {
+    const {markNotificationAsRead}=useAuthStore();
+
+    const navigate = useNavigate();
+    useEffect(() => {
       const fetchConversations = async () => {
-        
-        if (!user) return;
+        if (!user) return; 
+    
+        setLoadingConversations(true); 
+    
         try {
-          const userId = user.userId || user.id;
-          const res = await listConversations();
+          const userId = user.userId || user.id; 
+          const res = await listConversations(); 
+    console.log(res,"for chat")
           setConversations(
             res.map((conv: any) => ({
               ...conv,
-              partnerId: conv.partner?._id || conv.receiver?._id || conv.sender?._id,
-              lastMessage: typeof conv.lastMessage === 'object' 
-                ? conv.lastMessage 
-                : { content: conv.lastMessage, createdAt: new Date().toISOString() } 
+              partnerId: conv.partner?._id || conv.receiver?._id || conv.sender?._id || '',
+              lastMessage: typeof conv.lastMessage === 'object'
+                ? conv.lastMessage
+                : { content: conv.lastMessage, createdAt: new Date().toISOString() }
             }))
-          );     
-          } catch (error) {
+          );
+        } catch (error) {
           console.error("Failed to fetch conversations:", error);
           notifyError("Could not load conversations");
         } finally {
-          setLoadingConversations(false);
+          setLoadingConversations(false); 
         }
       };
+    
       fetchConversations();
-    }, [user,listConversations]);
+    }, [user, listConversations]); 
+    
+useEffect(() => {
+  if (!socket) return;
 
+  socket.on("onlineUsers", (userIds: string[]) => {
+    setOnlineUsers(userIds);
+  });
+
+  return () => {
+    socket.off("onlineUsers");
+  };
+}, [socket]);
+console.log(onlineUsers,"users online")
     useEffect(() => {
       const fetchNotifications = async () => {
         try {
@@ -107,7 +123,11 @@ const OwnerChatPage = () => {
       
         useEffect(() => {
           if (!user) return;
-          const socketInstance = io('http://localhost:8000');
+          const socketInstance = io("http://localhost:8000",{
+    query: {
+    userId: user.id, 
+  },
+})
           setSocket(socketInstance);
         
           return () => {
@@ -115,44 +135,67 @@ const OwnerChatPage = () => {
           };
         }, [user]);
         
-// Join chat room
   useEffect(() => {
-    if (!socket || !user || !ownerId) return;
+    if (!socket || !user || !ownerId) {
+      console.log("Waiting for socket, user, or ownerId...");
+      return; 
+    }
   
     const senderId = user.userId || user.id;
     const room = [senderId, ownerId].sort().join('-');
     socket.emit('joinRoom', room);
   
     const handleReceiveMessage = (newMessage: Message) => {
-      if (!messages.some(msg => msg._id === newMessage._id)) {
+      const myId = user?.userId || user?.id;
+      const senderId = typeof newMessage.sender === 'string' ? newMessage.sender : newMessage.sender._id;
+      const receiverId = typeof newMessage.receiver === 'string' ? newMessage.receiver : newMessage.receiver._id;
+    
+      const isSentByMe = senderId === myId;
+      const chatPartnerId = isSentByMe ? receiverId : senderId;
+      const isRelevantToCurrentChat = selectedConversation === chatPartnerId;
+    
+      // Only add to messages if it's relevant and not already there
+      if (!isSentByMe && isRelevantToCurrentChat && !messages.some(msg => msg._id === newMessage._id)) {
         setMessages(prev => [...prev, newMessage]);
       }
     
       setConversations(prev => {
-        const updatedConversations = [...prev];
-        const senderIdToCheck = typeof newMessage.sender === 'string' 
-          ? newMessage.sender 
-          : newMessage.sender._id;
-          
-        const conversationIndex = updatedConversations.findIndex(
-          conv => conv.partnerId === senderIdToCheck
-        );
-        
-        if (conversationIndex !== -1) {
-          updatedConversations[conversationIndex] = {
-            ...updatedConversations[conversationIndex],
+        let updated = prev.map(conv => {
+          const partnerId = conv.partner?._id || conv._id;
+          if (partnerId === chatPartnerId) {
+            return {
+              ...conv,
+              lastMessage: newMessage,
+              lastMessageTime: newMessage.createdAt,
+              unreadCount: isRelevantToCurrentChat ? 0 : (conv.unreadCount || 0) + (isSentByMe ? 0 : 1),
+            };
+          }
+          return conv;
+        });
+    
+        const index = updated.findIndex(conv => {
+          const partnerId = conv.partner?._id || conv._id;
+          return partnerId === chatPartnerId;
+        });
+    
+        if (index !== -1) {
+          const [updatedConv] = updated.splice(index, 1);
+          updated.unshift(updatedConv);
+        } else {
+          updated.unshift({
+            partnerId: chatPartnerId,
+            partner: isSentByMe ? newMessage.receiver : newMessage.sender,
             lastMessage: newMessage,
             lastMessageTime: newMessage.createdAt,
-          };
-      
-          const [conversation] = updatedConversations.splice(conversationIndex, 1);
-          updatedConversations.unshift(conversation);
+            unreadCount: isRelevantToCurrentChat || isSentByMe ? 0 : 1,
+          });
         }
-      
-        return updatedConversations;
+    
+        return updated;
       });
-      
     };
+    
+    
     
     socket.on('receiveMessage', handleReceiveMessage);
   
@@ -161,46 +204,36 @@ const OwnerChatPage = () => {
     };
   }, [socket, user, ownerId, messages]);
   
-      // Scroll to bottom when messages change
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  // }, [messages]); 
-    //   useEffect(() => {
-    //     if (!user ) return;
-    //     const fetchConversation = async () => {
-    //         console.log("adrrr")
-    //         console.log(selectedConversation,"poioi")
-    //         if (!selectedConversation) return;
-    //         const selected = conversations.find(c => c._id === selectedConversation);
-    //         console.log(selected,"foryyy")
+ useEffect(() => {
+  if (!selectedConversation || !user?.id || messages.length === 0) return;
 
-    //       try {
-    //         const senderId = user.userId || user.id;
-    //         // const receiverId = ; // assuming ownerId is the partner's id
-      
-    //         // const result = await getConversation(senderId, receiverId); // pass both
-    //         // if (result && result.data) {
-    //         //   setMessages(result.data || []);
-    //         //   console.log(result);
-    //         //   if (result.data.partner) {
-    //         //     setChatPartner(result.data.partner);
-    //         //   }
-    //         // }
-    //       } catch (error) {
-    //         console.error("Error fetching conversation:", error);
-    //         notifyError("Failed to load conversation");
-    //       }
-    //     };
-      
-    //     fetchConversation();
-    //   }, []);
-      
-useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const lastMessage = messages[messages.length - 1];
+  const senderId = typeof lastMessage.sender === 'string' ? lastMessage.sender : lastMessage.sender._id;
 
-  const handleNotificationClick = (notification:any) => {
+  if (senderId !== user.id) {
+    (async () => {
+      try {
+        await markMessagesAsRead(selectedConversation, user.id);
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.partnerId === selectedConversation
+              ? { ...conv, unreadCount: 0 }
+              : conv
+          )
+        );
+      } catch (err) {
+        console.error('Error marking messages as read:', err);
+      }
+    })();
+  }
+}, [messages, selectedConversation, user]);
+
+
+  const handleNotificationClick = async (notification:any) => {
+    await  markNotificationAsRead(notification._id) 
+
     if (notification.type === 'booking') {
+      console.log(notification,"noti")
       navigate(`/owner/bookings/${notification.otherId}`);
     } else if (notification.type === 'property') {
       navigate(`/owner/property/${notification.otherId}`);
@@ -225,6 +258,11 @@ useEffect(() => {
           return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); 
         }
       }
+      console.log('selectedConversation:', selectedConversation);
+console.log('conversations:', conversations.map(c => c.partnerId));
+
+const unreadCount = notifications.filter(n => !n.read).length;
+
       
   return (
     <OwnerLayout>
@@ -241,12 +279,18 @@ useEffect(() => {
                 Messages
               </TabsTrigger>
               <TabsTrigger
-                value="notifications"
-                className="data-[state=active]:bg-[#b68451]/20 data-[state=active]:text-[#b68451] transition-all duration-300"
-              >
-                <BellDot className="w-4 h-4 mr-2" />
-                Notifications
-              </TabsTrigger>
+  value="notifications"
+  className="relative data-[state=active]:bg-[#b68451]/20 data-[state=active]:text-[#b68451] transition-all duration-300"
+>
+  <BellDot className="w-4 h-4 mr-2" />
+  Notifications
+  {unreadCount > 0 && (
+    <span className="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold text-white bg-red-600 rounded-full">
+      {unreadCount}
+    </span>
+  )}
+</TabsTrigger>
+
             </TabsList>
           </div>
 
@@ -262,27 +306,55 @@ useEffect(() => {
                 <ConversationList
   onSelectConversation={setSelectedConversation}
   selectedId={selectedConversation}
+    onlineUsers={onlineUsers}
+
   conversations={conversations.map((c) => ({
-    id: c._id,
+    id: c._id, 
+      partnerId: c.partner?._id, 
+
     name: c.partner?.name || "Unknown",
-    lastMessage: c.lastMessage.content,
-    timestamp: formatChatTimestamp(c.lastMessage.createdAt),
+    lastMessage: c.lastMessage?.content || "No messages",
+    timestamp: formatChatTimestamp(c.lastMessage?.createdAt),
     unread: c.unreadCount > 0,
     unreadCount: c.unreadCount,
-      }))}
+  }))}
 />
+
 
               </div>
 
               <div className="md:col-span-2 space-y-6">
               <div className="h-[calc(100vh-22rem)] bg-white/70 backdrop-blur-md rounded-lg border border-[#b68451]/10 shadow-lg hover:shadow-xl transition-all duration-300">
   {selectedConversation && partner ? (
-    <Conversation
-      conversation={messages}
-      selectedConversation={selectedConversation}
-      propertyId={propertyData?._id}
-      partner={partner}
-    />
+ <Conversation
+ conversation={messages}
+ selectedConversation={selectedConversation}
+ propertyId={propertyData?._id}
+ partner={partner}
+ onMessageSent={(message) => {
+   setConversations(prev => {
+     const updated = [...prev];
+     const index = updated.findIndex(
+      
+       c => c.partnerId === selectedConversation
+     );
+     if (index !== -1) {
+       updated[index] = {
+         ...updated[index],
+         lastMessage: {
+           content: message.content,
+           createdAt: message.timestamp,
+         },
+       };
+       const [conv] = updated.splice(index, 1);
+       updated.unshift(conv);
+     }
+     return updated;
+   });
+ }}
+/>
+
+
   ) : (
     <div className="h-full flex items-center justify-center text-gray-500">
       Select a conversation to start messaging
@@ -301,32 +373,47 @@ useEffect(() => {
             value="notifications"
             className="mt-0 animate-[slideIn_0.4s_ease-out]"
           >
+              {notifications && (
+    <div className="flex items-center justify-between mb-4 px-1">
+      <h2 className="text-lg font-semibold text-[#b68451]">Notifications</h2>
+      <span className="text-sm text-red-600">
+        {notifications.filter(n => !n.read).length} unread
+      </span>
+    </div>
+  )}
+      
+
             <div className="bg-white/70 backdrop-blur-md rounded-lg p-6 border border-[#b68451]/10 shadow-lg">
               <div className="space-y-4">
               {notifications.map((notification, i) => (
-        <div
-          key={i}
-          className="p-4 rounded-lg bg-white/80 border border-[#b68451]/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-          onClick={() => handleNotificationClick(notification)}  
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#b68451]/10 flex items-center justify-center">
-              <BellDot size={20} className="text-[#b68451]" />
-            </div>
-            <div>
-              <h3 className="font-medium text-[#b68451]">
-                New {notification.type} message received
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {notification.message}
-              </p>
-              {/* Time ago calculation using moment.js */}
-              <span className="text-xs text-gray-500 mt-2 block">
-                {moment(notification.createdAt).fromNow()} {/* Display time ago */}
-              </span>
-            </div>
-          </div>
+      <div
+      key={i}
+      className={`relative p-4 rounded-lg border border-[#b68451]/10 hover:shadow-md transition-all duration-300 hover:scale-[1.02] cursor-pointer
+        ${!notification.read ? 'bg-yellow-50' : 'bg-white/80'}`}
+      onClick={() => handleNotificationClick(notification)}
+    >
+      {/* Unread dot */}
+      {!notification.read && (
+        <span className="absolute top-2 right-2 bg-red-500 w-2.5 h-2.5 rounded-full"></span>
+      )}
+      <div className="flex items-start gap-4">
+        <div className="w-10 h-10 rounded-full bg-[#b68451]/10 flex items-center justify-center">
+          <BellDot size={20} className="text-[#b68451]" />
         </div>
+        <div>
+          <h3 className="font-medium text-[#b68451]">
+            New {notification.type} message received
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">
+            {notification.message}
+          </p>
+          <span className="text-xs text-gray-500 mt-2 block">
+            {moment(notification.createdAt).fromNow()}
+          </span>
+        </div>
+      </div>
+    </div>
+    
       ))}
               </div>
             </div>

@@ -13,7 +13,8 @@ class walletRepository extends BaseRepository<IWallet> implements IWalletReposit
     userId: string,
     bookingId: string,
     amount: number,
-    type: 'credit' | 'debit'
+    type: 'credit' | 'debit',
+    transactionId:string,
   ) {
     const transactionDate = new Date();
     const increment = type === 'debit' ? -amount : amount;
@@ -28,6 +29,7 @@ class walletRepository extends BaseRepository<IWallet> implements IWalletReposit
             paymentType: type,
             date: transactionDate,
             amount,
+            transactionId,
           },
         },
       },
@@ -36,6 +38,21 @@ class walletRepository extends BaseRepository<IWallet> implements IWalletReposit
 
     return result;
   }
+
+async fetchWalletData(userId: string): Promise<IWallet | null> {
+  const wallet = await Wallet.findOne({
+    userId: new mongoose.Types.ObjectId(userId),
+  });
+
+  if (!wallet) return null;
+
+  wallet.transactionDetails.sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  return wallet;
+}
+
 
 
 }

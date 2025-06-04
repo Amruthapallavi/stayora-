@@ -7,12 +7,13 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Separator } from '../../components/ui/seperator';
 import { useAuthStore } from '../../stores/authStore';
-import  { IProperty } from '../../types/IProperty';
-import { IOwner } from '../../types/IOwner';
+import  { IProperty } from '../../types/property';
+import { IOwner } from '../../types/owner';
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Swal from 'sweetalert2';
-// import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '../../components/ConfirmationAlert';
+import OwnerDetailsModal from '../../components/admin/OwnerDetailsModal';
+import PropertyMap from '../../components/user/PropertyMap';
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +21,8 @@ const PropertyDetail = () => {
     const { getPropertyById ,rejectProperty,approveProperty} = useAuthStore();
     const [property, setProperty] = useState<IProperty | null>(null);
     const [bookingData, setBookingData] = useState<any | null>(null);
-
+const [selectedUser, setSelectedUser] = useState<IOwner | null>(null);
+  const [isModal, setIsModal] = useState(false);
     const [ownerData, setOwnerData] = useState<IOwner |null >(null);
     const [loading, setLoading] = useState(true);
 
@@ -34,14 +36,14 @@ const PropertyDetail = () => {
             
             // Load property details
             const propertyResponse = await getPropertyById(id || '');
-            console.log(propertyResponse)
+            console.log(propertyResponse,"property")
             if (!propertyResponse.Property) {
               notifyError('Property not found');
               return;
             }
           //   setProperty(propertyResponse.property);
           setProperty(propertyResponse.Property);
-          setOwnerData(propertyResponse.ownerData);
+setOwnerData(propertyResponse?.ownerData ?? null);
           setBookingData(propertyResponse.booking);
           // Load features
           //   const featuresResponse = await listAllFeatures();
@@ -68,7 +70,6 @@ const PropertyDetail = () => {
         
             if (confirm.isConfirmed) {
               const response = await approveProperty(propertyId);
-              console.log("Approved property ID:", propertyId);
               notifySuccess(response?.message || "Property approved successfully");
               window.location.reload();
             }
@@ -118,7 +119,10 @@ const PropertyDetail = () => {
               Swal.fire("Error", "Something went wrong. Please try again.", "error");
             }
           };
-          
+            const handleViewDetails = (user: IOwner) => {
+              setSelectedUser(user);
+              setIsModal(true);
+            };
   if (!property) {
     return (
       <div className="flex h-[80vh] flex-col items-center justify-center">
@@ -197,10 +201,13 @@ const PropertyDetail = () => {
               <h3 className="text-lg font-semibold mt-4">Location</h3>
               <p className="text-gray-600">{property.address}</p>
               
-              <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center mt-2">
-                <Map className="h-8 w-8 text-gray-400" />
-                <span className="ml-2 text-gray-500">Map would go here</span>
-              </div>
+              {/* <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center mt-2"> */}
+                  <PropertyMap 
+    latitude={property.mapLocation?.coordinates.latitude || 0} // Default to 0 if latitude is null
+    longitude={property.mapLocation?.coordinates.longitude || 0} // Default to 0 if longitude is null
+    propertyTitle={property.title}
+  />
+              {/* </div> */}
             </TabsContent>
             
             <TabsContent value="amenities">
@@ -227,7 +234,7 @@ const PropertyDetail = () => {
           <div className="flex justify-between items-start flex-wrap gap-3">
           <div className="w-full md:w-48 h-32 rounded overflow-hidden">
             <img
-              src={booking.propertyImages[0]} // Assuming the first image is the main property image
+              src={booking.propertyImages[0]} 
               alt={booking.propertyName}
               className="w-full h-full object-cover"
             />
@@ -305,13 +312,15 @@ const PropertyDetail = () => {
                   <div>
                     <p className="font-medium">{ownerData?.name}</p>
                     <p className="text-sm text-gray-500">Property Owner</p>
+                    {ownerData && (
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-blue-500"
-                      onClick={() => navigate(`/admin/owners/${ownerData?._id}`)}
+                                  onClick={() => handleViewDetails(ownerData)}
                     >
                       View Owner Profile
                     </Button>
+                    )}
                   </div>
                 </div>
                 
@@ -365,7 +374,11 @@ const PropertyDetail = () => {
       </div>
     </CardContent>
   </Card>
-)}
+)} <OwnerDetailsModal
+            owner={selectedUser}
+            isOpen={isModal}
+            onClose={() => setIsModal(false)}
+          />
 
         </div>
       </div>

@@ -101,7 +101,7 @@ console.log(err);
 
             <button
               type="submit" disabled={isLoading}
-              className="w-full bg-[#a0815c] text-white py-2 rounded-lg hover:bg-[#8a6d4f] transition"
+              className="w-full bg-[#b8860b] text-white py-2 rounded-lg hover:bg-[#8a6d4f] transition"
             >
               Login
             </button>

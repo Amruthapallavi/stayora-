@@ -31,7 +31,7 @@ const TYPES = {
     BookingRepository: Symbol.for("BookingRepository"),
     MessageRepository: Symbol.for("MessageRepository"),
     WalletRepository: Symbol.for("WalletRepository"),
-
+    ReviewRepository:Symbol.for("ReviewRepository"),
     NotificationRepository: Symbol.for("NotificationRepository"),
   };
   

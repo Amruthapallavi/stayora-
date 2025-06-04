@@ -11,21 +11,38 @@ export const initializeSocket = (server: HttpServer): void => {
     },
   });
 
-  io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
+const onlineUsers = new Map<string, string>(); 
 
-    socket.on("joinRoom", (room: string) => {
-      socket.join(room);
-      console.log(`Socket ${socket.id} joined room: ${room}`);
-    });
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
 
-    socket.on("sendMessage", (data) => {
-      io.to(data.room).emit("receiveMessage", data);
-      console.log("Message sent to room", data.room, data);
-    });
+  const userId = socket.handshake.query.userId as string;
 
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected:", socket.id);
-    });
+  if (userId) {
+    onlineUsers.set(userId, socket.id);
+    console.log(`User ${userId} connected`);
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+  }
+
+  socket.on("joinRoom", (room: string) => {
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined room: ${room}`);
   });
+
+  socket.on("sendMessage", (data) => {
+    io.to(data.room).emit("receiveMessage", data);
+  });
+
+  socket.on("disconnect", () => {
+    for (const [uid, sid] of onlineUsers.entries()) {
+      if (sid === socket.id) {
+        onlineUsers.delete(uid);
+        console.log(`User ${uid} disconnected`);
+        break;
+      }
+    }
+    io.emit("onlineUsers", Array.from(onlineUsers.keys()));
+  });
+});
+
 };

@@ -121,7 +121,7 @@ const UserSignup = () => {
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#a0815c] to-[#8a6d4f] text-white py-2 rounded-lg hover:from-[#8a6d4f] hover:to-[#5c4430] transition duration-300 shadow-lg"
+                className="w-full bg-gradient-to-r from-[#b8860b] to-[#8a6d4f] text-white py-2 rounded-lg hover:from-[#8a6d4f] hover:to-[#5c4430] transition duration-300 shadow-lg"
               >
                 Signup
               </button>

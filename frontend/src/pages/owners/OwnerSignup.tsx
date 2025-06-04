@@ -194,12 +194,14 @@ const OwnerSignup = () => {
             </div>
           </div>
 
-          <button
-              type="submit" disabled={isLoading}
-              className="w-full bg-[#a0815c] text-white py-2 rounded-lg hover:bg-[#8a6d4f] transition"
-            >
-              Signup
-            </button>
+         <button
+  type="submit"
+  disabled={isLoading}
+  className="w-full bg-[#a0815c] text-white py-2 rounded-lg hover:bg-[#8a6d4f] transition"
+>
+  {isLoading ? "Signing up..." : "Signup"}
+</button>
+
         </form>
       </div>
     </div>

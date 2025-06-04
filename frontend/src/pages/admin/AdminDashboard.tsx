@@ -9,32 +9,18 @@ import { Button } from "../../components/ui/button";
 import { useAuthStore } from "../../stores/authStore";
 import { TooltipProvider } from "../../components/ui/tooltip";
 import useDarkMode from "../../components/Theme";
+import { DashboardData, RevenueEntry } from "../../types/admin";
 
 
 
-type RevenueEntry = {
-  month: string;
-  revenue: number;
-};
 const AdminDashboard = () => {
 
   const { darkMode, toggleDarkMode } = useDarkMode();
  const {getDashboardData}=useAuthStore();
- const [dashboardData, setDashboardData] = useState<any>(null); 
- const [revenueData, setRevenueData] = useState<RevenueEntry[]>([]);  
+ const [dashboardData, setDashboardData] = useState<DashboardData | null>(null); 
+const [revenueData, setRevenueData] = useState<RevenueEntry[]>([]);
+const [error, setError] = useState<string | null>(null);
 
- const [error, setError] = useState<string | null>(null);
-  // const toggleDarkMode = () => {
-  //   const newTheme = !darkMode;
-  //   setDarkMode(newTheme);
-  //   localStorage.setItem("theme", newTheme ? "dark" : "light");
-
-  //   if (newTheme) {
-  //     document.documentElement.classList.add("dark");
-  //   } else {
-  //     document.documentElement.classList.remove("dark");
-  //   }
-  // };
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -48,14 +34,7 @@ const AdminDashboard = () => {
 
     fetchDashboardData();
   }, []);
-console.log(dashboardData,"dash")
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
+
 
   const stats = [
     {
@@ -67,9 +46,9 @@ console.log(dashboardData,"dash")
       viewMore:"/admin/users",
       gradientTo: "blue-600",
       details: [
-        { label: "Active ", value:dashboardData?.activeUsers, color: "green" },
-        { label: "Verified", value: dashboardData?.verifiedUsers, color: "yellow" },
-        { label: "Blocked", value: dashboardData?.blockedUsers, color: "red" },
+        { label: "Active Users", value:dashboardData?.activeUsers, color: "green" },
+        { label: "Verified Users", value: dashboardData?.verifiedUsers, color: "yellow" },
+        { label: "Blocked Users", value: dashboardData?.blockedUsers, color: "red" },
       ] 
     
     },
@@ -83,8 +62,8 @@ console.log(dashboardData,"dash")
       gradientFrom: "indigo-400",
       gradientTo: "indigo-600",
       details: [
-        { label: "Active ", value:dashboardData?.activeOwners, color: "green" },
-        { label: "Blocked", value: dashboardData?.blockedOwners, color: "red" },
+        { label: "Active Owners ", value:dashboardData?.activeOwner, color: "green" },
+        { label: "Blocked Owners", value: dashboardData?.blockedOwners, color: "red" },
       ] 
     },
     {
@@ -118,13 +97,14 @@ console.log(dashboardData,"dash")
       ] 
     },
     {
-      label: "Active Bookings",
-      value: dashboardData?.activeBookings ?? 0,
+      label: "Subscription Revenue",
+      value:`₹${dashboardData?.subscriptionRevenue ?? 0}`,
       icon: ShoppingBag,
       trend: { value: 5.8, isPositive: true },
       gradientFrom: "rose-400",
       gradientTo: "rose-600",
     },
+    
     {
       label: "Total Revenue",
       value: `₹${dashboardData?.totalRevenue?.toLocaleString() ?? "0"}`,
@@ -194,8 +174,10 @@ console.log(dashboardData,"dash")
               index={index}
               gradientFrom={stat.gradientFrom}
               gradientTo={stat.gradientTo}
-              details={stat.details}
-            />
+              details={stat.details?.map(detail => ({
+                ...detail,
+                value: (detail.value !== undefined ? detail.value : 0) as string | number, // Ensure value is string or number
+              }))}            />
           ))}
           </div>
           

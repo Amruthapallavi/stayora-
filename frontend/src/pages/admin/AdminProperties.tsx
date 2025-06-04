@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import { useAuthStore } from '../../stores/authStore';
-import { IProperty } from '../../types/IProperty';
+import { IProperty } from '../../types/property';
 import { cn } from '../../lib/utils';
 import AdminLayout from '../../components/admin/AdminLayout';
 import TooltipWrapper from '../../components/ToolTip';
@@ -19,6 +19,7 @@ import { showConfirmAlert, showErrorAlert, showSuccessAlert } from '../../compon
 import { showStatusChangeAlert } from '../../components/alert/AlertService';
 import Swal from "sweetalert2";
 import { notifySuccess } from '../../utils/notifications';
+import Pagination from '../../components/admin/AdminPage';
 const AdminProperties: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,19 +28,26 @@ const AdminProperties: React.FC = () => {
   const [properties, setProperties] = useState<IProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { getAllProperties ,rejectProperty,approveProperty,blockUnblockProperty,deleteProperty
   } = useAuthStore();
-  const propertyPerPage=5;
-
+  const limit=4;
   useEffect(() => {
-    const fetchProperties = async () => {
+    const delayDebounce = setTimeout(() => {
+      fetchProperties(currentPage, searchQuery);
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, currentPage]);
+
+    const fetchProperties = async (currentPage:number,search:string) => {
       setIsLoading(true);
       try {
-        const res = await getAllProperties();
+        const res = await getAllProperties(currentPage,limit,search ||"");
         setProperties(res.properties);
+        console.log(res,"for properi")
         setFilteredProperties(res.properties);
-        // setTotalPages(res.totalPages);
+        setCurrentPage(res?.currentPage ?? 1);
+        setTotalPages(res.totalPages ?? 1);
       } catch (error) {
         console.error('Failed to fetch properties:', error);
       } finally {
@@ -47,10 +55,8 @@ const AdminProperties: React.FC = () => {
       }
     };
   
-    fetchProperties();
-  }, [currentPage, getAllProperties]);
+
   
-console.log(properties)
   const applyFilters = (query: string, status: string | null) => {
     let filtered = [...properties];
 
@@ -59,9 +65,10 @@ console.log(properties)
         property.title.toLowerCase().includes(query.toLowerCase()) ||
         property._id.toLowerCase().includes(query.toLowerCase()) ||
         property.address.toLowerCase().includes(query.toLowerCase()) ||
-        property?.ownerId?.name.toLowerCase().includes(query.toLowerCase())
-)
+        (typeof property.ownerId === 'object' && property.ownerId.name.toLowerCase().includes(query.toLowerCase()))
+      );
     }
+    
 
     if (status) {
       filtered = filtered.filter((property) => property.status === status);
@@ -76,10 +83,10 @@ console.log(properties)
     applyFilters(query, statusFilter);
   };
 
-  const indexOfLastProperty = currentPage * propertyPerPage;
-  const indexOfFirstProperty = indexOfLastProperty - propertyPerPage;
-  const currentProperty = properties.slice(indexOfFirstProperty, indexOfLastProperty);
-  const totalPages = Math.ceil(properties.length / propertyPerPage);
+  // const indexOfLastProperty = currentPage * propertyPerPage;
+  // const indexOfFirstProperty = indexOfLastProperty - propertyPerPage;
+  // const currentProperty = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  // const totalPages = Math.ceil(properties.length / propertyPerPage);
   const handleStatusFilter = (status: string | null) => {
     setStatusFilter(status);
     applyFilters(searchQuery, status);
@@ -90,7 +97,9 @@ console.log(properties)
     setStatusFilter(null);
     setFilteredProperties(properties);
   };
-
+ useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
   const handleApprove = async (propertyId: string) => {
     try {
       const confirmed = await showConfirmAlert(
@@ -182,10 +191,7 @@ const handleReject = async (propertyId:string) => {
     });
 
     if (confirm.isConfirmed) {
-      console.log("Rejected property ID:", propertyId);
-      console.log("Reason:", reason);
       const response= await rejectProperty(propertyId,reason);
-      console.log(response,"checking");
       notifySuccess(response?.message);
 window.location.reload();
       // Call your backend API here if needed
@@ -201,22 +207,22 @@ window.location.reload();
   const handleRowClick = (property: IProperty) => {
     navigate(`/admin/properties/${property._id}`);
   };
-  const handlePageChange = async (page: number) => {
-    if (page > 0 && page <= totalPages) {
-      setCurrentPage(page);
-      try {
-        setIsLoading(true);
-        const res = await getAllProperties(page);
-        setProperties(res.properties);
-        setFilteredProperties(res.properties);
-        setTotalPages(res.totalPages);
-      } catch (error) {
-        console.error('Failed to fetch properties:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
+  // const handlePageChange = async (page: number) => {
+  //   if (page > 0 && page <= totalPages) {
+  //     setCurrentPage(page);
+  //     try {
+  //       setIsLoading(true);
+  //       const res = await getAllProperties(page);
+  //       setProperties(res.properties);
+  //       setFilteredProperties(res.properties);
+  //       setTotalPages(res.totalPages || 1);
+  //     } catch (error) {
+  //       console.error('Failed to fetch properties:', error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   }
+  // };
   
 
   return (
@@ -290,7 +296,7 @@ window.location.reload();
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentProperty.map((property, index) => (
+              {properties.map((property, index) => (
                 <tr
                   key={index}
                   className={cn('hover:bg-gray-50', 'cursor-pointer')}
@@ -309,7 +315,9 @@ window.location.reload();
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm capitalize">{property.type}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">{property?.ownerId?.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+  {typeof property.ownerId === "object" ? property.ownerId?.name : "N/A"}
+</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">₹{property.rentPerMonth}/month</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <StatusBadge status={property.status} />
@@ -346,7 +354,6 @@ window.location.reload();
             onClick={(e) => {
               e.stopPropagation();
               handleApprove(property._id);
-              console.log("Approve property", property._id);
             }}
           />
         </TooltipWrapper>
@@ -367,14 +374,20 @@ window.location.reload();
     {property.status === "active" && (
       <>
         <TooltipWrapper content="Block">
-          <Ban
-            size={18}
-            className="cursor-pointer text-yellow-600 hover:text-yellow-700"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleBlockUnblock(property._id, property.status);
-            }}
-          />
+        <Ban
+  size={18}
+  className="cursor-pointer text-yellow-600 hover:text-yellow-700"
+  onClick={(e) => {
+    e.stopPropagation();
+
+    if (property.status === "active" || property.status === "blocked") {
+      handleBlockUnblock(property._id, property.status);
+    } else {
+      console.error('Invalid status:', property.status);
+    }
+  }}
+/>
+
         </TooltipWrapper>
         <TooltipWrapper content="Delete">
           <Trash2
@@ -391,16 +404,22 @@ window.location.reload();
 
     {property.status === "blocked" && (
       <>
-        <TooltipWrapper content="Unblock">
-          <CheckCircle
-            size={18}
-            className="cursor-pointer text-green-500 hover:text-green-600"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleBlockUnblock(property._id, property.status);
-            }}
-          />
-        </TooltipWrapper>
+      <TooltipWrapper content="Unblock">
+  <CheckCircle
+    size={18}
+    className="cursor-pointer text-green-500 hover:text-green-600"
+    onClick={(e) => {
+      e.stopPropagation();
+
+      if (property.status === "active" || property.status === "blocked") {
+        handleBlockUnblock(property._id, property.status);
+      } else {
+        console.error("Invalid status:", property.status);
+      }
+    }}
+  />
+</TooltipWrapper>
+
         <TooltipWrapper content="Delete">
           <Trash2
             size={18}
@@ -425,17 +444,13 @@ window.location.reload();
           </table>
         </div>
       )}
-          <div className="flex justify-between items-center mt-6">
-          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-            Previous
-          </button>
-          <span className="text-gray-700 font-semibold">Page {currentPage} of {totalPages}</span>
-          <button className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-            Next
-          </button>
-        </div>
-
+         
     </div>
+      <Pagination 
+                 currentPage={currentPage}
+                 totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
     </AdminLayout>
   );
 };

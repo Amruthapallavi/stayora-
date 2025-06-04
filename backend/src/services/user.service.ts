@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import OTPService from "../utils/OTPService";
 
-import userRepository from "../repositories/user.repository";
 import { IUser } from "../models/user.model";
 import {
   IUserService,
@@ -11,16 +10,11 @@ import {
 } from "./interfaces/IUserService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import { isValidEmail, isValidOTP, isValidPhone } from "../utils/validators";
-import ownerRepository from "../repositories/owner.repository";
 import Cart, { IAddOn, ICart } from "../models/cart.model";
 import mongoose, { ObjectId, Types } from "mongoose";
 import Service from "../models/service.model";
-import bookingRepository from "../repositories/booking.repository";
-import { ChildProcess } from "child_process";
-import propertyRepository from "../repositories/property.repository";
 import { IBooking } from "../models/booking.model";
-import { IWallet } from "../models/wallet.model";
-import walletRepository from "../repositories/wallet.repository";
+import { v4 as uuidv4 } from "uuid";
 import { Response } from "express";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { inject, injectable } from "inversify";
@@ -30,6 +24,17 @@ import { IBookingRepository } from "../repositories/interfaces/IBookingRepositor
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
 import { INotificationService } from "./interfaces/INotificationServices";
 import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
+import { BookingStatus, PaymentStatus, PropertyStatus } from "../models/status/status";
+import { UserResponseDTO } from "../DTO/UserResponseDto";
+import { mapUserToDTO } from "../mappers/userMapper";
+import { PropertyResponseDTO } from "../DTO/PropertyDTO";
+import { mapPropertyToDTO, mapPropertyToDTOs } from "../mappers/propertyMapper";
+import { IResponse } from "../DTO/BookingResponseDTO";
+import { IProperty } from "../models/property.model";
+import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
+import { mapOwnerToDTO } from "../mappers/ownerMapper";
+import { uuid } from "uuidv4";
+import { generateTransactionId } from "../config/TransactionId";
 
 @injectable()
 export class UserService implements IUserService {
@@ -54,7 +59,7 @@ export class UserService implements IUserService {
   }
 
   async registerUser(
-    userData: SignupData
+    userData:SignupData
   ): Promise<{ message: string; status: number }> {
     const { name, email, password, confirmPassword, phone } = userData;
     if (!name || !email || !password || !confirmPassword || !phone) {
@@ -95,9 +100,7 @@ export class UserService implements IUserService {
     email: string,
     otp: string
   ): Promise<{ message: string; status: number }> {
-    console.log(email, "email");
     const user = await this.userRepository.findByEmail(email);
-    console.log(user, "user");
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -105,9 +108,7 @@ export class UserService implements IUserService {
       throw new Error("Invalid otp");
     }
     console.log("user otp", user.otp, "and ", otp);
-    console.log("Stored OTP Expires:", user.otpExpires?.getTime());
-    console.log("Current Time:", Date.now());
-
+ 
     if (user.otp !== otp || (user.otpExpires?.getTime() ?? 0) < Date.now()) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
@@ -153,7 +154,7 @@ export class UserService implements IUserService {
     password: string,
     res: Response
   ): Promise<{
-    user: IUser;
+    user: UserResponseDTO;
     token: string;
     message: string;
     refreshToken: string;
@@ -163,7 +164,7 @@ export class UserService implements IUserService {
     if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
-
+ 
     if (!user.isVerified) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
@@ -200,7 +201,7 @@ export class UserService implements IUserService {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     return {
-      user: this.sanitizeUser(user),
+user: mapUserToDTO(user),
       token,
       refreshToken: refreshToken,
 
@@ -233,7 +234,7 @@ export class UserService implements IUserService {
 
   async processGoogleAuth(
     profile: any
-  ): Promise<{ user: IUser; token: string; message: string; status: number }> {
+  ): Promise<{ user: UserResponseDTO; token: string; message: string; status: number }> {
     const email = profile.email;
     let user = await this.userRepository.findByEmail(email);
     if (user) {
@@ -262,30 +263,32 @@ export class UserService implements IUserService {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        // profileImage: user.profileImage,
       },
       jwtSecret,
       { expiresIn: "1h" }
     );
 
     return {
-      user: this.sanitizeUser(user),
+      user: mapUserToDTO(user),
       token,
       message: MESSAGES.SUCCESS.LOGIN,
       status: STATUS_CODES.OK,
     };
   }
 
-  async getAllProperties(): Promise<{
-    properties: any[];
+  async getAllProperties(page:number,limit:number): Promise<{
+    properties: IProperty[];
+    currentPage:number;
+    totalPages:number;
     status: number;
     message: string;
   }> {
     try {
-      const properties = await this.userRepository.findProperties();
-
+      const {properties,totalPages,totalProperties} = await this.userRepository.findProperties(page,limit);
       return {
-        properties: properties || [],
+        properties:properties|| [],
+        totalPages,
+        currentPage:page,
         status: STATUS_CODES.OK,
         message: "Successfully fetched",
       };
@@ -293,6 +296,8 @@ export class UserService implements IUserService {
       console.error("Error in property listing:", error);
       return {
         properties: [],
+        totalPages:1,
+        currentPage:1,
         message: MESSAGES.ERROR.SERVER_ERROR,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
       };
@@ -305,7 +310,7 @@ export class UserService implements IUserService {
     endDate: Date,
     userId: string,
     propertyId: string
-  ): Promise<{ status: number; message: string }> {
+  ): Promise<IResponse> {
     try {
       if (!userId || !moveInDate || !rentalPeriod || !endDate || !propertyId) {
         return {
@@ -321,7 +326,6 @@ export class UserService implements IUserService {
           message: "Cart not found",
         };
       }
-      console.log(existingCart, "cart");
       const toLocalDateString = (date: Date) => {
         const offset = date.getTimezoneOffset() * 60000;
         return new Date(date.getTime() - offset).toISOString().split("T")[0];
@@ -371,10 +375,9 @@ export class UserService implements IUserService {
 
   async getProfileData(
     id: string
-  ): Promise<{ user: any; status: number; message: string }> {
+  ): Promise<{ user: UserResponseDTO |null; status: number; message: string }> {
     try {
       const user = await this.userRepository.getUserById(id);
-
       if (!user) {
         return {
           user: null,
@@ -382,9 +385,11 @@ export class UserService implements IUserService {
           message: "User not found",
         };
       }
+         const userData=mapUserToDTO(user);
+
 
       return {
-        user,
+        user:userData,
         status: STATUS_CODES.OK,
         message: "Successfully fetched",
       };
@@ -402,7 +407,7 @@ export class UserService implements IUserService {
     id: string
   ): Promise<{
     property: any;
-    ownerData: any;
+    ownerData: OwnerResponseDTO |null;
     status: number;
     message: string;
   }> {
@@ -412,8 +417,6 @@ export class UserService implements IUserService {
       const property = await this.propertyRepository.findPropertyById(
         propertyId
       );
-      console.log(id, "property");
-      console.log(property);
       // if (!property || property.status !== "active") {
       //   throw new Error("Property not available");
       // }
@@ -428,14 +431,10 @@ export class UserService implements IUserService {
       }
 
       const ownerId = property.ownerId.toString();
-      const owner = await this.userRepository.findOwnerById(ownerId);
-
+      
+      const owner = await this.ownerRepository.findById(ownerId);
       const ownerData = owner
-        ? {
-            name: owner.name,
-            phone: owner.phone,
-            email: owner.email,
-          }
+        ? mapOwnerToDTO(owner)
         : null;
       return {
         property,
@@ -455,7 +454,7 @@ export class UserService implements IUserService {
   }
 
   async getUserStatus(id: string): Promise<{
-    user: any | null;
+    user: UserResponseDTO | null;
     status: number;
     message: string;
   }> {
@@ -469,9 +468,9 @@ export class UserService implements IUserService {
           message: "User not found",
         };
       }
-
+  const userData=mapUserToDTO(user);
       return {
-        user,
+        user:userData,
         status: STATUS_CODES.OK,
         message: "User fetched successfully",
       };
@@ -498,7 +497,6 @@ export class UserService implements IUserService {
       const property = await this.propertyRepository.findPropertyById(
         propertyId
       );
-      console.log(property);
       if (!property) {
         return {
           cartData: null,
@@ -523,7 +521,6 @@ export class UserService implements IUserService {
         totalCost: property.rentPerMonth,
       };
 
-      console.log(propertyData);
       let cart = await this.userRepository.findCart(userId);
 
       if (!cart) {
@@ -566,7 +563,7 @@ export class UserService implements IUserService {
     page: number = 1,
     limit: number = 5
   ): Promise<{
-    bookings: any[] | null;
+    bookings: IBooking[] | [];
     totalPages: number;
     status: number;
     message: string;
@@ -581,7 +578,7 @@ export class UserService implements IUserService {
 
       if (!bookings || bookings.length === 0) {
         return {
-          bookings: null,
+          bookings: [],
           totalPages: 0,
           status: STATUS_CODES.NOT_FOUND,
           message: "No bookings found for this user",
@@ -599,7 +596,7 @@ export class UserService implements IUserService {
     } catch (error) {
       console.error("Error in getUserBookings:", error);
       return {
-        bookings: null,
+        bookings: [],
         totalPages: 0,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
         message: MESSAGES.ERROR.SERVER_ERROR,
@@ -715,14 +712,12 @@ export class UserService implements IUserService {
       }
 
       const user = await this.userRepository.findById(id);
-      console.log(user, "for updating");
       if (!user) {
         return {
           message: "User not found",
           status: STATUS_CODES.NOT_FOUND,
         };
       }
-      console.log(updatedData);
       user.name = updatedData.data.name;
       user.phone = updatedData.data.phone;
       user.address = updatedData.data.address;
@@ -757,18 +752,21 @@ export class UserService implements IUserService {
         };
       }
 
-      // Fetch wallet data for the given user ID
-      const data = await this.walletRepository.findOne({
-        userId: new mongoose.Types.ObjectId(id),
-      });
-
-      if (!data) {
-        return {
-          message: "No wallet transactions found",
-          data: null,
-          status: STATUS_CODES.NOT_FOUND,
-        };
-      }
+      const data = await this.walletRepository.fetchWalletData(id)
+       if (!data) {
+              const emptyWallet: IWalletWithTotals = {
+                userId: new mongoose.Types.ObjectId(id),
+                balance: 0,
+                transactionDetails: [],
+                totalCredit: 0,
+                totalDebit: 0,
+              };
+              return {
+                message: "No  transactions found",
+                data: emptyWallet,
+                status: STATUS_CODES.OK,
+              };
+            }
 
       let totalDebit = 0;
       let totalCredit = 0;
@@ -814,7 +812,6 @@ export class UserService implements IUserService {
           message: MESSAGES.ERROR.USER_NOT_FOUND,
         };
       }
-      console.log(userId);
       const isMatch = await bcrypt.compare(oldPassword, user.password || "");
       if (!isMatch) {
         return {
@@ -877,8 +874,8 @@ export class UserService implements IUserService {
         isCancelled: true,
         cancellationReason: reason,
         refundAmount: refundAmount,
-        bookingStatus: "cancelled",
-        paymentStatus: "refunded",
+        bookingStatus: BookingStatus.Cancelled,
+        paymentStatus: PaymentStatus.Refunded,
       };
 
       console.log(reason);
@@ -893,11 +890,24 @@ export class UserService implements IUserService {
       );
       const property = await this.propertyRepository.updatePropertyById(
         propertyId,
-        { status: "active" }
+        { status: PropertyStatus.Active }
       );
-
-      console.log(response);
-
+        const transactionId = generateTransactionId();
+ await this.walletRepository.updateUserWalletTransaction(
+          booking?.userId?.toString() ?? '',
+          id,
+          booking?.totalCost ?? 0,
+          'credit',
+          transactionId
+        );
+        console.log("creditt")
+        await this.walletRepository.updateUserWalletTransaction(
+          booking?.ownerId?.toString() ?? '',
+          id,
+          booking?.totalCost ?? 0,
+          'debit',
+          transactionId,
+        );
       return {
         status: STATUS_CODES.OK,
         message: "Booking cancelled successfully",
@@ -923,11 +933,11 @@ export class UserService implements IUserService {
         );
 
         await this.bookingRepository.updateBookingDetails(bookingId, {
-          bookingStatus: "completed",
+          bookingStatus: BookingStatus.Completed,
         });
 
         await this.propertyRepository.updatePropertyById(propertyId, {
-          status: "active",
+          status: PropertyStatus.Active,
         });
         const user = await this.userRepository.getUserById(
           booking.userId.toString()

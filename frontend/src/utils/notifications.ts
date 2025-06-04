@@ -3,6 +3,11 @@ import { toast } from "react-toastify";
 export const notifySuccess = (message: string) => {
   toast.success(message, {
     position: "top-right",
+  // style: {
+  //     backgroundColor: '#b68451', 
+  //     color: 'white',             
+  //     borderRadius: '8px',
+  //   },
     autoClose: 5000,
   });
 };

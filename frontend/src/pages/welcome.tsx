@@ -16,7 +16,7 @@ const Welcome: React.FC = () => {
  const navigate=useNavigate();
   useEffect(() => {
     axios
-      .get("http://localhost:5000/")
+      .get("http://localhost:8000/")
       .catch((error) => console.error("Error:", error));
   }, []);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -53,7 +53,7 @@ const Welcome: React.FC = () => {
         className="flex items-center space-x-2 hover:text-yellow-600"
         onClick={() => setShowDropdown(!showDropdown)}
       >
-        {isAuthenticated ? <span>{user.name}</span> : <span>Login</span>}
+        {isAuthenticated ? <span>{user?.name}</span> : <span>Login</span>}
         <FaChevronDown className="text-sm" />
       </button>
 
@@ -84,9 +84,9 @@ const Welcome: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  logout(); // Call the logout function
+                  logout(); 
                   setShowDropdown(false);
-                  navigate("/"); // Redirect to homepage after logout
+                  navigate("/"); 
                 }}
                 className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-yellow-100"
               >
@@ -424,8 +424,8 @@ const Welcome: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold">Phone</h4>
-                    <p className="text-gray-600">+1 (555) 123-4567</p>
-                    <p className="text-gray-600">+1 (555) 987-6543</p>
+                    <p className="text-gray-600">+91 (987) 123-4567</p>
+                    <p className="text-gray-600">+91 (985) 987-6543</p>
                   </div>
                 </div>
                 
@@ -435,8 +435,8 @@ const Welcome: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold">Location</h4>
-                    <p className="text-gray-600">123 Property Street</p>
-                    <p className="text-gray-600">San Francisco, CA 94105</p>
+                    <p className="text-gray-600">123 AB Street</p>
+                    <p className="text-gray-600">MG Nagar, kochi 94105</p>
                   </div>
                 </div>
               </div>
@@ -446,17 +446,19 @@ const Welcome: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-yellow-600 px-4">
+      <section className="py-16 bg-[#b8860b] px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Ready to Find Your Perfect Home?</h2>
           <p className="text-yellow-100 text-xl max-w-3xl mx-auto mb-8">
             Join thousands of satisfied users who have found their ideal property through StayOra.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button size="lg" className="bg-white text-yellow-600 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-yellow-600 hover:bg-gray-100"
+            onClick={()=>navigate('/user/login')}>
               <Search className="mr-2 h-5 w-5" /> Search Properties
             </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-yellow-700">
+            <Button variant="outline" size="lg" className="border-white text-white hover:bg-yellow-700"
+            onClick={()=>navigate('/owner/login')}>
               <Building className="mr-2 h-5 w-5" /> List Your Property
             </Button>
           </div>

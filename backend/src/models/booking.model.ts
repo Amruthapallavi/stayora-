@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
+import { BookingStatus, PaymentStatus } from "./status/status";
 
 interface IAddOn {
   serviceId: ObjectId;
@@ -10,6 +11,7 @@ interface IAddOn {
 }
 
 export interface IBooking extends Document {
+  // _id:mongoose.Types.ObjectId;
   bookingId: string;
   userId: ObjectId;
   ownerId:ObjectId;
@@ -25,8 +27,8 @@ export interface IBooking extends Document {
   totalCost: number;
   paymentMethod: string;
   paymentId?: string;
-  paymentStatus: "pending" | "completed" | "failed"|"refunded";
-  bookingStatus: "pending" | "confirmed" | "cancelled"|"completed";
+  paymentStatus: PaymentStatus;
+  bookingStatus: BookingStatus;
   isCancelled:boolean,
   cancellationReason?:string,
   refundAmount:number,
@@ -71,15 +73,16 @@ const bookingSchema = new Schema<IBooking>(
 
     paymentId: { type: String },
     paymentStatus: {
-      type: String,
-      enum: ["pending", "completed", "failed"],
-      default: "pending",
-    },
-    bookingStatus: {
-      type: String,
-      enum: ["pending", "confirmed", "cancelled","completed"],
-      default: "pending",
-    },
+  type: String,
+  enum: Object.values(PaymentStatus),
+  default: PaymentStatus.Pending,
+},
+bookingStatus: {
+  type: String,
+  enum: Object.values(BookingStatus),
+  default: BookingStatus.Pending,
+},
+
   },
   { timestamps: true }
 );

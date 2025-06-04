@@ -4,23 +4,37 @@ import Cart from "../models/cart.model";
 import Property from "../models/property.model";
 import BaseRepository from "./base.repository";
 import { IBookingRepository } from "./interfaces/IBookingRepository";
+import { IBookingData } from "../DTO/BookingResponseDTO";
 
 class BookingRepository extends BaseRepository<IBooking> implements IBookingRepository {
   constructor() {
     super(Booking);
   }
 
-  async saveBooking(bookingData: any) {
+  async saveBooking(bookingData: IBookingData) {
     const booking = new Booking(bookingData);
     return await booking.save();
   }
 
-  async findOwnerBookings(ownerId: string) {
-    return await Booking.find({ ownerId: new mongoose.Types.ObjectId(ownerId) })
+async findOwnerBookings(ownerId: string, page: number, limit: number): Promise<{ bookings: IBooking[], totalPages: number }> {
+  const skip = (page - 1) * limit;
+
+  const [bookings, totalCount] = await Promise.all([
+    Booking.find({ ownerId: new mongoose.Types.ObjectId(ownerId) })
       .populate("userId")
       .populate("propertyId")
-      .sort({ createdAt: -1 }); 
-  }
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    
+    Booking.countDocuments({ ownerId: new mongoose.Types.ObjectId(ownerId) })
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return { bookings, totalPages };
+}
+
   
   async findBookings(userId: string) {
     return Booking.find({ userId }).sort({ createdAt: -1 });

@@ -1,4 +1,3 @@
-// src/utils/cron.ts
 import cron from 'node-cron';
 import container from '../config/DI/inversify';
 import TYPES from '../config/DI/types';

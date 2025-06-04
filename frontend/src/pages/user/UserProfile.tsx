@@ -9,7 +9,7 @@ import { Input } from "../../components/ui/input";
 import { toast } from "sonner";
 import { useAuthStore } from "../../stores/authStore";
 import UserLayout from '../../components/user/UserLayout';
-import { IUser } from '../../types/user.interface';
+import { IUser } from '../../types/user';
 import { notifyError, notifySuccess } from '../../utils/notifications';
 import { validateEmail } from '../../utils/validators';
 import  momen from 'moment';
@@ -71,7 +71,7 @@ const Profile = () => {
   useEffect(() => {
     if (userData) {
       setProfileForm({
-        _id:userData._id ||'',
+        _id:userData.id ||'',
         name: userData.name || '',
         email: userData.email || '',
         phone: userData.phone || '',
@@ -119,19 +119,16 @@ const Profile = () => {
   
     const { name, email, phone } = profileForm;
   
-    // Validate name
     if (!name.trim()) {
       notifyError("Invalid Name... Name cannot be empty or spaces only");
       return;
     }
   
-    // Validate email using the utility
     if (!validateEmail(email)) {
       notifyError("Invalid Email... Please enter a valid email address");
       return;
     }
   
-    // Validate phone (10 digits only)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phone.trim())) {
       notifyError("Phone number must be exactly 10 digits");

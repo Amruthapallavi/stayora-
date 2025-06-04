@@ -1,5 +1,5 @@
 export interface IOwner {
-    _id: string;
+    id: string;
     name: string;
     email: string;
     phone: string;
@@ -9,11 +9,11 @@ export interface IOwner {
     govtIdStatus?: "pending" | "approved" | "rejected";
     rejectionReason?: string | null;
     address: Address;
-    houses?: string | null; // ref to house ID
-    status?: "Pending" | "Blocked" | "Active";
+    houses?: string | null;
+    status: "Pending" | "Blocked" | "Active";
     isVerified: boolean;
     otp?: string | null;
-    otpExpires?: string | null; // ISO string from backend
+    otpExpires?: string | null; 
     createdAt: string;
     updatedAt: string;
   }
@@ -30,7 +30,6 @@ export interface IOwner {
 
 
 
-  // Define a form-specific type
 export interface ProfileFormType {
   name: string;
   email: string;
@@ -43,4 +42,12 @@ export interface ProfileFormType {
     state: string;
     pincode: string;
   };
+}
+
+
+export interface OwnersResponse {
+  owners: IOwner[];
+  totalOwners?:IOwner[];
+  totalPages?:number;
+    currentPage?:number
 }

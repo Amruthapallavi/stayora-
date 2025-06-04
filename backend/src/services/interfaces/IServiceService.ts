@@ -1,6 +1,6 @@
 import  { IService }  from "../../models/service.model";
 export interface IServiceService {
-listServices():Promise<{message:string,status:number,services:IService[]|null}>;
+listServices():Promise<{message:string,status:number,services:IService[]|[]}>;
 createService(serviceData:Partial<IService>):Promise <{message:string,status:number}>;
 updateServiceStatus(
     id: string,

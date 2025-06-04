@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BedDouble, Bath, Building, MapPin } from 'lucide-react';
-import { IProperty } from '../../types/IProperty';
+import { IProperty } from '../../types/property';
 
 
 
@@ -67,7 +67,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 >
   View Details
 </Link>
-{property.status !== 'rejected' && property.status !== 'booked' && (
+{property.status !== 'rejected' && property.status !== 'booked'  && (
   <Link 
     to={`/owner/edit-property/${property._id}`}
     className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"

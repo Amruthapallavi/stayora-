@@ -14,9 +14,25 @@ class UserRepository extends BaseRepository<IUser> implements IUserRepository {
   async findByEmail(email: string): Promise<IUser | null> {
     return await User.findOne({ email: email });
   }
-  async findProperties() {
-    return await Property.find({ status: 'active' });
+ async findProperties(page: number, limit: number) {
+  const skip = (page - 1) * limit;
+
+  const [totalProperties, properties] = await Promise.all([
+    Property.countDocuments({ status: 'active' }),
+    Property.find({ status: 'active' })
+      .skip(skip)
+      .limit(limit)
+  ]);
+
+  const totalPages = Math.ceil(totalProperties / limit);
+
+  return {
+    totalProperties,
+    totalPages,
+    properties,
   };
+}
+
   
   async findCart(id:string):Promise<ICart |null>{
     return await Cart.findOne({userId:id})

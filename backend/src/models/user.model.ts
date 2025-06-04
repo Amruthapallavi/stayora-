@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { Role, UserStatus } from "./status/status";
 
 interface Address {
   houseNo: string;
@@ -15,9 +16,9 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   phone?: string;
-  status: "Active" | "Blocked" | "Pending";
+  status: UserStatus;
   isVerified: boolean;
-  role: "user" | "admin";
+  role: Role;
   googleId?: string;
   otp?: string | null;
   otpExpires: Date | null;
@@ -55,8 +56,8 @@ const UserSchema: Schema = new Schema(
       },
     },
     phone: { type: String, trim: true, default: null },
-    status: { type: String, enum: ["Active", "Blocked", "Pending"], default: "Active" },
-    role: { type: String, enum: ["user", "admin"], default: "user" },
+    status: { type: String, enum: Object.values(UserStatus), default:UserStatus.Active },
+    role: { type: String, enum: Object.values(Role), default: Role.User },
     isVerified: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires: { type: Date },

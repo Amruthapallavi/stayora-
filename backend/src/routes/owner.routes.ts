@@ -43,6 +43,9 @@ ownerRoutes.patch("/profile/:id",authMiddleware(["owner"]),ownerCtr.updateProfil
 ownerRoutes.get("/property/:id",authMiddleware(["owner"]),ownerCtr.getPropertyById.bind(ownerCtr));
 ownerRoutes.patch("/property/update/:id",authMiddleware(["owner"]),ownerCtr.updateProperty.bind(ownerCtr));
 ownerRoutes.get("/wallet/:id",authMiddleware(["owner"]),ownerCtr.fetchWalletData.bind(ownerCtr));
+ownerRoutes.patch("/change-password/:id",authMiddleware(["owner"]), ownerCtr.changePassword.bind(ownerCtr));
+ownerRoutes.post("/subscription",authMiddleware(["owner"]),ownerCtr.subscription.bind(ownerCtr));
+ownerRoutes.post("/verify-subscription",authMiddleware(["owner"]),ownerCtr.verifySubscription.bind(ownerCtr));
 
 ownerRoutes.get("/features",authMiddleware(["owner"])
 ,featureCtr.listFeatures.bind(featureCtr));
@@ -59,12 +62,15 @@ ownerRoutes.get("/get-Owner-Properties",authMiddleware(["owner"]),propertyCtr.ge
 ownerRoutes.post("/verify-otp", ownerCtr.verifyOTP.bind(ownerCtr));
 ownerRoutes.post("/logout",ownerCtr.logout);
 ownerRoutes.delete('/delete/:id', authMiddleware(['owner']), propertyCtr.deletePropertyById.bind(propertyCtr));
+ownerRoutes.post("/bookings/cancel/:id",authMiddleware(["owner"]), bookingCtr .cancelBooking.bind(bookingCtr));
+
 ownerRoutes.get("/conversation",authMiddleware(['owner']),chatCtr.getConversation.bind(chatCtr));
 ownerRoutes.post("/message",authMiddleware(['owner']),chatCtr.sendMessage.bind(chatCtr));
 ownerRoutes.patch("/messages/mark-as-read", authMiddleware(["owner"]),chatCtr.markMessagesAsRead.bind(chatCtr));
 
 ownerRoutes.get("/conversations",authMiddleware(['owner']),chatCtr.listConversations.bind(chatCtr));
 ownerRoutes.get("/notifications", authMiddleware(["owner"]), notificationCtr.getNotifications.bind(notificationCtr));
+ownerRoutes.patch("/notifications/:notificationId/read",authMiddleware(["owner"]),notificationCtr.markNotificationAsRead.bind(notificationCtr));
 
 export default ownerRoutes;
 

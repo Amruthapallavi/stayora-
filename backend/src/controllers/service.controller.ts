@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import IServiceController from "./interfaces/IServiceController";
 import { STATUS_CODES } from "../utils/constants";
-import adminService from "../services/admin.service";
-import serviceService from "../services/service.service";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import { IServiceService } from "../services/interfaces/IServiceService";

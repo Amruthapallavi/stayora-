@@ -1,6 +1,6 @@
 import  { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Home, User, CreditCard, Clock, Check, X } from 'lucide-react';
+import { ArrowLeft, Calendar, Home, User, CreditCard, Clock, Check, X, Eye } from 'lucide-react';
 // import { bookings, properties, users } from '../../utils/mockData';
 import { Button } from '../../components/ui/button';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -8,17 +8,19 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Separator } from '../../components/ui/seperator';
 import { useAuthStore } from '../../stores/authStore';
 import { notifyError } from '../../utils/notifications';
-import { IOwner } from '../../types/IOwner';
-import { IUser } from '../../types/user.interface';
+import { IOwner } from '../../types/owner';
+import { IUser } from '../../types/user';
 import AdminLayout from '../../components/admin/AdminLayout';
 import * as moment from 'moment';
+import OwnerDetailsModal from '../../components/admin/OwnerDetailsModal';
 
 const BookingDetail = () => {
   const { id } = useParams<{ id: string }>();
   const {bookingDetails} =useAuthStore();
     const [ownerData, setOwnerData] = useState<IOwner | null>(null);
     const [userData, setUserData] = useState<IUser | null>(null);
-
+ const [selectedUser, setSelectedUser] = useState<IUser | IOwner | null>(null);
+  const [isModal, setIsModal] = useState(false);
   const [loading, setLoading] = useState(true);
     const [booking, setBooking] = useState<any>(null);
   const navigate = useNavigate();
@@ -38,7 +40,11 @@ const BookingDetail = () => {
           if (bookingData) {
             setBooking(bookingData.bookingData);
             setUserData(bookingData.userData);
-            setOwnerData(bookingData.ownerData);
+            if (bookingData.ownerData) {
+  setOwnerData(bookingData.ownerData); 
+} else {
+  setOwnerData(null);
+}
           } else {
             notifyError("Booking not found");
             navigate('/owner/bookings');
@@ -53,7 +59,10 @@ const BookingDetail = () => {
   
       fetchBooking();
     }, [id, navigate, bookingDetails]);
-  
+   const handleViewDetails = (user: IUser |IOwner) => {
+    setSelectedUser(user);
+    setIsModal(true);
+  };
   if (!booking) {
     return (
       <div className="flex h-[80vh] flex-col items-center justify-center">
@@ -66,9 +75,6 @@ const BookingDetail = () => {
     );
   }
 
-  // Find related property and user
-//   const property = properties.find(p => p.id === booking.propertyId);
-//   const user = users.find(u => u.id === booking.userId);
 
   return (
     <AdminLayout>
@@ -117,7 +123,32 @@ const BookingDetail = () => {
                 </div>
                 
                 <Separator />
+                <div className="flex items-start">
+                  <div className="w-10 flex-shrink-0">
+                    <User className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{ownerData?.name}</p>
+                    <p className="text-sm text-gray-500">Owner</p>
+                    {ownerData && (
+                       <button
+                        className="p-0 h-auto text-blue-500"
+                                  onClick={() => handleViewDetails(ownerData)}
+                                >
+                                   View owner profile
+                                </button>
+                      // <Button 
+                      //   variant="link" 
+                      //   className="p-0 h-auto text-blue-500"
+                      //   onClick={() => navigate(`/admin/owners/${ownerData?.id}`)}
+                      // >
+                      //   View owner Profile
+                      // </Button>
+                    )}
+                  </div>
+                </div>
                 
+                <Separator />
                 <div className="flex items-start">
                   <div className="w-10 flex-shrink-0">
                     <User className="h-5 w-5 text-gray-500" />
@@ -126,13 +157,11 @@ const BookingDetail = () => {
                     <p className="font-medium">{userData?.name}</p>
                     <p className="text-sm text-gray-500">Guest</p>
                     {userData && (
-                      <Button 
-                        variant="link" 
-                        className="p-0 h-auto text-blue-500"
-                        onClick={() => navigate(`/admin/users/${userData._id}`)}
-                      >
-                        View Guest Profile
-                      </Button>
+                    <button className="p-0 h-auto text-blue-500"
+                                  onClick={() => handleViewDetails(userData)}
+                                >
+                                   View Guest profile
+                                </button>
                     )}
                   </div>
                 </div>
@@ -252,7 +281,11 @@ const BookingDetail = () => {
             </CardContent>
           </Card>
         </div>
-        
+         <OwnerDetailsModal
+            owner={selectedUser}
+            isOpen={isModal}
+            onClose={() => setIsModal(false)}
+          />
         <div className="space-y-6">
           <Card>
             <CardContent className="p-6">
@@ -260,7 +293,7 @@ const BookingDetail = () => {
               
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Base price</span>
+                  <span className="text-gray-600">Rent-per-month</span>
                   <span>₹{booking.rentPerMonth}</span>
                 </div>
                 <div className="flex justify-between">
@@ -268,7 +301,7 @@ const BookingDetail = () => {
                   <span>₹{booking.addOnCost}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Taxes</span>
+                  <span className="text-gray-600">Total</span>
                   <span>₹{booking.totalCost}</span>
                 </div>
                 

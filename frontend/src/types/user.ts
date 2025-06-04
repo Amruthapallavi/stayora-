@@ -1,8 +1,8 @@
 export interface IUser {
-    _id: string;
+    id: string;
     name: string;
     email: string;
-    phone?: string;
+    phone: string;
     createdAt?:Date,
     address?: {
       houseNo?: string;
@@ -12,6 +12,9 @@ export interface IUser {
       state?: string;
       pincode?: string;
     };
+    status:"Active"|"Blocked";
+    
+    isVerified:boolean;
   }
 
 
@@ -27,3 +30,12 @@ export interface IUser {
     createdAt: string;
   }
   
+
+  export interface IUserResponse {
+    users: IUser[] ;
+    totalPages?:number;
+    currentPage?:number;
+    totalUsers?:IUser[];
+  }
+  
+ 

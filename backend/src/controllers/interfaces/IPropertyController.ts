@@ -10,5 +10,6 @@ export interface IPropertyController {
   blockUnblockProperty(req: Request, res: Response): Promise<void>;
   deleteProperty(req: Request, res: Response): Promise<void>;
   rejectProperty(req: Request, res: Response): Promise<void>;
+  addReview(req:Request,res:Response):Promise<void>;
   getPropertyById(req: Request, res: Response): Promise<void>;
 }

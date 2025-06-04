@@ -10,8 +10,8 @@ import { Types } from "mongoose";
 
 export interface IAdminRepository extends IBaseRepository<IUser> {
   findByEmail(email: string): Promise<IUser | null>;
-  findAllUsers(): Promise<IUser[]>;
-  findAllOwners(): Promise<IOwner[]>;
+findAllUsers(page: number, limit: number,searchTerm?:string): Promise<{ users: IUser[]; totalUser: number;totalPages:number }>;
+findAllOwners(page: number, limit: number,searchTerm?:string): Promise<{ owners: IOwner[]; totalOwner: number;totalPages:number }>;
   findUser(userId: string): Promise<IUser | null>;
   findOwner(ownerId: string): Promise<IOwner | null>;
   deleteOwner(ownerId: string): Promise<IOwner | null>;
@@ -26,7 +26,7 @@ export interface IAdminRepository extends IBaseRepository<IUser> {
     { _id: { month: number; year: number }; count: number; revenue: number }[]
   >;
   
-
+subscriptionRevenue(): Promise<number>
 
 }
 

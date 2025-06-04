@@ -29,7 +29,6 @@ import UserProfile from "./pages/user/UserProfile";
 import OwnerProfile from "./pages/owners/OwnerProfile";
 import OwnerPropertyListing from "./pages/owners/OwnerProperties";
 import AddPropertyForm from "./pages/owners/AddProperty";
-import Properties from "./pages/owners/properties";
 import PropertyDetails from "./pages/owners/PropertyDetail";
 import PropertyDetailedPage from "./pages/user/PropertyDetails";
 import PropertyListing from "./pages/user/PropertyListing";
@@ -49,6 +48,8 @@ import UserWalletPage from "./pages/user/UserWallet";
 import OwnerWalletPage from "./pages/owners/OwnerWallet";
 import OwnerChatPage from "./pages/owners/Chat";
 import ChatPage from "./pages/user/ChatPage";
+import Subscribe from "./pages/owners/SubscriptionPage";
+import NotFound from "./pages/owners/NotFound";
 const App = () => {
   return (
     <BrowserRouter>
@@ -117,7 +118,7 @@ const App = () => {
             <Route path="/owner/bookings" element={<OwnerBookings />} />
             <Route path="/owner/bookings/:id" element={<BookingDetails />} />
             <Route path="/owner/chat" element={<OwnerChatPage />} />
-            
+            <Route path="/owner/subscription" element={<Subscribe/>} />
             <Route path="/owner/wallet" element={<OwnerWalletPage />} />
 
 
@@ -143,6 +144,7 @@ const App = () => {
   path="/auth/google/callback"
   element={<GoogleAuthCallback />}
 />
+<Route path="*" element={<NotFound />} />
 
 
       </Routes>

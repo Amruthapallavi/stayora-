@@ -5,6 +5,7 @@ import Feature, { IFeature } from "../models/features.model";
 import Property, { IProperty } from "../models/property.model";
 import Booking, { IBooking } from "../models/booking.model";
 import mongoose from "mongoose";
+import { title } from "process";
 class OwnerRepository
   extends BaseRepository<IOwner>
   implements IOwnerRepository
@@ -19,9 +20,36 @@ class OwnerRepository
   async findFeatures(): Promise<IFeature[]> {
     return await Feature.find();
   }
-  async findOwnerProperty(ownerId: string): Promise<IProperty[]> {
-    return await Property.find({ ownerId });
-  }
+async findOwnerProperty(
+  ownerId: string,
+  page: number,
+  limit: number,
+  searchTerm?: string
+): Promise<{ properties: IProperty[]; totalProperties: number; totalPages: number }> {
+  const skip = (page - 1) * limit;
+
+  const searchQuery = searchTerm
+    ? {
+        ownerId,
+        $or: [
+          { title: { $regex: searchTerm, $options: "i" } },
+          { location: { $regex: searchTerm, $options: "i" } },
+        ],
+      }
+    : { ownerId };
+
+  const properties = await Property.find(searchQuery)
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  const totalProperties = await Property.countDocuments(searchQuery);
+  const totalPages = Math.ceil(totalProperties / limit);
+
+  return { properties, totalProperties, totalPages };
+}
+
+
   async getFeatureNamesByIds(ids: string[]): Promise<IFeature[]> {
     return await Feature.find({ _id: { $in: ids } }, { name: 1, _id: 0 });
   }
@@ -37,7 +65,9 @@ class OwnerRepository
   async getPropertiesByOwner(ownerId: string): Promise<IProperty[]> {
     return await Property.find({ ownerId }).lean();
   }
-
+async updateUserPassword (id: string, newHashedPassword: string): Promise<void> {
+    await Owner.findByIdAndUpdate(id, { password: newHashedPassword });
+  };
   async getBookingsByPropertyIds(propertyIds: string[]): Promise<IBooking[]> {
     return await Booking.find({ propertyId: { $in: propertyIds } }).lean();
   }

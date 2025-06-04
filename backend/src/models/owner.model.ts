@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, ObjectId } from "mongoose";
+import { GovtIdStatus, SubscriptionPlan, UserStatus } from "./status/status";
 
 export interface IOwner extends Document {
   _id: ObjectId;
@@ -7,7 +8,7 @@ export interface IOwner extends Document {
   phone: string;
   password: string;
   govtId: string;
-  govtIdStatus: "pending" | "approved" | "rejected";
+  govtIdStatus: GovtIdStatus;
   rejectionReason?: string | null;
   address: {
     houseNo: string;
@@ -18,7 +19,13 @@ export interface IOwner extends Document {
     pincode: string;
   };
   houses?: ObjectId;
-  status: "Pending" | "Blocked" | "Active";
+  status: UserStatus;
+  isSubscribed:boolean;
+  subscriptionPlan:SubscriptionPlan;
+  subscriptionPrice:number;
+  allowedProperties:number;
+  subscriptionStart: Date | null;
+  subscriptionEnd:Date | null;
   isVerified: boolean;
   otp?: string | null;
   otpExpires: Date | null;
@@ -50,17 +57,28 @@ const ownerSchema: Schema = new Schema(
     houses: { type: Schema.Types.ObjectId, ref: "houses", default: null },
     status: {
       type: String,
-      enum: ["Pending", "Blocked", "Active"],
-      default: "Pending",
+      enum: Object.values(UserStatus),
+      default: UserStatus.Pending,
     },
     govtId: { type: String, required: true },
     govtIdStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: Object.values(GovtIdStatus),
+      default: GovtIdStatus.Pending,
     },
+    subscriptionPlan:{
+      type:String,
+      enum:Object.values(SubscriptionPlan),
+      default:SubscriptionPlan.BASIC,
+    },
+    subscriptionPrice:{type:Number,default:0},
+    allowedProperties:{type:Number,default:1},
     rejectionReason: { type: String, default: null },
     isVerified: { type: Boolean, default: false },
+    isSubscribed:{type:Boolean,default:false},
+        subscriptionStart: { type: Date, default: null },
+subscriptionEnd :{type: Date , default:null},
+
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },
   },

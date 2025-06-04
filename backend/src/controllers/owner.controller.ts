@@ -1,18 +1,16 @@
 import { Request, Response } from "express";
-// import ownerService from "../services/owner.service";
 import { IOwnerController } from "./interfaces/IOwnerController";
 import { STATUS_CODES } from "../utils/constants";
 import jwt from "jsonwebtoken";
-// import bookingService from "../services/bookingService";
-import propertyService from "../services/property.service";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import IOwnerService from "../services/interfaces/IOwnerService";
 import { IPropertyService } from "../services/interfaces/IPropertyService";
+import { VerifyPaymentDTO } from "../DTO/booking/bookingControllerDTO";
 
-interface MulterRequest extends Request {
-  file?: Express.Multer.File;
-}
+// interface MulterRequest extends Request {
+//   file?: Express.Multer.File;
+// }
 
 @injectable()
 export class OwnerController implements IOwnerController {
@@ -84,7 +82,7 @@ console.log(result.refreshToken,"refreshToken");
         res.status(result.status).json({
           message: result.message,
           user: {
-            id: result.owner._id,
+            id: result.owner.id,
             name: result.owner.name,
             email: result.owner.email,
             phone: result.owner.phone,
@@ -215,49 +213,103 @@ const formData= req.body;
     throw error;
   }
 }
+ async subscription(req:Request,res:Response):Promise<void>{
+  try {
+    console.log(req.body,"req.body for subscription")
+    const {planName,price,allowedProperties}=req.body;
+    const ownerId=(req as any).userId;
+    if (!price || typeof price !== "number") {
+           res.status(400).json({ message: "Invalid price amount" });
+        }
+    console.log(ownerId,"for subscription")
+    const order = await this.ownerService.subscription(price,planName,ownerId,allowedProperties);
+    console.log(order,"subscription order")
+        res.status(200).json(order);
+  } catch (error) {
+     console.error("Error in subscription controller:", error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      message: "Something went wrong while subscribing.",
+    });
+  }
+ }
 
+async verifySubscription(req: Request, res: Response): Promise<void> {
+  try {
+    const ownerId = (req as any).userId;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      planName,
+      price,
+      allowedProperties,
+    } = req.body.paymentData;
 
-// async listFeatures(req:Request, res:Response):Promise<void>{
-//   try {
-//     const result = await ownerService.listFeatures();
-//     console.log(result,"from owner controller");
-//     res.status(result.status).json({
-//       features: result.features,
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-//       error: error instanceof Error ? error.message : "Failed to fetch features",
-//     });
-//   }
-// }
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      res.status(400).json({ message: "Missing payment verification fields" });
+      return;
+    }
 
-// async ownerProperties(req:Request,res:Response):Promise<void>{
-// try {
-//   const ownerId = (req as any).userId; 
+    const result = await this.ownerService.verifySubscription({
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      ownerId,
+      planName,
+      price,
+      allowedProperties
+    });
 
-// const result = await ownerService.ownerProperties(ownerId);
-//     res.status(result.status).json({
-//       properties: result.properties,
-//     });
-// } catch (error) {
-//   console.error(error);
-//     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-//       error: error instanceof Error ? error.message : "Failed to fetch properties",
-//     });
-// }
-// }
+    if (!result.isValid) {
+      res.status(400).json({ success: false, message: "Payment verification failed" });
+      return;
+    }
 
-async getOwnerStatus(req: Request, res: Response): Promise<any> {
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+    });
+  } catch (error) {
+    console.error("Error verifying subscription payment:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "Payment verification failed",
+      });
+    }
+  }
+}
+
+async changePassword  (req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+console.log(userId);
+    if (!oldPassword || !newPassword) {
+      res.status(STATUS_CODES.BAD_REQUEST).json({ message: "Both old and new passwords are required." });
+      return;
+    }
+
+    const result = await this.ownerService.changePassword(userId, oldPassword, newPassword);
+
+    res.status(result.status).json({ message: result.message });
+  } catch (error) {
+    console.error("Error in changePassword controller:", error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      message: "Something went wrong while changing the password.",
+    });
+  }
+}
+
+async getOwnerStatus(req: Request, res: Response): Promise<void> {
   try {
     const result = await this.ownerService.getOwnerStatus(req.params.id);
 
     if (!result.user) {
-      return res.status(result.status).json({ message: result.message });
+       res.status(result.status).json({ message: result.message });
     }
     res.status(result.status).json({
-      status: result.user.status, // e.g., "active", "blocked"
-      user: result.user._id,
+      status: result.user?.status, // e.g., "active", "blocked"
+      user: result.user?.id,
     });
   } catch (err) {
     console.error("Get user status failed:", err);
@@ -289,7 +341,6 @@ async fetchWalletData(req:Request,res:Response):Promise<void>{
 
 async getPropertyById(req:Request,res:Response):Promise<void>{
   try {
-    // const ownerId = (req as any).userId; 
 
     const id=req.params.id;
     console.log(id);

@@ -11,6 +11,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import moment from 'moment'; 
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
 export interface DisplayNotification {
     _id: string;
     title: string;
@@ -40,6 +41,7 @@ export interface DisplayNotification {
     const [isOpen, setIsOpen] = useState(false);
   const [notifList, setNotifList] = useState<DisplayNotification[]>([]);
 const navigate=useNavigate();
+const {markNotificationAsRead}=useAuthStore();
   const notificationRef = useRef(null);
   useEffect(() => {
     const handleClickOutside = (event:any) => {
@@ -54,7 +56,7 @@ const navigate=useNavigate();
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
+console.log(notifList)
 //   const markAsRead = (id:any) => {
 //     setNotifList((prev) =>
 //       prev.map((notif) =>
@@ -79,14 +81,15 @@ useEffect(() => {
     setNotifList(transformed);
   }, [notifications]);
   
-  const markAsRead = (id:any) => {
+  const markAsRead = async (id: string) => {
+    console.log(id,"formark not")
+    await markNotificationAsRead(id); 
     setNotifList((prev) =>
       prev.map((notif) =>
         notif._id === id ? { ...notif, read: true } : notif
       )
     );
   };
-  
 
   const removeNotification = (id:any) => {
     setNotifList((prev) => prev.filter((notif) => notif._id !== id));
@@ -128,7 +131,11 @@ useEffect(() => {
               <h3 className="font-semibold text-gray-800">Notifications</h3>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={markAsRead}
+onClick={async () => {
+  for (const notif of notifList.filter((n) => !n.read)) {
+    await markAsRead(notif._id);
+  }
+}}
                   className="text-xs text-yellow-600 hover:text-yellow-800 transition flex items-center"
                 >
                   <Check size={14} className="mr-1" />
@@ -184,15 +191,16 @@ useEffect(() => {
                           </div>
 
                           <div className="absolute top-3 right-3 flex">
-                            {!notification.read && (
-                              <button
-                                onClick={() => markAsRead(notification._id)}
-                                className="text-gray-400 hover:text-yellow-600 p-1 transition"
-                                title="Mark as read"
-                              >
-                                <Check size={16} />
-                              </button>
-                            )}
+                          {!notification.read && (
+  <button
+    onClick={() => markAsRead(notification.id)} 
+    className="text-gray-400 hover:text-yellow-600 p-1 transition"
+    title="Mark as read"
+  >
+    <Check size={16} />
+  </button>
+)}
+
                             <button
                               onClick={() => removeNotification(notification.id)}
                               className="text-gray-400 hover:text-red-600 p-1 transition"

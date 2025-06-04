@@ -52,7 +52,7 @@ localStorage.removeItem("refreshToken");
   const navItems = [
     { name: "Home", path: "/user/home" },
     { name: "Houses", path: "/user/properties" },
-    { name: "Categories", path: "/user/categories" },
+    // { name: "Categories", path: "/user/categories" },
     { name: "About", path: "/about" }
   ];
 

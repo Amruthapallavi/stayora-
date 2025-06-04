@@ -7,7 +7,14 @@ import { IService } from "../../models/service.model";
 
 export interface IUserRepository extends IBaseRepository<IUser> {
   findByEmail(email: string): Promise<IUser | null>;
-  findProperties(): Promise<IProperty[]>;
+findProperties(
+  page: number,
+  limit: number
+): Promise<{
+  properties: IProperty[];
+  totalPages: number;
+  totalProperties: number;
+}>;
   findCart(id: string): Promise<ICart | null>;
   findOwnerById(id: string): Promise<IOwner | null>;
   findActiveServices(): Promise<IService[]>;

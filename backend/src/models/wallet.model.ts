@@ -1,14 +1,20 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
+import { PaymentType } from './status/status';
 
 const transactionSchema = new Schema(
   {
+    transactionId:{
+      type:String,
+      required:true
+
+    },
     bookingId: {
       type: String,
       required: true,
     },
     paymentType: {
       type: String,
-      enum: ['credit', 'debit'],
+      enum: Object.values(PaymentType),
       required: true,
     },
     date: {
@@ -43,14 +49,14 @@ const walletSchema = new Schema(
   { timestamps: true }
 );
 
-// TypeScript Interface
 export interface IWallet extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   balance: number;
   transactionDetails: {
+    transactionId:string;
     bookingId: string;
-    paymentType: 'credit' | 'debit';
+    paymentType:PaymentType;
     date: Date;
     amount: number;
   }[];

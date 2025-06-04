@@ -11,6 +11,7 @@ import {
   showSuccessAlert,
 } from "../../components/ConfirmationAlert";
 import AdminLayout from "../../components/admin/AdminLayout";
+import { IFeature } from "../../types/feature";
 const iconOptions = [
   { name: "Wifi", icon: <Wifi size={28} />, value: "Wifi" },
   { name: "Air Conditioning", icon: <AirVent size={28} />, value: "AirVent" },
@@ -21,19 +22,11 @@ const iconOptions = [
   { name: "Eco-Friendly", icon: <Leaf size={28} />, value: "Leaf" },
 ];
 
-type Feature = {
-  _id?: string;
-  name: string;
-  description: string;
-  icon?: string;
-
-
-};
 
 
 const AdminFeatures = () => {
   const { listAllFeatures, addFeature ,removeFeature,editFeature} = useAuthStore();
-  const [features, setFeatures] = useState<Feature[]>([]);
+  const [features, setFeatures] = useState<IFeature[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -50,18 +43,13 @@ const AdminFeatures = () => {
 
   useEffect(() => {
     loadFeatures();
-  }, []);
-  // Toggle sidebar
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  // Fetch Features from Backend
+  }, [addFeature,editFeature]);
+  
   const loadFeatures = async () => {
     setIsLoading(true);
     try {
       const response = await listAllFeatures();
-      setFeatures(response.features);
+      setFeatures(response);
     } catch (error) {
       notifyError("Failed to load features.");
     } finally {
@@ -72,8 +60,7 @@ const AdminFeatures = () => {
   
 
 
-  // Open Modal (For Adding/Editing)
-  const openModal = (feature:Feature | null=null) => {
+  const openModal = (feature:IFeature | null=null) => {
     if (feature) {
       setIsEditing(true);
       setNewFeature({
@@ -84,7 +71,7 @@ const AdminFeatures = () => {
       });
     } else {
       setIsEditing(false);
-      setNewFeature({ name: "", description: "", icon: "" });
+      setNewFeature({ _id:"",name: "", description: "", icon: "" });
     }
     setIsModalOpen(true);
   };
@@ -92,7 +79,7 @@ const AdminFeatures = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setNewFeature({ name: "", description: "", icon: "" });
+    setNewFeature({ _id: "", name: "", description: "", icon: "" });
   };
 
   const handleEditFeature = async (e: any) => {
@@ -104,14 +91,14 @@ const AdminFeatures = () => {
     }
   
     try {
-      const response = await editFeature(_id, newFeature);
+        await editFeature(_id, newFeature);
       notifySuccess("Feature updated successfully");
       window.location.reload();
       // setFeatures((prevFeatures) =>
       //   prevFeatures.map((feature) => (feature.id === id ? response.feature : feature))
       // );
       // closeModal();
-    } catch (err) {
+    } catch (err:any) {
       notifyError(err.response?.data?.message || "Failed to update feature.");
     }
   };
@@ -122,7 +109,7 @@ const AdminFeatures = () => {
   };
 
   // Add Feature
-  const handleAddFeature = async (e: React.FormEvent) => {
+  const handleAddFeature = async () => {
   
     const { name, description, icon } = newFeature;
   
@@ -133,6 +120,8 @@ const AdminFeatures = () => {
   
     try {
       const response = await addFeature(newFeature, "admin");
+      // setFeatures(prev => [...prev, response.feature]); // Assuming this structure
+
         notifySuccess("New feature added successfully");
         closeModal();
       

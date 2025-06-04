@@ -66,6 +66,8 @@ import NotificationRepository from "../../repositories/notification.repository";
 import { INotificationRepository } from "../../repositories/interfaces/INotificationRepository";
 import { IWalletRepository } from "../../repositories/interfaces/IWalletRepository";
 import walletRepository from "../../repositories/wallet.repository";
+import { IReviewRepository } from "../../repositories/interfaces/IReviewRepository";
+import ReviewRepository from "../../repositories/reviewRepository";
 // import userService from "../../services/user.service";
 
 const container = new Container();
@@ -106,7 +108,7 @@ container.bind<IBookingRepository>(TYPES.BookingRepository).to(BookingRepository
 container.bind<IMessageReposiotry>(TYPES.MessageRepository).to(MessageRepository);
 container.bind<INotificationRepository>(TYPES.NotificationRepository).to(NotificationRepository);
 container.bind<IWalletRepository>(TYPES.WalletRepository).to(walletRepository);
-
+container.bind<IReviewRepository>(TYPES.ReviewRepository).to(ReviewRepository);
 
 
 

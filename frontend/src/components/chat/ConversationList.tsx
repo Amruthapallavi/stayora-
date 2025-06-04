@@ -1,28 +1,18 @@
 import { MessageCircle } from "lucide-react";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { cn } from "../../lib/utils";
+import { ConversationListProps } from "../../types/notification";
 
-interface Conversation {
-  id: string;
-  name: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-}
 
-interface ConversationListProps {
-  onSelectConversation: (id: string) => void;
-  selectedId: string | null;
-  conversations: any[] | [];
-}
 
 const ConversationList = ({
   onSelectConversation,
   selectedId,
+  onlineUsers,
   conversations,
-}: ConversationListProps) => {
-  console.log(conversations,"to check the frontend")
 
+}: ConversationListProps) => {
+  console.log(onlineUsers,"online users")
   return (
     <ScrollArea className="h-[calc(100vh-12rem)] pr-4">
       <div className="space-y-2">
@@ -82,13 +72,17 @@ const ConversationList = ({
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 truncate">
-                  {conversation.lastMessage}
+                  {conversation.lastMessage} 
                 </p>
               </div>
-              {conversation.unread && (
+              {onlineUsers?.includes(conversation.partnerId) && (
                 <div className="w-2 h-2 rounded-full bg-[#b68451] mt-2 animate-pulse" />
               )}
+
+
             </div>
+            
+
           </button>
         ))}
       </div>

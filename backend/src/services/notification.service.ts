@@ -1,8 +1,6 @@
-import notificationRepository from "../repositories/notification.repository";
 import { INotificationService } from "./interfaces/INotificationServices";
 import { INotification } from "../models/notification.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
-import mongoose from "mongoose";
 import { Types } from 'mongoose';
 import { INotificationRepository } from "../repositories/interfaces/INotificationRepository";
 

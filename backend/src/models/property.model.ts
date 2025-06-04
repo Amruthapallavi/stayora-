@@ -1,13 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { PropertyStatus } from "./status/status";
 
 
-export enum PropertyStatus {
-  Pending = "pending",
-  Active = "active",
-  Blocked = "blocked",
-  Booked = "booked",
-  Rejected = "rejected"
-}
 
 
 
@@ -46,7 +40,9 @@ export interface IProperty extends Document {
   isRejected:boolean;
   rejectedReason:string;
   isBooked:boolean;
-  status:"pending" | "active" | "blocked" |"booked" |"rejected";
+  averageRating:number;
+  totalReviews: number;
+  status:PropertyStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,7 +56,7 @@ const propertySchema: Schema = new Schema(
     description: { type: String, required: true },
     category: { type: Schema.Types.ObjectId, ref: "Category" },
 
-    location: {
+    mapLocation: {
       place: { type: String, }, 
       coordinates: {
         latitude: { type: Number, default: null },
@@ -94,10 +90,12 @@ const propertySchema: Schema = new Schema(
     otherFeatures: { type: [String], default: [] },
     isRejected:{type:Boolean,default:false},
      rejectedReason:{type:String},
+     averageRating: { type: Number, default: 0 },
+totalReviews: { type: Number, default: 0 },
     isBooked:{type:Boolean,default:false},
     status: {
       type: String,
-      enum: ["pending", "active", "blocked"], default:"pending",
+      enum: Object.values(PropertyStatus), default:PropertyStatus.Pending,
       required: true,
     },
   },

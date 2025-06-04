@@ -1,11 +1,10 @@
 import { IService } from "../models/service.model";
-import adminRepository from "../repositories/admin.repository";
-import serviceRepository from "../repositories/serviceRepository";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
 import { IServiceService } from "./interfaces/IServiceService";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import { IServiceRepository } from "../repositories/interfaces/IServiceRepository";
+import { ServiceStatus } from "../models/status/status";
 
 @injectable()
 export class ServiceService implements IServiceService {
@@ -72,7 +71,7 @@ export class ServiceService implements IServiceService {
              };
            }
          
-           service.status = service.status === "active" ? "disabled" : "active";
+           service.status = service.status === ServiceStatus.Active ? ServiceStatus.Disabled : ServiceStatus.Active;
          
            
            

@@ -1,23 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import adminRepository from "../repositories/admin.repository";
 import { IUser } from "../models/user.model";
 import { IAdminService } from "./interfaces/IAdminService";
-import { IOwner } from "../models/owner.model";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
-import userRepository from "../repositories/user.repository";
-import ownerRepository from "../repositories/owner.repository";
 import Mail from "../utils/Mail";
 import { isValidEmail } from "../utils/validators";
-import Service from "../models/service.model";
-import  { Types } from "mongoose";
-
-import Feature from "../models/features.model";
-import { IProperty } from "../models/property.model";
-import { IBooking } from "../models/booking.model";
-import propertyRepository from "../repositories/property.repository";
-import mongoose from "mongoose";
-import bookingRepository from "../repositories/booking.repository";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import { IAdminRepository } from "../repositories/interfaces/IAdminRepository";
@@ -25,16 +12,13 @@ import { IPropertyRepository } from "../repositories/interfaces/IPropertyReposit
 import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
 import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
+import { GovtIdStatus, Role, UserStatus } from "../models/status/status";
+import { UserResponseDTO } from "../DTO/UserResponseDto";
+import { mapUsersToDTOs } from "../mappers/userMapper";
+import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
+import { mapOwnersToDTOs, mapOwnerToDTO } from "../mappers/ownerMapper";
+import { DashboardResponseDTO } from "../DTO/DashboardDataDTO";
 
-interface ServiceData {
-  name: string;
-  description: string;
-  price: number;
-  image:string;
-  contactMail:string;
-  contactNumber:string;
-  duration: string;
-}
 
 @injectable()
 export class AdminService implements IAdminService {
@@ -115,7 +99,6 @@ if (!isPasswordValid) {
       jwtRefreshSecret,
       { expiresIn: "7d" }
     );
-    // const adminId=admin._id;
     await this.adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
 
     return {
@@ -123,7 +106,7 @@ if (!isPasswordValid) {
         id:admin._id,
         name:admin.name,
         email:admin.email,
-        role:"admin",
+        role:Role.Admin,
       },
       token,
       message: MESSAGES.SUCCESS.LOGIN,
@@ -160,54 +143,77 @@ if (!isPasswordValid) {
       throw new Error("Invalid refresh token");
     }
   }
-  // async getAdminDashboardStats(): Promise<{
-  //   totalUsers: number;
-  //   totalVendors: number;
-  //   status: number;
-  // }> {
-  //   // const totalUsers = await userRepository.countDocuments({});
-  //   // const totalVendors = await ownerRepository.countDocuments({});
-
-  //   return {
-  //     // totalUsers,
-  //     // totalVendors,
-  //     status: STATUS_CODES.OK,
-  //   };
-  // }
-
-  async listAllUsers(): Promise<{ users: any[]; status: number }> {
-    try {
-      const users = await this.adminRepository.findAllUsers();
-    console.log(users)
+ 
+async listAllUsers(
+  page: number,
+  limit: number,
+  searchTerm: string
+): Promise<{
+  users: UserResponseDTO[];
+  status: number;
+  totalUsers: UserResponseDTO[];
+  totalPages: number;
+  currentPage: number;
+}> {
+  try {
+    const { users, totalUser, totalPages } =
+      await this.adminRepository.findAllUsers(page, limit, searchTerm);
+    const totalUsers=  await this.userRepository.find({role:"user"});
+    const userDTOs = mapUsersToDTOs(users);
+    const totalUsersDTOs=mapUsersToDTOs(totalUsers);
     return {
-      users,
+      users: userDTOs,
+      totalUsers:totalUsersDTOs,
+      totalPages,
+      currentPage: page,
+      status: STATUS_CODES.OK,
+    };
+  } catch (error) {
+    console.error("Error in listAllUsers:", error);
+    return {
+      users: [],
+      totalUsers: [],
+      totalPages: 0,
+      currentPage: page,
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+    };
+  }
+}
+
+
+  async listAllOwners( page: number,
+  limit: number,
+  searchTerm: string
+): Promise<{
+  owners: OwnerResponseDTO[];
+  status: number;
+  totalOwners: OwnerResponseDTO[];
+  totalPages: number;
+  currentPage: number;}> {
+    try {
+     const { owners, totalOwner, totalPages } =
+      await this.adminRepository.findAllOwners(page, limit, searchTerm);
+  const totalOwners=await this.ownerRepository.find();
+    const ownerDTOs = mapOwnersToDTOs(owners);
+    const totalOwnerDTOs=mapOwnersToDTOs(totalOwners);
+    return {
+      owners: ownerDTOs,
+      totalOwners:totalOwnerDTOs,
+      totalPages,
+      currentPage: page,
       status: STATUS_CODES.OK,
     };
     } catch (error) {
-      console.error("Error in listServices:", error);
-      return { 
-        users: [], 
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-      };
-    }
-  }
-
-  async listAllOwners(): Promise<{ owners: IOwner[]; status: number }> {
-    try {
-      const owners = await this.adminRepository.findAllOwners();
+    console.error("Error in listAllUsers:", error);
     return {
-      owners,
-      status: STATUS_CODES.OK,
+      owners: [],
+      totalOwners: [],
+      totalPages: 0,
+      currentPage: page,
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
     };
-    } catch (error) {
-      console.error("Error in listServices:", error);
-      return { 
-        owners: [], 
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR 
-      };
-    }
   }
-
+}
   async updateUserStatus(id: string, status: string): Promise<{ message: string; status: number }> {
     try {
       const user = await this.adminRepository.findUser(id);
@@ -217,7 +223,7 @@ if (!isPasswordValid) {
         status: STATUS_CODES.NOT_FOUND, 
       };
     }
-      user.status = user.status === "Active" ? "Blocked" : "Active";
+      user.status = user.status === UserStatus.Active ? UserStatus.Blocked : UserStatus.Active;
   
     
     
@@ -234,7 +240,7 @@ if (!isPasswordValid) {
   }
 
 
-  async getDashboardData(): Promise<{ data: any; status: number; message: string }> {
+async getDashboardData(): Promise<DashboardResponseDTO> {
     try {
       const [
         userStats,
@@ -248,12 +254,11 @@ if (!isPasswordValid) {
         this.adminRepository.getUserRegistrations(),
         this.adminRepository.getOwnerRegistrations(),
         this.adminRepository.getBookingStats(),
-        this.propertyRepository.find(), // fetch all properties
-        this.bookingRepository.find(),    // fetch all bookings
+        this.propertyRepository.find(), 
+        this.bookingRepository.find(),    
         this.userRepository.find(),
         this.ownerRepository.find(),
       ]);
-      console.log(userStats,"dta")
       const totalUsers = allUsers.filter(p => p.role === "user").length;
       const activeUsers=allUsers.filter(p => p.status === "Active").length;
       const blockedUsers=allUsers.filter(p => p.status === "Blocked").length;
@@ -267,7 +272,6 @@ if (!isPasswordValid) {
 
       const totalRevenue = bookingStats.reduce((sum, b) => sum + b.revenue, 0);
 
-      // Property stats
       const totalProperties = allProperties.length;
       const activeProperties = allProperties.filter(p => p.status === "active").length;
       const pendingProperties = allProperties.filter(p => p.status === "pending").length;
@@ -275,12 +279,10 @@ if (!isPasswordValid) {
       const bookedProperties = allProperties.filter(p => p.status === "booked").length;
       const rejectedProperties = allProperties.filter(p => p.status === "rejected").length;
 
-      // Booking stats
       const activeBookings = allBookings.filter(b => b.bookingStatus === "confirmed").length;
       const completedBookings = allBookings.filter(b => b.bookingStatus === "completed").length;
       const cancelledBookings = allBookings.filter(b => b.bookingStatus === "cancelled").length;
       const totalBookingCount = allBookings.length;
-      // Monthly analytics
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const resultMap = new Map<string, any>();
@@ -298,7 +300,7 @@ if (!isPasswordValid) {
       mapData(userStats, "users");
       mapData(ownerStats, "owners");
       mapData(bookingStats, "bookings");
-
+     const subscriptionRevenue = await this.adminRepository.subscriptionRevenue();
       const userActivityData = Array.from(resultMap.values());
       const revenueData = bookingStats.map(item => ({
         month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
@@ -325,25 +327,27 @@ if (!isPasswordValid) {
         verifiedUsers,
         activeOwner,
         blockedOwners,
-        totalBookingCount
+        totalBookingCount,
+        subscriptionRevenue,
+
 
       };
 
-      return {
-        data: dashboardData,
-        status: STATUS_CODES.OK,
-        message: "Admin dashboard fetched successfully"
-      };
+       return {
+      data: dashboardData,
+      status: STATUS_CODES.OK,
+      message: "Admin dashboard fetched successfully"
+    };
 
-    } catch (error) {
-      console.error("Error in getDashboardData (Admin):", error);
-      return {
-        data: null,
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        message: MESSAGES.ERROR.SERVER_ERROR
-      };
-    }
+  } catch (error) {
+    console.error("Error in getDashboardData (Admin):", error);
+    return {
+      data: null,
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      message: MESSAGES.ERROR.SERVER_ERROR
+    };
   }
+}
 
 
   
@@ -358,14 +362,14 @@ if (!isPasswordValid) {
         status: STATUS_CODES.NOT_FOUND, 
       };
     }
-      owner.status = owner.status === "Active" ? "Blocked" : "Active";
+      owner.status = owner.status === UserStatus.Active ? UserStatus.Blocked : UserStatus.Active;
   
     
     
     await owner.save();
   
     return {
-      message: "Successful",
+      message: MESSAGES.SUCCESS.STATUS_UPDATED,
       status: STATUS_CODES.OK, 
     };
     } catch (error) {
@@ -389,9 +393,8 @@ if (!isPasswordValid) {
       }
       const result=await this.adminRepository.deleteOwner( id);
       
-      console.log(result)
       return {
-        message: "Successfully deleted",
+        message: MESSAGES.SUCCESS.DELETED_SUCCESSFUL,
         status: STATUS_CODES.OK,
       };
     } catch (error) {
@@ -419,12 +422,13 @@ if (!isPasswordValid) {
         status: STATUS_CODES.NOT_FOUND, 
       };
     }
-    owner.govtIdStatus="approved";
-    owner.status="Active";
+    owner.govtIdStatus=GovtIdStatus.Approved;
+    owner.status= UserStatus.Active;
     await owner.save();
+    await Mail.sendApprovalMail(owner.email, owner.name);
 
     return {
-      message: " Approved Successfully ",
+      message:MESSAGES.SUCCESS.APPROVE_SUCCESSFUL,
       status: STATUS_CODES.OK,
     };
   } catch (error) {
@@ -448,7 +452,7 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
     }
 
     await this.ownerRepository.update(id, {
-      govtIdStatus: "rejected",
+      govtIdStatus: GovtIdStatus.Rejected,
       rejectionReason: reason,
     });
 
@@ -480,3 +484,32 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
 
 }
 export default AdminService;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ // async getAdminDashboardStats(): Promise<{
+  //   totalUsers: number;
+  //   totalVendors: number;
+  //   status: number;
+  // }> {
+  //   // const totalUsers = await userRepository.countDocuments({});
+  //   // const totalVendors = await ownerRepository.countDocuments({});
+
+  //   return {
+  //     // totalUsers,
+  //     // totalVendors,
+  //     status: STATUS_CODES.OK,
+  //   };
+  // }

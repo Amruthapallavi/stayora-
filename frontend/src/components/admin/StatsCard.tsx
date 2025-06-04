@@ -22,7 +22,7 @@ import { Link } from "react-router-dom";
 
 interface StatsCardProps {
   label: string;
-  value: string;
+  value: string |number |undefined;
   icon: LucideIcon;
   link?:string;
   trend?: {

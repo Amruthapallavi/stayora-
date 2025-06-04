@@ -19,7 +19,7 @@ const serviceCtr = container.get<ServiceController>(TYPES.ServiceController);
 const featureCtr = container.get<FeatureController>(TYPES.FeatureController);
 const bookingCtr = container.get<BookingController>(TYPES.BookingController);
 
-adminRoutes.post("/login", adminCtr.login);
+adminRoutes.post("/login", adminCtr.login.bind(adminCtr));
 
 adminRoutes.get(
   "/users",
@@ -48,7 +48,7 @@ adminRoutes.get(
   authMiddleware(["admin"]),
   propertyCtr.getAllProperties.bind(propertyCtr)
 );
-adminRoutes.post("/refresh-token", adminCtr.refreshToken);
+adminRoutes.post("/refresh-token", adminCtr.refreshToken.bind(adminCtr));
 adminRoutes.get(
   "/dashboard",
   authMiddleware(["admin"]),

@@ -2,31 +2,12 @@
 import  { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Home, Plus, BookOpen, CheckCircle, UserCheck, AlertCircle } from 'lucide-react';
+import { Home, Plus, BookOpen, CheckCircle, UserCheck, AlertCircle, Search } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import OwnerLayout from '../../components/owner/OwnerLayout';
+import { Property, StatCardProps } from '../../types/response';
 
-interface Property {
-  id: string;
-  title: string;
-  type: string;
-  rentPerMonth: number;
-  city: string;
-  images: string[];
-  views?: number;
-  bookings?: number;
-  revenue?: number;
-}
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  description: string;
-  icon: React.ReactNode;
-  trend?: 'up' | 'down';
-  trendValue?: string;
-}
 
 const StatCard = ({ title, value, description, icon, trend, trendValue }: StatCardProps) => (
   <Card>
@@ -50,7 +31,7 @@ const StatCard = ({ title, value, description, icon, trend, trendValue }: StatCa
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getProperties,user, getDashboardData } = useAuthStore();
+  const { getProperties,user, getDashboardData,getUserData } = useAuthStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<{ name: string; bookings: number; revenue: number }[]>([]);
@@ -63,20 +44,22 @@ const Dashboard = () => {
     monthlyRevenue: 0,
     occupancyRate: 0,
   });
-
- 
-
+const limit=6;
+let page=1;
+let search='';
   useEffect(() => {
-    loadProperties();
+    loadProperties(limit,page=1,search);
+    
   }, []);
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const response = await getDashboardData()  
-       
+       console.log(response,"dashboard data")
         setDashboardData(response.data);  
-      setChartData(response.data?.bookingsByMonth);
+setChartData(response.data?.bookingsByMonth ?? []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
       }
@@ -84,12 +67,12 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [user._id]); 
-  const loadProperties = async () => {
+  const loadProperties = async (page=1,limit:number,Search='') => {
     try {
       setLoading(true);
-      const response = await getProperties();
+      const response = await getProperties(page,limit,Search);
       setProperties(response.properties);
-      
+      console.log(response,"for propertyies")
       setStats({
         totalProperties: response.properties.length,
         activeBookings: Math.floor(Math.random() * 10) + 5,

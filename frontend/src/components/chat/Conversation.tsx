@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { useAuthStore } from "../../stores/authStore";
 import io from 'socket.io-client';
 import Notification from "./Notifications";
 import { v4 as uuidv4 } from 'uuid';
-import { IUser } from "../../types/user.interface";
+import { IUser } from "../../types/user";
 
 interface Message {
   id: string;
@@ -20,11 +20,15 @@ interface ConversationProps {
   selectedConversation: string;
   propertyId: string;
   partner: IUser;
+  onMessageSent?: (message: {
+    content: string;
+    timestamp: string;
+  }) => void;
 }
 
 
 
-const Conversation = ({ conversation,selectedConversation,propertyId,partner }: ConversationProps) => {
+const Conversation = ({ conversation,selectedConversation,propertyId,partner ,onMessageSent}: ConversationProps) => {
     const {sendMessage,user}=useAuthStore();
       const [messageText, setMessageText] = useState('');
       const [sending, setSending] = useState(false);
@@ -32,7 +36,8 @@ const Conversation = ({ conversation,selectedConversation,propertyId,partner }: 
         const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
         const [conversations, setConversations] = useState<any[]>([]);
         const [showNotification, setShowNotification] = useState(false);
-        
+        const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
         const formatChatTimestamp = (dateStr: string) => {
       const date = new Date(dateStr);
       const now = new Date();
@@ -52,6 +57,12 @@ const Conversation = ({ conversation,selectedConversation,propertyId,partner }: 
         return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); // e.g., "Apr 10, 2023"
       }
     };
+    useEffect(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, [messages]);
+    
     useEffect(() => {
       setMessages(conversation || []);
       setConversations(conversation || []); // <- this sends it to parent
@@ -99,6 +110,13 @@ const Conversation = ({ conversation,selectedConversation,propertyId,partner }: 
           
           // First, send the message to the server
           const response = await sendMessage(formData);
+          if (onMessageSent) {
+            onMessageSent({
+              content: messageText,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
           const newMessage = response.data;
       
           setMessages(prev => {
@@ -112,21 +130,29 @@ const Conversation = ({ conversation,selectedConversation,propertyId,partner }: 
           // Update the conversations list
           setConversations(prev => {
             const updatedConversations = [...prev];
-            const conversationIndex = updatedConversations.findIndex(conv => conv.partnerId === selectedConversation);
-      
+            const conversationIndex = updatedConversations.findIndex(
+              conv => conv.partnerId === selectedConversation
+            );
+          
             if (conversationIndex !== -1) {
               updatedConversations[conversationIndex] = {
                 ...updatedConversations[conversationIndex],
-                lastMessage: messageText,
-                lastMessageTime: new Date().toISOString(),
+                lastMessage: {
+                  content: messageText,
+                  createdAt: new Date().toISOString(),
+                },
               };
-              // Move this conversation to the top
+          
               const [conversation] = updatedConversations.splice(conversationIndex, 1);
               updatedConversations.unshift(conversation);
             }
-      
+          
             return updatedConversations;
           });
+          if (onMessageSent) {
+            onMessageSent(newMessage); // send the message to parent
+          }
+          
           // Reset form
       setMessageText('');
       // setSelectedFile(null);
@@ -172,11 +198,16 @@ const Conversation = ({ conversation,selectedConversation,propertyId,partner }: 
           <p>{message.content}</p>
           <span className="text-[10px] opacity-70 mt-1 block text-right">
             {formatChatTimestamp(message.timestamp)}
+
           </span>
+
         </div>
+        <div ref={messagesEndRef} />
+
       </div>
     );
   })}
+
 </div>
 
         </ScrollArea>

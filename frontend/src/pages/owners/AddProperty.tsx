@@ -9,42 +9,18 @@ import { notifyError, notifySuccess } from "../../utils/notifications";
 import { validatePropertyForm } from "../../utils/validators";
 import Map from "../../components/owner/map";
 import OwnerLayout from "../../components/owner/OwnerLayout";
+import { PropertyFormData } from "../../types/property";
+import { IFeature } from "../../types/feature";
 
-interface Feature {
-  _id: string;
-  name: string;
-}
 
-interface FormData {
-  title: string;
-  type: string;
-  minLeasePeriod: string;
-  maxLeasePeriod: string;
-  bedrooms: string;
-  bathrooms: string;
-  houseNumber: string;
-  street: string;
-  address: string;
-  city: string;
-  district: string;
-  state: string;
-  pincode: string;
-  rentPerMonth: string;
-  furnishing: string;
-  description: string;
-  rules: string;
-  cancellationPolicy: string;
-  selectedFeatures: string[];
-  addedOtherFeatures: string[];
-  selectedImages: string[];
-  mapLocation?: { lat: number; lng: number };
-}
+
+
 
 const AddProperty = () => {
   const navigate = useNavigate();
   const { listAllFeatures, addProperty } = useAuthStore();
   
-  const [features, setFeatures] = useState<Feature[]>([]);
+  const [features, setFeatures] = useState<IFeature[]>([]);
   const [otherFeatures, setOtherFeatures] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -58,7 +34,7 @@ const AddProperty = () => {
     "Uttarakhand", "West Bengal"
   ];
   
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<PropertyFormData>({
     title: "",
     type: "",
     minLeasePeriod: "",
