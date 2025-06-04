@@ -102,12 +102,7 @@ export interface IPropertyDetails{
     createdAt: string; 
     updatedAt: string; 
   }
-  
-  interface owner{
-    name:string,
-    phone:string,
-    email:string
-  }
+
 
 
  export interface PropertyFormData {

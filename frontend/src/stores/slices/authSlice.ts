@@ -144,6 +144,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthState> = (set, 
           response = await authService.ownerResetPassword({ email, newPassword });
           break;
       }
+      return response;
     } catch (error) {
       console.error("error", error);
       throw error;

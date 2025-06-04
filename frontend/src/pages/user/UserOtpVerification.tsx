@@ -6,7 +6,6 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const OtpVerification = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { verifyOtp, resendOtp } = useAuthStore();
@@ -42,18 +41,16 @@ const OtpVerification = () => {
   const handleSubmit = async () => {
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
-      setError("Please enter OTP.");
       notifyError("Please enter OTP.");
       return;
     }
     setIsLoading(true);
     try {
-      const response = await verifyOtp(email, otpValue, "user");
+      await verifyOtp(email, otpValue, "user");
       
       notifySuccess("OTP verification successful. Please Login to continue");
       navigate("/user/login");
     } catch (error) {
-      setError("OTP verification failed. Try again.");
       notifyError("OTP verification failed. Try again.");
       console.error(error);
     } finally {

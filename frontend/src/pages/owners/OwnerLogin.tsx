@@ -9,7 +9,6 @@ const OwnerLogin = () => {
 
   const navigate = useNavigate();
   const {login} = useAuthStore();
-  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -22,7 +21,6 @@ const OwnerLogin = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
 try {
       await login(formData.email, formData.password, "owner");
       notifySuccess("Login successful!");
@@ -30,12 +28,18 @@ try {
     } catch (err: any) {
       const errMsg =
         err.response?.data?.error || "Failed to login. Please try again.";
-      setError(errMsg);
       notifyError(errMsg);
     } finally {
       setIsLoading(false);
     }  };
 
+ if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-golden"></div>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3]">
       <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full">

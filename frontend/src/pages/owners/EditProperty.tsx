@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 import { Checkbox } from "../../components/ui/checkbox";
-import { PlusCircle, Trash2, Save, ArrowLeft, Upload, Image as ImageIcon } from "lucide-react";
+import { PlusCircle, Trash2, Save, ArrowLeft } from "lucide-react";
 import { notifySuccess, notifyError } from '../../utils/notifications';
 import { Link } from 'react-router-dom';
 import { Feature, FormData, FormErrors, IProperty } from '../../types/property';

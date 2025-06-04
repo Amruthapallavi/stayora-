@@ -65,7 +65,9 @@ const OwnerBookings = () => {
       showCancelButton: true,
       confirmButtonText: "Yes, confirm it!",
     });
-
+   if(!bookingId){
+    console.error("booking Id not found");
+   }
     if (result.isConfirmed) {
       try {
         Swal.fire("Confirmed!", "Booking has been confirmed.", "success");
@@ -83,7 +85,9 @@ const OwnerBookings = () => {
       showCancelButton: true,
       confirmButtonText: "Yes, cancel it!",
     });
-
+ if(!bookingId){
+    console.error("booking Id not found");
+   }
     if (result.isConfirmed) {
       try {
         Swal.fire("Cancelled!", "Booking has been cancelled.", "success");

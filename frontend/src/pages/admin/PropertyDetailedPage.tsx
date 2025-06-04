@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Map, Home, User, Calendar, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Home, User, Calendar, IndianRupee } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Card, CardContent } from '../../components/ui/card';
@@ -63,8 +63,8 @@ setOwnerData(propertyResponse?.ownerData ?? null);
               text: "You are about to approve this property.",
               icon: "question",
               showCancelButton: true,
-              confirmButtonColor: "#28a745", // green
-              cancelButtonColor: "#6c757d", // gray
+              confirmButtonColor: "#28a745",
+              cancelButtonColor: "#6c757d", 
               confirmButtonText: "Yes, approve it!",
             });
         
@@ -132,6 +132,17 @@ setOwnerData(propertyResponse?.ownerData ?? null);
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Properties
         </Button>
       </div>
+    );
+  }
+  if (loading) {
+    return (
+      <AdminLayout>
+      <div className="flex min-h-screen bg-gray-100">
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-t-2 border-black rounded-full"></div>
+        </div>
+      </div>
+      </AdminLayout>
     );
   }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
-  User,
   Home,
   MoveRight,
   MapPin,
@@ -23,7 +22,7 @@ import {
 import { Calendar } from "../../components/ui/calendar";
 
 import { format, addMonths } from "date-fns";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 
@@ -44,7 +43,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
     // clearCart,
     listServices,
   } = useAuthStore();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -54,7 +53,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const [services, setServices] = useState<IService[]>([]);
-  const [error, setError] = useState("");
+  
 
   const steps = [
     { number: 1, label: "Rooms" },
@@ -64,7 +63,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   ];
 
   const propertyId = searchParams.get("propertyId");
-  const propertyName = searchParams.get("propertyName");
+  // const propertyName = searchParams.get("propertyName");
   const min = bookingDetails?.property?.minLeasePeriod;
   const max = bookingDetails?.property?.maxLeasePeriod;
   const [rentalPeriod, setRentalPeriod] = useState<number>(min);
@@ -147,7 +146,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
           }
         } else {
           const errMsg = "Missing move-in date or end date";
-          setError(errMsg);
 
           notifyError(errMsg);
           setIsLoading(false);

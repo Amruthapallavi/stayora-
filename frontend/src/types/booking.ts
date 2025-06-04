@@ -185,23 +185,6 @@ export interface IMapLocation {
   };
 }
 
-// export interface IOwnerData {
-//   id: string;
-//   name: string;
-//   email: string;
-//   phone: string;
-//   status: string;
-//   isVerified: boolean;
-//   isSubscribed: boolean;
-//   govtId: string;
-//   govtIdStatus: string;
-//   rejectionReason: string | null;
-//   subscriptionStart: string | null;
-//   subscriptionEnd: string | null;
-//   updatedAt: string;
-//   createdAt: string;
-//   address?: string; 
-// }
 
 export interface IBookingRes {
   _id: string;

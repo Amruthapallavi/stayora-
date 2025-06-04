@@ -67,7 +67,8 @@ const handleCancelBooking = async () => {
     cancelButtonColor: "#3085d6",
     confirmButtonText: "Yes, cancel it!",
   });
-
+   setCancelReason(cancelReason);
+   setProcessing(true);
   if (confirm.isConfirmed) {
     try {
 

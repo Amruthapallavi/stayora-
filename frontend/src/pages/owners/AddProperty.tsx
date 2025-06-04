@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/owner/Sidebar";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { validatePropertyForm } from "../../utils/validators";
@@ -65,7 +64,7 @@ const AddProperty = () => {
   const loadFeatures = async () => {
     try {
       const response = await listAllFeatures();
-      setFeatures(response.features);
+      setFeatures(response);
     } catch (error) {
       notifyError("Failed to load features.");
       console.error("Error loading features:", error);
@@ -141,12 +140,12 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setPreviewImages((prev) => [...prev, ...previews]);
 };
 
-  const removeImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedImages: prev.selectedImages.filter((_, i) => i !== index),
-    }));
-  };
+  // const removeImage = (index: number) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     selectedImages: prev.selectedImages.filter((_, i) => i !== index),
+  //   }));
+  // };
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setFormData((prev) => ({
@@ -160,14 +159,12 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Update complete address when individual address components change
     if (name === 'houseNumber' || name === 'street' || name === 'city' || name === 'district' || name === 'state' || name === 'pincode') {
       const updatedFormData = {
         ...formData,
         [name]: value
       };
       
-      // Rebuild the complete address
       const addressParts = [
         updatedFormData.houseNumber,
         updatedFormData.street,
@@ -191,7 +188,6 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       }));
     }
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -218,10 +214,10 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "mapLocation" && value) {
-          formDataToSend.append("mapLocation", JSON.stringify(value)); // ✅ Stringify the location
+          formDataToSend.append("mapLocation", JSON.stringify(value));  
         } else if (Array.isArray(value)) {
           value.forEach((item) => {
-            formDataToSend.append(key, item); // handle arrays like features etc.
+            formDataToSend.append(key, item); 
           });
         } else if (value !== undefined && value !== null) {
           formDataToSend.append(key, value as string);
@@ -233,7 +229,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         formDataToSend.append("images", file);
       });
 
-      const response = await addProperty(formDataToSend);
+      await addProperty(formDataToSend);
       notifySuccess("Property added successfully!");
       navigate("/owner/properties");
     } catch (error) {

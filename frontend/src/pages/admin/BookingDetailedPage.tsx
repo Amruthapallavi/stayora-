@@ -1,6 +1,6 @@
 import  { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Home, User, CreditCard, Clock, Check, X, Eye } from 'lucide-react';
+import { ArrowLeft, Calendar, Home, User, CreditCard, Clock, Check, X } from 'lucide-react';
 // import { bookings, properties, users } from '../../utils/mockData';
 import { Button } from '../../components/ui/button';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -74,6 +74,17 @@ const BookingDetail = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <AdminLayout>
+      <div className="flex min-h-screen bg-gray-100">
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-t-2 border-black rounded-full"></div>
+        </div>
+      </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

@@ -6,7 +6,6 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const NewPassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { verifyOtp, resetPassword } = useAuthStore();
@@ -48,7 +47,6 @@ const NewPassword = () => {
   const handleSubmitOtp = async () => {
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
-      setError("Please enter OTP.");
       notifyError("Please enter OTP.");
       return;
     }
@@ -59,7 +57,6 @@ const NewPassword = () => {
       notifySuccess("OTP verification successful. Set your new password.");
       setIsOtpVerified(true);
     } catch (error) {
-      setError("OTP verification failed. Try again.");
       notifyError("OTP verification failed. Try again.");
       console.error(error);
     } finally {
@@ -69,7 +66,6 @@ const NewPassword = () => {
 
   const handlePasswordSubmit = async () => {
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
       notifyError("Passwords do not match.");
       return;
     }
@@ -80,7 +76,6 @@ const NewPassword = () => {
       notifySuccess("Password updated successfully. Please log in.");
       navigate("/user/login");
     } catch (error) {
-      setError("Password update failed. Try again.");
       notifyError("Password update failed. Try again.");
       console.error(error);
     }
@@ -95,6 +90,10 @@ const NewPassword = () => {
     }
     return () => clearInterval(timer);
   }, [resendTimer]);
+
+if(isLoading){
+  
+}
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3]">

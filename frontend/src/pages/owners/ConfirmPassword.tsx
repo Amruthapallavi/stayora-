@@ -6,7 +6,6 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const ConfirmPassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { verifyOtp, resetPassword } = useAuthStore();
@@ -48,7 +47,6 @@ const ConfirmPassword = () => {
   const handleSubmitOtp = async () => {
     const otpValue = otp.join("");
     if (otpValue.length < 6) {
-      setError("Please enter OTP.");
       notifyError("Please enter OTP.");
       return;
     }
@@ -59,7 +57,6 @@ const ConfirmPassword = () => {
       notifySuccess("OTP verification successful. Set your new password.");
       setIsOtpVerified(true);
     } catch (error) {
-      setError("OTP verification failed. Try again.");
       notifyError("OTP verification failed. Try again.");
       console.error(error);
     } finally {
@@ -69,7 +66,6 @@ const ConfirmPassword = () => {
 
   const handlePasswordSubmit = async () => {
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
       notifyError("Passwords do not match.");
       return;
     }
@@ -79,7 +75,6 @@ const ConfirmPassword = () => {
       notifySuccess("Password updated successfully. Please log in.");
       navigate("/owner/login");
     } catch (error) {
-      setError("Password update failed. Try again.");
       notifyError("Password update failed. Try again.");
       console.error(error);
     }
@@ -94,7 +89,13 @@ const ConfirmPassword = () => {
     }
     return () => clearInterval(timer);
   }, [resendTimer]);
-
+ if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-golden"></div>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3]">
       <div className="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full">

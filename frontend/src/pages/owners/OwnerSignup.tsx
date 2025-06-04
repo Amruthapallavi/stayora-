@@ -7,7 +7,6 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const OwnerSignup = () => {
   const navigate = useNavigate();
   const { signup } = useAuthStore();
-  const [error, setError] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,8 +47,6 @@ const OwnerSignup = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    setError("");
-
     if (formData.password !== formData.confirmPassword) {
       notifyError("Passwords do not match.");
       return;
@@ -80,7 +77,6 @@ const OwnerSignup = () => {
       });
     } catch (err: any) {
       const errMsg = err.response?.data?.error || "Failed to sign up. Please try again.";
-      setError(errMsg);
       notifyError(errMsg);
     }finally{
       setIsLoading(false);

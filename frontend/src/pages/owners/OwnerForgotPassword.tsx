@@ -6,7 +6,6 @@ import { notifySuccess, notifyError } from "../../utils/notifications";
 const OwnerForgotPassword = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
-    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const { forgotPassword } = useAuthStore();
 
@@ -26,7 +25,6 @@ const OwnerForgotPassword = () => {
             navigate("/owner/confirm-password", { state: { email } });
         } catch (err: any) {
             const errMsg = err.response?.data?.error || "Failed to send OTP. Please try again.";
-            setError(errMsg);
             notifyError(errMsg);
         } finally {
             setIsLoading(false);

@@ -3,7 +3,6 @@ import { Wifi, AirVent, ParkingCircle, ShieldCheck, Tv, ThermometerSun, Leaf } f
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../stores/authStore";
 import { notifyError, notifySuccess } from "../../utils/notifications";
-import { useNavigate } from "react-router-dom";
 import {
   showConfirmAlert,
   showErrorAlert,
@@ -81,7 +80,8 @@ const AdminFeatures = () => {
   };
 
   const handleEditFeature = async (e: any) => {
-    const { _id, name, description, icon } = newFeature;
+    // e.preventdefault();
+    const { _id, name, description } = newFeature;
   
     if (!_id || !name || !description) {
       notifyError("All fields are required.");
@@ -98,18 +98,17 @@ const AdminFeatures = () => {
       // closeModal();
     } catch (err:any) {
       notifyError(err.response?.data?.message || "Failed to update feature.");
+      e.prevent();
     }
   };
   
-  // Handle Input Change
   const handleInputChange = (e:any) => {
     setNewFeature({ ...newFeature, [e.target.name]: e.target.value });
   };
 
-  // Add Feature
   const handleAddFeature = async () => {
   
-    const { name, description, icon } = newFeature;
+    const { name, description } = newFeature;
   
     if (!name || !description ) {
       notifyError("All fields are required.");
@@ -117,8 +116,7 @@ const AdminFeatures = () => {
     }
   
     try {
-      const response = await addFeature(newFeature, "admin");
-      // setFeatures(prev => [...prev, response.feature]); // Assuming this structure
+      await addFeature(newFeature, "admin");
 
         notifySuccess("New feature added successfully");
         closeModal();
@@ -136,7 +134,6 @@ const AdminFeatures = () => {
     }));
   };
   
-  // Remove Feature
   
     const handleRemoveFeature = async (id: string) => {
       const result = await showConfirmAlert(
@@ -151,7 +148,6 @@ const AdminFeatures = () => {
           console.log("Deleting owner with ID:", id);
           await removeFeature(id);
     
-          // Remove the deleted owner from the list
           setFeatures((prev) => prev.filter((feature) => feature._id !== id));
     
           showSuccessAlert("The feature has been removed.");

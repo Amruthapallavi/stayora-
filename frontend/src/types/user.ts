@@ -23,7 +23,7 @@ status: string;
     content: string;
     sender: string | { _id: string };
     senderModel: string;
-    receiver: string;
+    receiver: string | { _id: string };
     propertyId?: string;
     receiverModel: string;
     images?: string[];

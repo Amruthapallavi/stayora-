@@ -43,7 +43,13 @@ const UserHomePage = () => {
 
     fetchProperties();
   }, []);
-
+ if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-golden"></div>
+      </div>
+    );
+  }
   return (
     <UserLayout>
       <div className="bg-gray-100 text-gray-900">

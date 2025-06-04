@@ -1,4 +1,4 @@
-import { INotification, INotificationApiResponse } from "./notification";
+import {  INotificationApiResponse } from "./notification";
 import { IAdminDashboardData } from "./admin";
 import { IResponse } from "./response";
 import { IUser, IUserResponse } from "./user";
@@ -6,15 +6,13 @@ import { IOwner, OwnersResponse } from "./owner";
 import { IProperty, IPropertyDetails, PropertyResponse } from "./property";
 import {
   IBookingAdminResponse,
-  IBookingDetailedData,
   IBookingDetailsResponse,
   IBookingResponse,
-  IOwnerBookingDetails,
   IOwnerBookingRes,
 } from "./booking";
 import { RazorpayOrderResponse, RazorpayVerifyResponse } from "./razorPay";
 import { ICart } from "./cart";
-import { IFeature, IFeatureResponse } from "./feature";
+import { IFeature } from "./feature";
 import { IService, IServiceResponse } from "./service";
 import { WalletData } from "./wallet";
 
@@ -46,7 +44,6 @@ signup: (data: FormData, authType: AuthType) => Promise<any>
   subscribe:(planName:string,price:number,allowedProperties:number)=>Promise<RazorpayOrderResponse>;
   verifySubscription:(paymentData: any) => Promise<any>;
   logout: () => void;
-  // getuserById(id:string):Promise<any>;
 }
 
 export interface propertyState {

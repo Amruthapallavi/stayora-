@@ -2,7 +2,7 @@
 import  { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Home, Plus, BookOpen, CheckCircle, UserCheck, AlertCircle, Search } from 'lucide-react';
+import { Home, Plus, BookOpen, CheckCircle, UserCheck, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import OwnerLayout from '../../components/owner/OwnerLayout';
@@ -31,13 +31,12 @@ const StatCard = ({ title, value, description, icon, trend, trendValue }: StatCa
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { getProperties,user, getDashboardData,getUserData } = useAuthStore();
+  const { getProperties,user, getDashboardData } = useAuthStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<{ name: string; bookings: number; revenue: number }[]>([]);
 
   const [dashboardData, setDashboardData] = useState<any>(null);  
-  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProperties: 0,
     activeBookings: 0,
@@ -61,7 +60,7 @@ let search='';
         setDashboardData(response.data);  
 setChartData(response.data?.bookingsByMonth ?? []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("failed to fetch dashboard data");
       }
     };
 

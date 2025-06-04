@@ -263,11 +263,16 @@ const receiverId =
           return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); 
         }
       }
-      console.log('selectedConversation:', selectedConversation);
-console.log('conversations:', conversations.map(c => c.partnerId));
+    
 
 const unreadCount = notifications.filter(n => !n.read).length;
-
+ if (loadingConversations) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-golden"></div>
+      </div>
+    );
+  }
       
   return (
     <OwnerLayout>

@@ -19,8 +19,7 @@ const AdminDashboard = () => {
  const {getDashboardData}=useAuthStore();
  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null); 
 const [revenueData, setRevenueData] = useState<RevenueEntry[]>([]);
-const [error, setError] = useState<string | null>(null);
-
+// 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -28,7 +27,7 @@ const [error, setError] = useState<string | null>(null);
         setDashboardData(response.data);  
         setRevenueData(response.data?.revenueData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error(err instanceof Error ? err.message : 'Unknown error');
       }
     };
 

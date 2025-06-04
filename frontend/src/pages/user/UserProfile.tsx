@@ -181,7 +181,7 @@ const Profile = () => {
       return;
     }
     try {
-      const response = await changePassword({
+      await changePassword({
         userId: user.id,
         oldPass: currentPassword,
         newPass: newPassword,

@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import { IOwner } from "../../types/owner";
 import Swal from "sweetalert2";
-import Footer from "../../components/user/Footer";
 
 const UserBookingDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,16 +93,12 @@ const UserBookingDetails = () => {
 
     try {
       setSubmittingReview(true);
-      console.log(booking._id, reviewRating, reviewText);
-      const response = await submitReview(
+       await submitReview(
         booking._id,
         reviewRating,
         reviewText
       );
-      //   if (!response.ok) {
-      //   throw new Error("Failed to submit review");
-      // }
-
+    
       notifySuccess("Review submitted successfully!");
       setReviewText("");
       setReviewRating(0);
