@@ -1,13 +1,14 @@
 
 
 export interface INotification {
+  _id:string;
   recipient: string;
   recipientModel: string;
   type: string;
   message: string;
   read: boolean;
   otherId?: string | null;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface INotificationApiResponse {

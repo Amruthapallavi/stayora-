@@ -27,7 +27,6 @@ const AdminUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<IUser[]>([]);
   // const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem("theme") === "dark");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [isModal, setIsModal] = useState(false);
 

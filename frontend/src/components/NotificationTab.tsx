@@ -6,11 +6,10 @@ import {
   ChevronRight,
   Calendar,
   Home,
-  MessageSquare,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import moment from 'moment'; 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 export interface DisplayNotification {
     _id: string;
@@ -40,9 +39,8 @@ export interface DisplayNotification {
   const NotificationsTab: React.FC<NotificationsTabProps> = ({ notifications }) => {
     const [isOpen, setIsOpen] = useState(false);
   const [notifList, setNotifList] = useState<DisplayNotification[]>([]);
-const navigate=useNavigate();
 const {markNotificationAsRead}=useAuthStore();
-  const notificationRef = useRef(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClickOutside = (event:any) => {
       if (
@@ -65,21 +63,26 @@ console.log(notifList)
 //     );
 //   };
 useEffect(() => {
-    const transformed = notifications.map((n) => ({
-      id: n._id,
-      title: n.type === 'booking' ? 'Booking Confirmed' : 'Notification',
-      description: n.message,
-      time: moment(n.createdAt).fromNow(),
-      read: n.read,
-      icon:
-        n.type === 'booking' ? (
-          <Home size={16} className="text-green-500" />
-        ) : (
-          <Calendar size={16} className="text-blue-500" />
-        ),
-    }));
-    setNotifList(transformed);
-  }, [notifications]);
+  const transformed = notifications.map((n) => ({
+    _id: n._id, // Required by DisplayNotification
+    id: n._id,  // Optional — used for UI keys
+    title: n.type === 'booking' ? 'Booking Confirmed' : 'Notification',
+    description: n.message,
+    time: moment(n.createdAt).fromNow(),
+    read: n.read,
+    icon:
+      n.type === 'booking' ? (
+        <Home size={16} className="text-green-500" />
+      ) : (
+        <Calendar size={16} className="text-blue-500" />
+      ),
+    type: n.type,         // Required
+    otherId: n.otherId,   // Required
+  }));
+
+  setNotifList(transformed);
+}, [notifications]);
+
   
   const markAsRead = async (id: string) => {
     console.log(id,"formark not")
@@ -193,7 +196,7 @@ onClick={async () => {
                           <div className="absolute top-3 right-3 flex">
                           {!notification.read && (
   <button
-    onClick={() => markAsRead(notification.id)} 
+    onClick={() => markAsRead(notification._id)} 
     className="text-gray-400 hover:text-yellow-600 p-1 transition"
     title="Mark as read"
   >
@@ -202,7 +205,7 @@ onClick={async () => {
 )}
 
                             <button
-                              onClick={() => removeNotification(notification.id)}
+                              onClick={() => removeNotification(notification._id)}
                               className="text-gray-400 hover:text-red-600 p-1 transition"
                               title="Remove"
                             >

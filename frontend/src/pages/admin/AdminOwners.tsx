@@ -4,7 +4,6 @@ import {
   Eye,
   CheckCircle,
   Unlock,
-  X,
   Ban,
   Trash2,
   Clock,
@@ -13,7 +12,6 @@ import { useAuthStore } from "../../stores/authStore";
 import {
   notifySuccess,
   notifyError,
-  notifyWarn,
 } from "../../utils/notifications";
 import {
   motion,
@@ -30,7 +28,6 @@ import {
   showStatusChangeAlert,
   showErrorAlert,
 } from "../../components/alert/AlertService";
-import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { IOwner } from "../../types/owner";
 import Pagination from "../../components/admin/AdminPage";
@@ -44,7 +41,6 @@ const OwnerListing = () => {
     deleteUser,
     rejectOwner,
   } = useAuthStore();
-  const navigate = useNavigate();
   const [owners, setOwners] = useState<IOwner[]>([]);
   // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -100,12 +96,12 @@ const OwnerListing = () => {
     setCurrentPage(1);
   };
 
-  const filteredOwners = owners.filter(
-    (owner) =>
-      owner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      owner.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      owner.phone.includes(searchQuery)
-  );
+  // const filteredOwners = owners.filter(
+  //   (owner) =>
+  //     owner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     owner.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     owner.phone.includes(searchQuery)
+  // );
 
   // const totalPages = Math.ceil(filteredOwners.length / OwnersPerPage);
   // const currentOwners = filteredOwners.slice(

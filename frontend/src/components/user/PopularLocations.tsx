@@ -1,10 +1,5 @@
 import { motion } from 'framer-motion';
 
-interface Location {
-  city: string;
-  count: string;
-  image: string;
-}
 
 const locationData = [
   {

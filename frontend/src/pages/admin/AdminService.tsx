@@ -131,7 +131,17 @@ const AdminServices = () => {
       notifyError(err.response?.data?.message || "Failed to add service.");
     }
   };
-
+  if (isLoading) {
+    return (
+      <AdminLayout>
+      <div className="flex min-h-screen bg-gray-100">
+        <div className="flex-1 p-8 flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-t-2 border-black rounded-full"></div>
+        </div>
+      </div>
+      </AdminLayout>
+    );
+  }
   return (
     <AdminLayout>
     <div className="flex min-h-screen bg-gray-100">

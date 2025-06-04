@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Copy, Check, Calendar, Clock, Star, Shield, Award } from 'lucide-react';
-import { Badge } from "../../components/ui/badge";
+import { ArrowLeft, MapPin, Copy, Check, Calendar, Clock, Shield, Award } from 'lucide-react';
 import { useState } from 'react';
 
 const BookingHeader = ({ propertyName, address, status, bookingId }: {

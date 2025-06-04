@@ -1,4 +1,3 @@
-import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -9,7 +8,7 @@ const PropertyMap = ({ latitude, longitude, propertyTitle }: { latitude: number;
 <MapContainer
   center={[latitude, longitude]}
   zoom={14}
-  style={{ height: '400px', width: '100%', zIndex: 0 }} // <-- here
+  style={{ height: '400px', width: '100%', zIndex: 0 }} 
 >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <Marker

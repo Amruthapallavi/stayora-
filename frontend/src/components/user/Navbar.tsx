@@ -11,7 +11,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const userMenuRef = useRef(null);
+const userMenuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -281,13 +281,15 @@ localStorage.removeItem("refreshToken");
                   { label: "My Wallet", path: "/user/wallet" },
                   { label: "Chat & Notifications", path: "/user/chat" }
 
-                ].map((item, index) => (
+                ].map((item, _index) => (
                   <Link 
                     key={item.label}
                     to={item.path}
                     className="block py-2 text-gray-700 hover:text-yellow-600 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
+                    
                   >
+                    
                     {item.label}
                   </Link>
                 ))}
