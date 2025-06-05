@@ -44,12 +44,10 @@ const createApiInstance = (endpoint: string) => {
           const response = await authApi.get("/refresh-token");
           const newAccessToken = response.data.token;
 
-          // Save the new access token
           localStorage.setItem("token", newAccessToken);
 
-          // Update the original request with new token
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return instance(originalRequest); // retry original request
+          return instance(originalRequest); 
         } catch (refreshError) {
           localStorage.removeItem("token");
           return Promise.reject(refreshError);

@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/admin/:path*", "destination": "/" },
+    { "source": "/owner/:path*", "destination": "/" },
+    { "source": "/user/:path*", "destination": "/" },
+    { "source": "/:path*", "destination": "/" }
+  ]
+}
