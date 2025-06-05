@@ -6,6 +6,9 @@ import http from "http";
 import './src/utils/cron';
 
 import { initializeSocket } from "./src/config/socket";
+app.get('/', (req, res) => {
+  res.send('Backend is up and running!');
+});
 
 const PORT = process.env.PORT || 8000;
 
