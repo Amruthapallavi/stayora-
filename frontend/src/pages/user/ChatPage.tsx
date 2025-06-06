@@ -32,6 +32,7 @@ import {
 import { IProperty } from "../../types/property";
 import { Message } from "../../types/user";
 import NotificationsTab from "../../components/NotificationTab";
+import Navbar from "../../components/user/Navbar";
 
 interface ChatPartner {
   _id: string;
@@ -536,10 +537,11 @@ console.log(conversations,"conversations")
   }
 
   return (
-    <UserLayout>
-      <div className="bg-gray-50 min-h-screen">
-        <div className="container mx-auto py-6 px-4">
-          <div className="flex justify-between items-center mb-4">
+    
+      <div className="bg-gray-50 min-h-screen ">
+        <Navbar/>
+ <div className="container mx-auto py-6 px-4 pt-30">    
+        <div className="flex justify-between items-center mb-4">
             <Button
               onClick={() => navigate(-1)}
               variant="ghost"
@@ -909,7 +911,7 @@ console.log(conversations,"conversations")
 
             {/* Property Info */}
             {/* Property Info */}
-            <div
+          <div
               className={`
                 ${
                   isMobileInfoVisible
@@ -938,71 +940,76 @@ console.log(conversations,"conversations")
                     <img
                       src={property.images[0]}
                       alt={property.title}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-32 object-cover"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                      <Home size={48} className="text-gray-400" />
+                    <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
+                      <Home size={32} className="text-gray-400" />
                     </div>
                   )}
 
-                  <CardContent className="pt-4">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center justify-between">
+                  <CardContent className="pt-3">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center justify-between">
                       <span>{property?.title}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="p-1 text-yellow-600"
                       >
-                        <Star size={18} />
+                        <Star size={16} />
                       </Button>
                     </h3>
 
                     {property?.rentPerMonth && (
                       <div className="flex items-center mb-3">
-                        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-bold">
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-bold">
                           ₹{property.rentPerMonth}/month
                         </span>
                       </div>
                     )}
 
                     {(property?.bedrooms || property?.bathrooms) && (
-                      <div className="flex justify-start gap-6 mb-4 bg-gray-50 p-2 rounded-lg">
+                      <div className="flex justify-start gap-4 mb-3 bg-gray-50 p-2 rounded-lg">
                         {property.bedrooms && (
                           <div className="flex items-center">
-                            <span className="text-gray-700 font-medium">
+                            <span className="text-gray-700 font-medium text-sm">
                               {property.bedrooms}
                             </span>
-                            <span className="text-gray-600 ml-1">Bed</span>
+                            <span className="text-gray-600 ml-1 text-sm">Bed</span>
                           </div>
                         )}
                         {property.bathrooms && (
                           <div className="flex items-center">
-                            <span className="text-gray-700 font-medium">
+                            <span className="text-gray-700 font-medium text-sm">
                               {property.bathrooms}
                             </span>
-                            <span className="text-gray-600 ml-1">Bath</span>
+                            <span className="text-gray-600 ml-1 text-sm">Bath</span>
                           </div>
                         )}
                       </div>
                     )}
 
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-800 mb-2">
+                    <div className="mb-3">
+                      <h4 className="font-semibold text-gray-800 mb-1 text-sm">
                         Description
                       </h4>
-                      <p className="text-gray-600 text-sm">
-                        {property?.description}
+                      <p className="text-gray-600 text-xs">
+                        {property?.description 
+                          ? property.description.length > 80 
+                            ? `${property.description.substring(0, 80)}...`
+                            : property.description
+                          : ''
+                        }
                       </p>
                     </div>
 
                     {property?.features && property.features.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-2">
+                      <div className="mb-3">
+                        <h4 className="font-semibold text-gray-800 mb-1 text-sm">
                           Amenities
                         </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {property.features.map((amenity, index) => (
+                        <div className="flex flex-wrap gap-1">
+                          {property.features.slice(0, 4).map((amenity, index) => (
                             <span
                               key={index}
                               className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
@@ -1010,31 +1017,36 @@ console.log(conversations,"conversations")
                               {amenity}
                             </span>
                           ))}
+                          {property.features.length > 4 && (
+                            <span className="text-gray-500 text-xs px-2 py-1">
+                              +{property.features.length - 4} more
+                            </span>
+                          )}
                         </div>
                       </div>
                     )}
 
                     {chatPartner && (
-                      <div className="mt-6 pt-4 border-t">
-                        <h4 className="font-semibold text-gray-800 mb-2">
-                          Owner Details
+                      <div className="mt-4 pt-3 border-t">
+                        <h4 className="font-semibold text-gray-800 mb-2 text-sm">
+                          Owner
                         </h4>
-                        <div className="flex items-center bg-yellow-50 p-3 rounded-lg">
-                          <Avatar className="h-10 w-10 mr-3">
+                        <div className="flex items-center bg-yellow-50 p-2 rounded-lg">
+                          <Avatar className="h-8 w-8 mr-2">
                             <AvatarImage
                               src={chatPartner.profileImage}
                               alt={chatPartner.name}
                             />
                             <AvatarFallback className="bg-yellow-100 text-yellow-800">
-                              {chatPartner.name.charAt(0) || <User size={20} />}
+                              {chatPartner.name.charAt(0) || <User size={16} />}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h5 className="font-medium">{chatPartner.name}</h5>
-                            <p className="text-sm text-gray-500">
+                            <h5 className="font-medium text-sm">{chatPartner.name}</h5>
+                            <p className="text-xs text-gray-500">
                               {chatPartner.email}
                             </p>
-                            <p className="text-sm text-gray-500">
+                             <p className="text-xs text-gray-500 pt-1">
                               {chatPartner.phone}
                             </p>
                           </div>
@@ -1042,15 +1054,16 @@ console.log(conversations,"conversations")
                       </div>
                     )}
 
-                    <div className="mt-4 pt-4 border-t">
+                    <div className="mt-3">
                       <Button
                         variant="outline"
-                        className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                        size="sm"
+                        className="w-full border-yellow-500 text-yellow-600 hover:bg-yellow-50 text-xs"
                         onClick={() =>
                           navigate(`/user/property/${property?._id || ""}`)
                         }
                       >
-                        View Full Property Details
+                        View Full Details
                       </Button>
                     </div>
                   </CardContent>
@@ -1060,7 +1073,6 @@ console.log(conversations,"conversations")
           </div>
         </div>
       </div>
-    </UserLayout>
   );
 };
 
