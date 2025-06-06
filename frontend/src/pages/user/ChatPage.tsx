@@ -454,7 +454,6 @@ console.log(conversations,"conversations")
       setImagePreview(null);
       notifySuccess("Message sent");
       await fetchConversations();
-      window.location.reload();
     } catch (err) {
       console.error("Send error:", err);
       notifyError("Failed to send message");
