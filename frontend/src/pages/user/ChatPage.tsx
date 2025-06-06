@@ -167,11 +167,15 @@ const ChatPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    const socketInstance = io("http://localhost:8000", {
-      query: {
-        userId: user.id,
-      },
-    });
+    const socketInstance = io(
+  import.meta.env.DEV ? "http://localhost:8000" : "https://amrithap.live",
+  {
+    query: {
+      userId: user.id,
+    },
+    transports: ["websocket"],
+  }
+);
     setSocket(socketInstance);
 
     return () => {
