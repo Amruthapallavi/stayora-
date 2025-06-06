@@ -1,3 +1,4 @@
+import { IReviewResponse } from "../../DTO/commonDTOs";
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 import { IBooking } from "../../models/booking.model";
 import { IProperty } from "../../models/property.model";
@@ -42,7 +43,7 @@ export interface IPropertyService {
     status: number;
     message: string;
   }>;
-
+getReviews(propertyId:string):Promise<{reviews:IReviewResponse[],status:number,message:string}>;
   getFilteredProperties(filters: any): Promise<IProperty[]>;
 addReview(
   bookingId: string,

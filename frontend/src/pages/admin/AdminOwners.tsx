@@ -70,7 +70,6 @@ const OwnerListing = () => {
   const loadOwners = async (page = 1, search = "") => {
     try {
       const response = await listAllOwners(page, limit, search);
-      console.log(response, "owners");
       setTotalOwners(response.totalOwners ?? totalOwners);
       setOwners(
         response && Array.isArray(response.owners) ? response.owners : []
@@ -135,7 +134,6 @@ const OwnerListing = () => {
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
-    console.log("User ID:", id, "Current Status:", currentStatus);
 
     const action = currentStatus === "Blocked" ? "Unblock" : "Block";
     const result = await showStatusChangeAlert(action);
@@ -143,10 +141,8 @@ const OwnerListing = () => {
     if (result.isConfirmed) {
       try {
         const newStatus = currentStatus === "Active" ? "Blocked" : "Active";
-        console.log("New Status:", newStatus);
 
         const response = await updateOwnerStatus(id, newStatus);
-        console.log("Response from updateOwnerStatus:", response);
 
         if (!response || response.error) {
           throw new Error(response?.message || "Failed to update status");
@@ -177,7 +173,6 @@ const OwnerListing = () => {
 
     if (result.isConfirmed) {
       try {
-        console.log("Deleting owner with ID:", id);
         await deleteUser(id, "owner");
 
         // Remove the deleted owner from the list

@@ -3,6 +3,7 @@ import {  IBookingDetailsResponse } from "../../types/booking";
 import { OwnersResponse } from "../../types/owner";
 import { IProperty, IPropertyDetails } from "../../types/property";
 import { adminApi } from "../api";
+import { IReviewResponse } from "../../types/response";
 
 export const adminService = {
   getDashboardData: async () => {
@@ -40,7 +41,10 @@ export const adminService = {
     const response = await adminApi(`/bookings/${id}`);
     return response.data;
   },
-
+ getReviews: async ( propertyId: string): Promise<IReviewResponse> => {
+    const response = await adminApi.get(`/reviews/${propertyId}`);
+    return response.data;
+  },
   listAllOwners: async ({
     page,
     limit,
@@ -80,7 +84,6 @@ export const adminService = {
   },
   listFeatures: async () => {
     const response = await adminApi.get("/features");
-    console.log(response,"features from admin")
     return response.data.features;
   },
   addFeature: async (featureData: any) => {
@@ -134,7 +137,6 @@ export const adminService = {
   const response = await adminApi.get(
     `/all-Properties?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`
   );
-  console.log(response, "for pro");
   return response.data;
 },
 

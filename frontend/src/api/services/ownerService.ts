@@ -7,7 +7,7 @@ import {
   IPropertyDetails,
   PropertyResponse,
 } from "../../types/property";
-import { IResponse } from "../../types/response";
+import { IResponse, IReviewResponse } from "../../types/response";
 import { WalletData } from "../../types/wallet";
 import { ownerApi } from "../api";
 
@@ -18,7 +18,6 @@ export const ownerService = {
   },
   listFeatures: async () => {
     const response = await ownerApi.get("/features");
-    console.log(response,"features from owner")
     return response.data.features;
   },
   listAllBookings: async (ownerId: string,page:number,limit:number) => {
@@ -50,6 +49,10 @@ export const ownerService = {
     });
     return response.data;
   },
+   getReviews: async ( propertyId: string): Promise<IReviewResponse> => {
+      const response = await ownerApi.get(`/reviews/${propertyId}`);
+      return response.data;
+    },
   changePassword: async (data: {
     userId: string;
     oldPass: string;
@@ -113,8 +116,11 @@ export const ownerService = {
     propertyId: string;
     content: string;
     room: any;
+    image:string;
   }) => {
-    const res = await ownerApi.post("/message", data);
+    const res = await ownerApi.post("/message", data ,{
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return res.data;
   },
   cancelBooking: async (id: string, reason: string): Promise<any> => {

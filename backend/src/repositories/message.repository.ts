@@ -46,6 +46,7 @@ class messageRepository
           receiver: 1,
           content: 1,
           propertyId: 1,
+          image:1,
           createdAt: 1,
           isRead: 1,
           partner: {

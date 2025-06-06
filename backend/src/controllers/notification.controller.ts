@@ -17,7 +17,6 @@ export class NotificationController implements INotificationController {
   async getNotifications(req: Request, res: Response): Promise<void> {
     try {
       const recipient = (req as any).userId;
-      console.log(recipient,"for notification")
       const result = await this.notificationService.getNotifications(recipient);
       res.status(result.status).json({
         message: result.message,

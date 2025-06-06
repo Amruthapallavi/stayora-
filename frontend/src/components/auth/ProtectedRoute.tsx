@@ -12,7 +12,6 @@ export const ProtectedRoute = ({ allowedTypes }: ProtectedRouteProps) => {
   const location = useLocation();
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [isUserValid, setIsUserValid] = useState(true);
-console.log(user,"user in hyt")
   useEffect(() => {
     const checkUserStatus = async () => {
       try {
@@ -28,7 +27,6 @@ console.log(user,"user in hyt")
         }
 
         const response = await getUserStatus(user.id);
-        console.log(response,"for propeted")
         const isValid = response?.status?.toLowerCase() === "active";
 
         setIsUserValid(isValid);

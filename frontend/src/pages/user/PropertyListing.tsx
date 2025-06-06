@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-// import { debounce } from 'lodash';
 
 import { Building, MapPin, BedDouble, Bath, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,11 +29,6 @@ const PropertyListing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 6;
-
-  // const handlePageChange = (page: number) => {
-  //   setCurrentPage(page);
-  //   window.scrollTo(0, 0);
-  // };
 
   useEffect(() => {
     async function fetchProperties(page: number, limit: number) {
@@ -69,7 +63,6 @@ const PropertyListing = () => {
 
     fetchProperties(currentPage, limit);
   }, [currentPage, getAllProperties]);
-
   const handleFilterChange = (key: string, value: any) => {
     setSearchFilters({
       ...searchFilters,
@@ -108,7 +101,9 @@ const PropertyListing = () => {
     setProperties(allProperties);
     setCurrentPage(1);
   };
-
+  const handleLocationSelect = (location: string) => {
+    console.log("Selected location:", location);
+  };
   if (loading) {
     return (
       <UserLayout>
@@ -249,7 +244,7 @@ const PropertyListing = () => {
           />
         </div>
 
-        <PopularLocations />
+        <PopularLocations onSelectLocation={handleLocationSelect} />
 
         {/* Features Section */}
         <section className="bg-gray-100/70 py-20">

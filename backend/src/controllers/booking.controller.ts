@@ -120,7 +120,6 @@ res.status(result.status).json({
             });
             return;
           }
-          console.log(bookingId,"id")
           const result = await this.bookingService.cancelBooking(bookingId,reason);
         res.status(result.status).json({
           message:result.message,

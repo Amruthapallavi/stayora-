@@ -27,7 +27,6 @@ import { useEffect, useState, useRef } from "react";
      try {
        setLoading(true);
        const response = await getNotifications();
-       console.log(response,"of notifications")
        if (response && response.data) {
          setNotifications(response.data);
        }

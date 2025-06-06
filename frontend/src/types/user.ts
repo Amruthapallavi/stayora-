@@ -26,7 +26,9 @@ status: string;
     receiver: string | { _id: string };
     propertyId?: string;
     receiverModel: string;
+    image?: string;
     images?: string[];
+
     createdAt: string;
   }
   

@@ -28,9 +28,17 @@ const propertyImageStorage = new CloudinaryStorage({
     resource_type: "image", 
   }),
 });
+const messageImageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "stayora/messageImages", 
+    format: "png", 
+    resource_type: "image", 
+  }),
+});
 
 const uploadGovtId = multer({ storage: govtIdStorage });
 const uploadServiceImage = multer({ storage: serviceImageStorage });
 const uploadPropertyImage = multer({ storage: propertyImageStorage });
-
-export { uploadGovtId, uploadServiceImage, uploadPropertyImage };
+const uploadMessageImages = multer({storage:messageImageStorage})
+export { uploadGovtId, uploadServiceImage, uploadPropertyImage ,uploadMessageImages };

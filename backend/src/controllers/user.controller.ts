@@ -17,7 +17,7 @@ export class UserController implements IUserController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
-          const userData: SignupData = req.body; 
+      const userData: SignupData = req.body;
 
       const result = await this.userService.registerUser(userData);
       res.status(result.status).json({
@@ -34,7 +34,7 @@ export class UserController implements IUserController {
   async verifyOTP(req: Request, res: Response): Promise<void> {
     try {
       const { email, otp } = req.body;
-      console.log(req.body, "reqbody");
+      console.log(req.body, "email and otp");
       const result = await this.userService.verifyOTP(email, otp);
       res.status(result.status).json({
         message: result.message,
@@ -51,7 +51,6 @@ export class UserController implements IUserController {
   async resendOTP(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.body;
-      console.log(req.body, "for resent otp");
       if (!email) {
         throw new Error("email is required");
       }
@@ -69,9 +68,8 @@ export class UserController implements IUserController {
   }
   async login(req: Request, res: Response): Promise<void> {
     try {
-    const { email, password }: LoginRequestDTO = req.body; 
+      const { email, password }: LoginRequestDTO = req.body;
       const result = await this.userService.loginUser(email, password, res);
-      console.log(result.refreshToken, "refreshToken");
       res.cookie("auth-token", result.token, {
         httpOnly: true,
         secure: Boolean(process.env.NODE_ENV === "production"),
@@ -79,7 +77,6 @@ export class UserController implements IUserController {
         maxAge: 3600000,
         path: "/",
       });
-      console.log(result, "for loging");
       res.status(result.status).json({
         message: result.message,
         user: {
@@ -105,8 +102,6 @@ export class UserController implements IUserController {
           `${process.env.FRONTEND_URL}/signup?error=user_not_found`
         );
       }
-      console.log(user);
-      console.log("Checking Google authentication...");
 
       const result = await this.userService.processGoogleAuth(user);
       if (!result.token) {
@@ -125,8 +120,6 @@ export class UserController implements IUserController {
         maxAge: 3600000,
         path: "/",
       });
-
-      console.log("Generated Token:", result.token);
 
       res.redirect(
         `${process.env.FRONTEND_URL}/auth/google/callback?token=${result.token}`
@@ -154,7 +147,6 @@ export class UserController implements IUserController {
       }
 
       const result = await this.userService.resendOTP(email);
-      console.log(result, "from");
       res.status(result.status).json({
         message: result.message,
       });
@@ -194,15 +186,13 @@ export class UserController implements IUserController {
 
   async getAllProperties(req: Request, res: Response): Promise<void> {
     try {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
-      const result = await this.userService.getAllProperties(page,limit);
-      console.log(result, "from user controller");
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const result = await this.userService.getAllProperties(page, limit);
       res.status(result.status).json({
         properties: result.properties,
-        currentPage:result.currentPage,
-        totalPages:result.totalPages,
-        
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
       });
     } catch (error) {
       console.error(error);
@@ -223,7 +213,6 @@ export class UserController implements IUserController {
     res.clearCookie("refreshToken", options);
     res.clearCookie("auth-token", options);
     res.clearCookie("token", options);
-    console.log(req.cookies, "checkingg");
     res.status(STATUS_CODES.OK).json({
       message: "Logged out successfully",
     });
@@ -232,9 +221,7 @@ export class UserController implements IUserController {
   async getProfileData(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id;
-      console.log(id);
       const result = await this.userService.getProfileData(id);
-      console.log(result, "from user controller");
       res.status(result.status).json({
         user: result.user,
       });
@@ -288,7 +275,6 @@ export class UserController implements IUserController {
   async getPropertyById(req: Request, res: Response): Promise<void> {
     try {
       const id = req.params.id;
-      console.log(id);
       const result = await this.userService.getPropertyById(id);
       res.status(result.status).json({
         Property: result.property,
@@ -374,30 +360,34 @@ export class UserController implements IUserController {
     }
   }
 
- async getUserBookings(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = (req as any).userId;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 5;
+  async getUserBookings(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).userId;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 5;
 
-    const result = await this.userService.getUserBookings(userId, page, limit);
+      const result = await this.userService.getUserBookings(
+        userId,
+        page,
+        limit
+      );
 
-    if (!result.bookings || result.bookings.length === 0) {
-      res.status(404).json({ message: "No bookings found" });
-      return;
+      if (!result.bookings || result.bookings.length === 0) {
+        res.status(404).json({ message: "No bookings found" });
+        return;
+      }
+
+      res.status(200).json({
+        status: "success",
+        bookings: result.bookings,
+        totalPages: result.totalPages,
+        currentPage: page,
+      });
+    } catch (err) {
+      console.error("Get bookings failed:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
-
-    res.status(200).json({
-      status: "success",
-      bookings: result.bookings,
-      totalPages: result.totalPages,
-      currentPage: page,
-    });
-  } catch (err) {
-    console.error("Get bookings failed:", err);
-    res.status(500).json({ message: "Internal server error" });
   }
-}
 
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
@@ -409,7 +399,6 @@ export class UserController implements IUserController {
         });
         return;
       }
-      console.log(id, "id");
       const result = await this.userService.updateProfile(id, formData);
       res.status(result.status).json({
         message: result.message,
@@ -429,7 +418,6 @@ export class UserController implements IUserController {
         });
         return;
       }
-      console.log(id, "id");
       const result = await this.userService.cancelBooking(id, reason);
       res.status(result.status).json({
         message: result.message,
@@ -448,7 +436,6 @@ export class UserController implements IUserController {
         });
         return;
       }
-      console.log(id, "id");
       const result = await this.userService.fetchWalletData(id);
       res.status(result.status).json({
         message: result.message,
@@ -463,7 +450,6 @@ export class UserController implements IUserController {
     try {
       const userId = req.params.id;
       const { oldPassword, newPassword } = req.body;
-      console.log(userId);
       if (!oldPassword || !newPassword) {
         res
           .status(STATUS_CODES.BAD_REQUEST)

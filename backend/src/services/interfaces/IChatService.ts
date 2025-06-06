@@ -7,15 +7,15 @@ import { IUser } from "../../models/user.model";
 
 
 export interface SendMessageInput {
-    sender: string;
-    senderModel: string;
-    receiver: string;
-    receiverModel: string;
-    propertyId?:string;
-    content: string;
-    images?: string[];
-  }
-  
+  sender: string;
+  senderModel: string;
+  receiver: string;
+  receiverModel: string;
+  propertyId?: string;
+  content: string;
+  image?: string; 
+}
+
   export interface IChatService {
     sendMessage(
       input: SendMessageInput

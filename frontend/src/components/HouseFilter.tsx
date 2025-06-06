@@ -52,10 +52,8 @@ const HouseFilter: React.FC = () => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = () => {
     console.log("Filters Applied: ", filters);
-    // Perform API call or filter logic here
   };
 
   return (

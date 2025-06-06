@@ -39,7 +39,7 @@ export class ChatService implements IChatService {
       receiverModel: input.receiverModel,
       content: input.content,
       propertyId:propertyObj,
-      images: input.images || [],
+      image: input.image ?? undefined, 
     });
     return {
       message: MESSAGES.SUCCESS.MESSAGE_SENT,

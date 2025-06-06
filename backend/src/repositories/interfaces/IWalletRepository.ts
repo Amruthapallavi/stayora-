@@ -6,6 +6,7 @@ export interface IWalletRepository extends IBaseRepository<IWallet>{
     updateUserWalletTransaction(
         userId: string,
         bookingId: string,
+        message:string,
         amount: number,
         type: 'credit' | 'debit',
         transactionId:string,

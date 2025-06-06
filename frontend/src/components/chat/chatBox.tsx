@@ -82,7 +82,6 @@ const ChatBox: React.FC<Props> = ({ user, receiverId, propertyId, className }) =
         setLoading(true);
         const senderId = user.userId || user.id;
         const result = await getConversation(senderId, receiverId);
-        console.log(chatPartner,"chatpartner")
         if (result && result.data) {
           setMessages(result.data || []);
           if (result.data.partner) {

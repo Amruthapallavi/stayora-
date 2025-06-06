@@ -33,7 +33,6 @@ const OwnerBookings = () => {
       try {
         setLoading(true);
         const result = await ownerPropertyBookings(user.id, currentPage, limit);
-        console.log(result, "bookings");
 
         setBookings(result.bookings);
         setTotalPages(result.totalPages ?? 1);

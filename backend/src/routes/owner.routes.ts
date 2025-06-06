@@ -3,7 +3,7 @@ import container from "../config/DI/inversify";
 import TYPES from "../config/DI/types";
 import  OwnerController from "../controllers/owner.controller";
 import passport from "../config/passport";
-import { uploadGovtId, uploadPropertyImage, uploadServiceImage } from "../middlewares/multer";
+import { uploadGovtId, uploadMessageImages, uploadPropertyImage, uploadServiceImage } from "../middlewares/multer";
 // import { verifyToken } from "../middlewares/authmid";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import BookingController from "../controllers/booking.controller";
@@ -65,7 +65,7 @@ ownerRoutes.delete('/delete/:id', authMiddleware(['owner']), propertyCtr.deleteP
 ownerRoutes.post("/bookings/cancel/:id",authMiddleware(["owner"]), bookingCtr .cancelBooking.bind(bookingCtr));
 
 ownerRoutes.get("/conversation",authMiddleware(['owner']),chatCtr.getConversation.bind(chatCtr));
-ownerRoutes.post("/message",authMiddleware(['owner']),chatCtr.sendMessage.bind(chatCtr));
+ownerRoutes.post("/message",authMiddleware(['owner']),uploadMessageImages.single("image"),chatCtr.sendMessage.bind(chatCtr));
 ownerRoutes.patch("/messages/mark-as-read", authMiddleware(["owner"]),chatCtr.markMessagesAsRead.bind(chatCtr));
 
 ownerRoutes.get("/conversations",authMiddleware(['owner']),chatCtr.listConversations.bind(chatCtr));

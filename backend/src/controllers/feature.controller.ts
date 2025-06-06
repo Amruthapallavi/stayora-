@@ -45,7 +45,6 @@ async listFeatures(req:Request, res:Response):Promise<void>{
       const id = req.params.id;
     const updatedData= req.body.data;
     const result = await this.featureService.updateFeature(id,updatedData)
-    console.log("ID:", req.params.id);
     
     res.status(result.status).json({
       message: result.message,

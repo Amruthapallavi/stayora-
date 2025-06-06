@@ -4,6 +4,7 @@ import {  IPropertyDetails } from "../../types/property";
 import {  IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
 import { IServiceResponse } from "../../types/service";
 import { WalletData } from "../../types/wallet";
+import { IReviewResponse } from "../../types/response";
 
 export const userService = {
   getAllProperties: async (page:number,limit:number): Promise<any> => {
@@ -20,13 +21,17 @@ export const userService = {
     const response = await userApi.get(`/property/filtered?${queryParams}`);
     return response.data;
   },
-  
+  locationProperties:async (): Promise<any> => {
+    const response = await userApi.get("/loc-properties");
+    return response.data;
+  },
   getConversation: async (sender: string, receiver: string): Promise<any> => {
     const response = await userApi.get("/conversation", {
       params: { sender, receiver },
     });
     return response.data;
   },
+
   markMessageAsRead: async (convId: string, userId: string): Promise<any> => {
     const response = await userApi.patch("/messages/mark-as-read", {
       params: { convId, userId },
@@ -68,6 +73,10 @@ export const userService = {
     return response.data;
   },
 
+  getReviews: async ( propertyId: string): Promise<IReviewResponse> => {
+    const response = await userApi.get(`/reviews/${propertyId}`);
+    return response.data;
+  },
   saveAddOns: async (addOns: string[], propertyId: string): Promise<void> => {
     const response = await userApi.post("/checkout/save-addons", {
       addOns,
@@ -93,8 +102,12 @@ export const userService = {
     propertyId: string;
     content: string;
     room: any;
+    image:string;
   }) => {
-    const res = await userApi.post("/message", data);
+    
+    const res = await userApi.post("/message", data,{
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return res.data;
   },
 

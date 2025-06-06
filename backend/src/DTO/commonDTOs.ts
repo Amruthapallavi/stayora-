@@ -1,3 +1,5 @@
+import { IUser } from "../models/user.model";
+
 export interface PaginationDTO {
   page: number;
   limit: number;
@@ -17,4 +19,12 @@ export interface GoogleProfileDTO {
   id: string;
   email: string;
   displayName: string;
+}
+
+export interface IReviewResponse {
+  _id: string;
+  userId: Partial<IUser>;
+  ratings:number;
+  reviewText: string;
+  createdAt: string; 
 }

@@ -2,8 +2,6 @@ import { Request,Response } from "express";
 import { STATUS_CODES } from "../utils/constants";
 import { IChatController } from "./interfaces/IChatController";
 import { io } from "../config/socket";
-import chatService from "../services/chat.service";
-import notificationService from "../services/notification.service";
 import { IChatService } from "../services/interfaces/IChatService";
 import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
@@ -26,8 +24,11 @@ export class ChatController implements IChatController {
             receiverModel,
             propertyId,
             content,
-            room
+            room,
+  
           } = req.body;
+          const imagePath = req.file ? req.file.path : null;
+
           const result = await this.chatService.sendMessage({
             sender,
             senderModel,
@@ -35,6 +36,8 @@ export class ChatController implements IChatController {
             receiverModel,
             propertyId,
             content,
+           image: imagePath ?? undefined,
+
         });
           if (room) {
             io.to(room).emit("receiveMessage", { ...result.data.toObject(), room });

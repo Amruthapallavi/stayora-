@@ -7,7 +7,7 @@ export interface IMessage extends Document {
   receiverModel: string;
   content: string;
   propertyId?:mongoose.Types.ObjectId;
-  images?: string[];
+  image?: string;
   isRead: boolean;
   timestamp: Date;
   createdAt: Date;
@@ -27,9 +27,17 @@ const messageSchema: Schema = new Schema(
       refPath: "$receiverModel",
     },
     receiverModel: { type: String, required: true, enum: ["User", "Owner"] },
-    content: { type: String, required: true },
+
     propertyId:{type: Schema.Types.ObjectId},
-    images: { type: [String], default: [] },
+    image: { type: String, default: [] },
+  content: {
+  type: String,
+  required: function(this: IMessage) {
+    return !this.image || this.image.length === 0;
+  }
+},
+
+
     isRead: {
       type: Boolean,
       default: false

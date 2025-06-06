@@ -20,7 +20,6 @@ io.on("connection", (socket) => {
 
   if (userId) {
     onlineUsers.set(userId, socket.id);
-    console.log(`User ${userId} connected`);
     io.emit("onlineUsers", Array.from(onlineUsers.keys()));
   }
 

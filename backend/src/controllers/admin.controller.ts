@@ -38,7 +38,6 @@ export class AdminController implements IAdminController {
 async refreshToken(req: Request, res: Response): Promise<void> {
   try {
     const refreshToken = req.cookies.refreshToken;
-    console.log("refresh token")
     if (!refreshToken) {
       res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: MESSAGES.ERROR.REFRESH_TOKEN_MISSING });
       return;
@@ -134,7 +133,6 @@ async listAllOwners(req:Request, res:Response):Promise<void>{
 async updateUserStatus(req:Request,res:Response):Promise<void>{
   try {
     const id = req.params.id;
-    console.log(id,"for updating user status",req.body.status)
 const { status }: UpdateStatusDTO = req.body.status;
   const result = await this.adminService.updateUserStatus(id,status)
 
@@ -154,7 +152,6 @@ async updateOwnerStatus(req:Request,res:Response):Promise<void>{
     const id = req.params.id;
 const { status }: UpdateStatusDTO = req.body.status;
   const result = await this.adminService.updateOwnerStatus(id,status)
-  console.log("ID:", req.params.id);
   
   res.status(result.status).json({
     message: result.message,
@@ -186,7 +183,6 @@ async approveOwner(req:Request,res:Response): Promise<void>{
   try {
     const id = req.params.id;
     const result = await this.adminService.approveOwner(id);
-    console.log(result)
     res.status(result.status).json({
       message: result.message,
     }); 

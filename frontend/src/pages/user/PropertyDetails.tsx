@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   BedDouble,
@@ -24,20 +24,22 @@ import { Button } from "../../components/ui/button";
 import UserLayout from "../../components/user/UserLayout";
 import PropertyMap from "../../components/user/PropertyMap";
 import { IProperty } from "../../types/property";
+import { IOwner } from "../../types/owner";
+import { IReview } from "../../types/response";
+import moment from "moment";
 
-interface owner {
-  name: string;
-  phone: string;
-  email: string;
-}
 
 const PropertyDetailedPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { getPropertyById } = useAuthStore();
+  const { getPropertyById ,getReviews} = useAuthStore();
   const [property, setProperty] = useState<IProperty | null>(null);
-  const [ownerData, setOwnerData] = useState<owner | null>(null);
+  const [ownerData, setOwnerData] = useState<Partial<IOwner> | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+const [showReviews, setShowReviews] = useState(false);
+const [showCount, setShowCount] = useState(4);
+const reviewRef = useRef<HTMLDivElement | null>(null);
+const [reviews, setReviews] = useState<IReview[]>([]);
   const navigate = useNavigate();
   useEffect(() => {
     loadPropertyAndFeatures();
@@ -61,7 +63,29 @@ const PropertyDetailedPage = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+  if (showReviews) setShowCount(4);
+}, [showReviews]);
 
+ useEffect(() => {
+    const fetchReviews = async () => {
+          if (!property || !property._id) return; 
+
+      try {
+        setLoading(true);
+        const response = await getReviews(property?._id);
+        setReviews(response.reviews); 
+      } catch (error) {
+        console.error('Failed to fetch reviews:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (property?._id) {
+      fetchReviews();
+    }
+  }, [property?._id, getReviews]);
   const handleBookNow = () => {
     if (property) {
       navigate(
@@ -74,6 +98,19 @@ const PropertyDetailedPage = () => {
   const handleChatWithOwner = () => {
     navigate(`/user/chat/${property?._id}/${property?.ownerId}`);
   };
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      reviewRef.current &&
+      !reviewRef.current.contains(event.target as Node) 
+    ) {
+      setShowReviews(false);
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
 
   if (loading) {
     return (
@@ -156,12 +193,102 @@ const PropertyDetailedPage = () => {
                       ))}
 
                       {/* Show rating value and total reviews */}
-                      <span className="ml-2 text-gray-700 font-semibold">
-                        {property.averageRating.toFixed(1)} (
-                        {property.totalReviews})
-                      </span>
+                     <span
+  className="ml-2 text-gray-700 font-semibold cursor-pointer hover:underline"
+  onClick={() => setShowReviews((prev) => !prev)}
+>
+  {property.averageRating.toFixed(1)} ({property.totalReviews})
+</span>
+
                     </div>
                   )}
+<div ref={reviewRef}>
+  <AnimatePresence>
+    {showReviews && (
+      <motion.div
+        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-2xl shadow-xl border border-[#b38e5d] p-6 mt-6 max-w-4xl mx-auto bg-white"
+      >
+        <h2 className="text-2xl font-bold text-[#b38e5d] mb-6 border-b border-[#b38e5d] pb-2">
+          Guest Reviews
+        </h2>
+
+        <div className="space-y-5 max-h-[400px] overflow-y-auto pr-1">
+          {reviews.slice(0, showCount).map((review, index) => (
+            <div
+              key={index}
+              className="bg-[#fdfcfb] rounded-xl p-5 border border-[#e2d8c8] shadow-sm hover:shadow-md transition flex gap-4"
+            >
+              {/* Avatar */}
+              <div className="h-12 w-12 rounded-full bg-[#b38e5d] text-white font-bold flex items-center justify-center text-base shadow-inner">
+                {review.userId.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+
+              {/* Review Content */}
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-semibold text-[#333]">
+                      {review.userId.name}
+                    </p>
+                    <p className="text-xs text-[#777]">{review.userId.email}</p>
+                  </div>
+                  <p className="text-xs text-[#999]">
+                    {moment(review.createdAt).format("DD MMM YYYY")}
+                  </p>
+                </div>
+
+                {/* Star Rating */}
+                <div className="flex items-center mt-2">
+                  {[...Array(5)].map((_, i) => (
+                    <svg
+                      key={i}
+                      className={`w-4 h-4 mr-1 ${
+                        i < (review.rating || 0)
+                          ? "text-[#b38e5d]"
+                          : "text-gray-300"
+                      }`}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.176c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.286 3.967c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.38 2.455c-.784.57-1.838-.197-1.54-1.118l1.286-3.967a1 1 0 00-.364-1.118L3.622 9.394c-.783-.57-.38-1.81.588-1.81h4.176a1 1 0 00.95-.69l1.286-3.967z" />
+                    </svg>
+                  ))}
+                  <span className="text-sm text-[#b38e5d] ml-2 font-medium">
+                    {review.rating?.toFixed(1)} / 5
+                  </span>
+                </div>
+
+                {/* Review Text */}
+                <p className="text-gray-700 text-sm mt-2 leading-relaxed">
+                  {review.reviewText}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Show More Button */}
+        {showCount < reviews.length && (
+          <div className="text-center mt-6">
+            <button
+              onClick={() => setShowCount((prev) => prev + 4)}
+              className="bg-[#b38e5d] hover:bg-[#a17747] text-white text-sm px-6 py-2 rounded-full shadow-sm transition"
+            >
+              Show More Reviews
+            </button>
+          </div>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+
+
+
 
                   <div className="flex items-center text-gray-600 mb-3">
                     <MapPin size={18} className="text-[#b38e5d] mr-2" />
@@ -404,79 +531,103 @@ const PropertyDetailedPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <div className="bg-white p-6 rounded-xl shadow-sm sticky top-8">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">
-                    Contact Landlord
-                  </h3>
-                  <Button
-                    onClick={handleChatWithOwner}
-                    className="flex items-center gap-2 bg-[#b68451] text-[#ffff]"
-                  >
-                    <MessageSquare className="h-4 w-4 " />
-                    Chat with Owner
-                  </Button>
+              <div className="bg-white p-6 rounded-xl shadow-lg sticky top-8 space-y-6 border border-[#f0e7dc]">
+  {/* Contact Header */}
+  <div>
+    <h3 className="text-xl font-bold text-gray-800 mb-3">Contact Landlord</h3>
+    <Button
+      onClick={handleChatWithOwner}
+      className="flex items-center gap-2 bg-[#b68451] text-white w-full"
+    >
+      <MessageSquare className="h-4 w-4" />
+      Chat with Owner
+    </Button>
+  </div>
 
-                  {/* <form className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-1">Your Name</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-golden focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-1">Your Email</label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-golden focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-gray-700 text-sm font-medium mb-1">Your Phone</label>
-                    <input 
-                      type="tel" 
-                      id="phone" 
-                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-golden focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="message" className="block text-gray-700 text-sm font-medium mb-1">Message</label>
-                    <textarea 
-                      id="message" 
-                      rows={4}
-                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-golden focus:border-transparent"
-                      placeholder="I'm interested in this property..."
-                    ></textarea>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="w-full bg-[#b38e5d] text-white py-3 rounded-md shadow-md hover:bg-golden-dark transition"
-                  >
-                    Send Message
-                  </button>
-                </form>  */}
+  {/* Direct Contact Info */}
+  <div className="pt-3 border-t border-gray-100">
+    <p className="text-gray-600 text-sm text-center">
+      Or call directly:
+      <span className="font-semibold text-[#b38e5d] ml-1">
+        {ownerData?.phone}
+      </span>
+    </p>
 
-                  <div className="mt-6 pt-6 border-t border-gray-100">
-                    <p className="text-gray-600 text-sm text-center">
-                      Or call directly:{" "}
-                      <span className="font-semibold text-[#b38e5d]">
-                        {ownerData?.phone}
-                      </span>
-                    </p>
+    <div className="flex items-center gap-3 mt-4 text-sm text-gray-700">
+      <Phone className="text-[#b38e5d]" size={18} />
+      <span>{ownerData?.phone}</span>
+    </div>
 
-                    <div className="flex items-center gap-3 mt-5">
-                      <Phone className="text-[#b38e5d]" size={20} />
-                      <span>{ownerData?.phone}</span>
-                    </div>
+    <div className="flex items-center gap-3 mt-2 text-sm text-gray-700">
+      <Mail className="text-[#b38e5d]" size={18} />
+      <span>{ownerData?.email}</span>
+    </div>
+  </div>
 
-                    <div className="flex items-center gap-3 mt-3">
-                      <Mail className="text-[#b38e5d]" size={20} />
-                      <span>{ownerData?.email}</span>
-                    </div>
-                  </div>
-                </div>
+  {/* Owner Review Summary */}
+ {reviews?.length > 0 && (
+  <div className="bg-white mt-8 p-6 rounded-xl shadow-lg border border-[#f0e7dc] space-y-4">
+    <h3 className="text-xl font-bold text-gray-800 border-b pb-2">
+      Guest Reviews
+    </h3>
+
+    {reviews.slice(0, 3).map((review, index) => (
+      <div
+        key={index}
+        className="bg-[#fdf8f3] p-4 rounded-lg border border-[#eadbc9] shadow-sm"
+      >
+        {/* User Info */}
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <p className="text-sm font-semibold text-[#b38e5d]">
+              {review?.userId?.name || "Guest"}
+            </p>
+            <p className="text-xs text-gray-500">{review?.userId?.email}</p>
+          </div>
+          <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <svg
+                key={i}
+                className={`w-4 h-4 ${
+                  i < review.rating ? "text-[#b38e5d]" : "text-gray-300"
+                }`}
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.176c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.286 3.967c.3.921-.755 1.688-1.54 1.118L10 13.347l-3.38 2.455c-.784.57-1.838-.197-1.54-1.118l1.286-3.967a1 1 0 00-.364-1.118L3.622 9.394c-.783-.57-.38-1.81.588-1.81h4.176a1 1 0 00.95-.69l1.286-3.967z" />
+              </svg>
+            ))}
+          </div>
+        </div>
+
+        {/* Review Text */}
+        <p className="text-sm text-gray-700">{review.reviewText}</p>
+        <p className="text-xs text-right text-gray-400 mt-2">
+          {moment(review.createdAt).format("DD MMM YYYY")}
+        </p>
+      </div>
+    ))}
+
+    {/* View All Reviews Button */}
+    {reviews.length > 3 && (
+      <button
+        className="text-sm text-[#b38e5d] font-medium hover:underline"
+        onClick={() => {
+          window.scrollTo({
+            top: document.getElementById("reviews-section")?.offsetTop || 0,
+            behavior: "smooth",
+          });
+          setShowReviews(true);
+        }}
+      >
+        View all {reviews.length} reviews
+      </button>
+    )}
+  </div>
+)}
+
+</div>
+
               </motion.div>
             </div>
           </div>

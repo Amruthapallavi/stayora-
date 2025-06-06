@@ -207,7 +207,6 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthState> = (set, 
   verifySubscription: async(paymentData:any)=>{
   try {
       const { authType } = get();
-      console.log(paymentData,"for")
       if (!authType || authType!=="owner") throw new Error("Not authenticated as owner");
 
        const response = await authService.verifySubscription(paymentData);

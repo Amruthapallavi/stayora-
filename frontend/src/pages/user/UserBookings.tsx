@@ -6,6 +6,7 @@ import UserLayout from "../../components/user/UserLayout";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import { IBookingList, IBookingResponse } from "../../types/booking";
+import { notifyError } from "../../utils/notifications";
 
 const Bookings = () => {
   const { userBookings } = useAuthStore();
@@ -18,7 +19,6 @@ const Bookings = () => {
     const fetchBookings = async () => {
       try {
         const response: IBookingResponse = await userBookings(currentPage);
-        console.log(response, "for list booking");
         setBookings(response.bookings);
         setTotalPages(response.totalPages);
       } catch (error) {
@@ -98,16 +98,19 @@ const Bookings = () => {
                             {booking.propertyId?.state}
                           </div>
                         </div>
-                        <div
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            booking.bookingStatus === "confirmed" ||
-                            booking.bookingStatus === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {booking.bookingStatus}
-                        </div>
+            <div
+  className={`px-4 py-1 rounded-full text-sm font-medium capitalize inline-block shadow-sm ${
+    booking.bookingStatus === "confirmed" || booking.bookingStatus === "completed"
+      ? "bg-green-500/10 text-green-700 border border-green-500"
+      : booking.bookingStatus === "cancelled"
+      ? "bg-red-500/10 text-red-700 border border-red-500"
+      : "bg-yellow-500/10 text-yellow-700 border border-yellow-500"
+  }`}
+>
+  {booking.bookingStatus}
+</div>
+
+
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -153,14 +156,28 @@ const Bookings = () => {
                           <Button
                             variant="outline"
                             className="border-[#b38e5d] text-[#b38e5d] hover:bg-[#f8f5f0]"
+                            onClick={() => {
+                              const propertyId = booking?.propertyId?._id;
+                              const ownerId = booking?.ownerId;
+
+                              if (propertyId && ownerId) {
+                                navigate(`/user/chat/${propertyId}/${ownerId}`);
+                              } else {
+                                console.error("Missing propertyId or ownerId");
+                                notifyError(
+                                  "Unable to connect owner right now..."
+                                );
+                              }
+                            }}
                           >
                             Contact Support
                           </Button>
+
                           <button
                             onClick={() =>
                               navigate(`/user/bookings/${booking._id}`)
                             }
-                            className="text-[#4b5563] hover:text-[#111827] text-sm font-medium"
+                            className="bg-[#b38e5d] text-white px-4 py-2 rounded-md shadow-md hover:bg-[#a77f4f] hover:shadow-lg transition-all duration-300 text-sm font-semibold"
                           >
                             View Details
                           </button>

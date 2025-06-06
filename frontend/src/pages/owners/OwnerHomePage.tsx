@@ -56,7 +56,6 @@ let search='';
     const fetchDashboardData = async () => {
       try {
         const response = await getDashboardData()  
-       console.log(response,"dashboard data")
         setDashboardData(response.data);  
 setChartData(response.data?.bookingsByMonth ?? []);
       } catch (err) {
@@ -71,7 +70,6 @@ setChartData(response.data?.bookingsByMonth ?? []);
       setLoading(true);
       const response = await getProperties(page,limit,Search);
       setProperties(response.properties);
-      console.log(response,"for propertyies")
       setStats({
         totalProperties: response.properties.length,
         activeBookings: Math.floor(Math.random() * 10) + 5,

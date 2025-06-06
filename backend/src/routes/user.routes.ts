@@ -8,6 +8,7 @@ import ChatController from "../controllers/chat.controller";
 import BookingController from "../controllers/booking.controller";
 import PropertyController from "../controllers/property.controller";
 import NotificationController from "../controllers/notification.controller";
+import { uploadMessageImages } from "../middlewares/multer";
 // import bookingCtr from "../controllers/booking.controller";
 // import chatController from "../controllers/chat.controller";
 // import propertyController from "../controllers/property.controller";
@@ -69,12 +70,13 @@ userRoutes.patch("/change-password/:id",authMiddleware(["user"]), userCtr .chang
 userRoutes.get("/wallet/:id",authMiddleware(["user"]), userCtr .fetchWalletData.bind(userCtr));
 userRoutes.post("/reviews",authMiddleware(['user']),propertyCtr.addReview.bind(propertyCtr));
 // userRoutes.get("/chat",authMiddleware(["user"]),chatController.getChat);
-userRoutes.post("/message",authMiddleware(['user']),chatCtr.sendMessage.bind(chatCtr));
+userRoutes.post("/message",authMiddleware(['user']),uploadMessageImages.single("image"),chatCtr.sendMessage.bind(chatCtr));
 userRoutes.get("/conversation",authMiddleware(['user']),chatCtr.getConversation.bind(chatCtr));
 userRoutes.get("/conversations",authMiddleware(['user']),chatCtr.listConversations.bind(chatCtr));
 userRoutes.get("/notifications", authMiddleware(["user"]), notificationCtr.getNotifications.bind(notificationCtr));
 userRoutes.patch("/messages/mark-as-read", authMiddleware(["user"]),chatCtr.markMessagesAsRead.bind(chatCtr));
-
+userRoutes.get("/reviews/:id",authMiddleware(["user"]), propertyCtr .getReviews.bind(propertyCtr));
+// userRoutes.get("/loc-properties",authMiddleware(["user"]),propertyCtr.locationProperties.bind(propertyCtr));
 userRoutes.patch("/notifications/:notificationId/read",authMiddleware(["user"]),notificationCtr.markNotificationAsRead.bind(notificationCtr));
 
  

@@ -1,3 +1,5 @@
+import { IUser } from "./user";
+
 export interface Property {
   id: string;
   title: string;
@@ -27,3 +29,14 @@ export interface IResponse {
     error?: boolean;
   }
   
+  export interface IReview {
+  _id: string;
+  userId: Partial<IUser>;
+  rating:number;
+  reviewText: string;
+  createdAt: string; 
+}
+export interface IReviewResponse{
+  message:string;
+  reviews:IReview[]
+}

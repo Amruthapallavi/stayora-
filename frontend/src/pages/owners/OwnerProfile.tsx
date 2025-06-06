@@ -140,12 +140,11 @@ export default function OwnerProfile() {
       return;
     }
   try{
-   const response= await changePassword({
+    await changePassword({
       userId: user.id,
       oldPass:currentPassword,
       newPass:newPassword,
     });
-  console.log(response,"for passwod")
     notifySuccess("password successfully updated");  
       setPasswordForm({
         currentPassword: "",

@@ -44,7 +44,6 @@ const AdminProperties: React.FC = () => {
       try {
         const res = await getAllProperties(currentPage,limit,search ||"");
         setProperties(res.properties);
-        console.log(res,"for properi")
         setFilteredProperties(res.properties);
         setCurrentPage(res?.currentPage ?? 1);
         setTotalPages(res.totalPages ?? 1);
@@ -426,7 +425,6 @@ window.location.reload();
             className="cursor-pointer text-red-500 hover:text-red-600"
             onClick={(e) => {
               e.stopPropagation();
-              console.log("Delete property", property._id);
             }}
           />
         </TooltipWrapper>

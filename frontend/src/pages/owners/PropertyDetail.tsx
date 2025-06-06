@@ -70,9 +70,7 @@ const ownerPropertyDetailedPage = () => {
 
   const handleDeleteProperty = async (propertyId: string) => {
     try {
-      console.log("Trying to delete property:", property?._id);
       const res = await deletePropertyById(propertyId);
-      console.log(res, "for deleting property");
       if (res) {
         notifySuccess(res.message);
         navigate("/owner/properties");

@@ -1,48 +1,49 @@
-import { useState, useEffect, useRef, ReactNode } from 'react';
-import {
-  Bell,
-  X,
-  Check,
-  ChevronRight,
-  Calendar,
-  Home,
-} from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-import moment from 'moment'; 
-import { Link } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
+import { useState, useEffect, useRef, ReactNode } from "react";
+import { Bell, X, Check, Calendar, Home } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import moment from "moment";
+import { Link } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
 export interface DisplayNotification {
-    _id: string;
-    title: string;
-    type:string;
-    otherId:string |null;
-    description: string;
-    time: string;
-    read: boolean;
-    icon: ReactNode;
-  }
-  export interface RawNotification {
-    _id: string;
-    message: string;
-    createdAt: string;
-    read: boolean;
-    recipient: string;
-    recipientModel: string;
-    type: 'booking' | 'message' | 'reminder' | string; 
-    otherId: string;
-    __v?: number;
-  }
-  interface NotificationsTabProps {
-    notifications: RawNotification[];
-  }
-  
-  const NotificationsTab: React.FC<NotificationsTabProps> = ({ notifications }) => {
-    const [isOpen, setIsOpen] = useState(false);
+  _id: string;
+  title: string;
+  type: string;
+  otherId: string | null;
+  description: string;
+  time: string;
+  read: boolean;
+  icon: ReactNode;
+}
+export interface RawNotification {
+  _id: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
+  recipient: string;
+  recipientModel: string;
+  type: "booking" | "message" | "reminder" | string;
+  otherId: string;
+  __v?: number;
+}
+interface NotificationsTabProps {
+  notifications: RawNotification[];
+}
+
+const NotificationsTab: React.FC<NotificationsTabProps> = ({
+  notifications,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [notifList, setNotifList] = useState<DisplayNotification[]>([]);
-const {markNotificationAsRead}=useAuthStore();
+  const { markNotificationAsRead } = useAuthStore();
   const notificationRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(2);
+
+const showMore = () => {
+  setVisibleCount((prev) => prev + 4);
+};
+
   useEffect(() => {
-    const handleClickOutside = (event:any) => {
+    const handleClickOutside = (event: any) => {
       if (
         notificationRef.current &&
         !notificationRef.current.contains(event.target)
@@ -51,50 +52,46 @@ const {markNotificationAsRead}=useAuthStore();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-console.log(notifList)
-//   const markAsRead = (id:any) => {
-//     setNotifList((prev) =>
-//       prev.map((notif) =>
-//         notif.id === id ? { ...notif, read: true } : notif
-//       )
-//     );
-//   };
-useEffect(() => {
-  const transformed = notifications.map((n) => ({
-    _id: n._id, // Required by DisplayNotification
-    id: n._id,  // Optional — used for UI keys
-    title: n.type === 'booking' ? 'Booking Confirmed' : 'Notification',
-    description: n.message,
-    time: moment(n.createdAt).fromNow(),
-    read: n.read,
-    icon:
-      n.type === 'booking' ? (
-        <Home size={16} className="text-green-500" />
-      ) : (
-        <Calendar size={16} className="text-blue-500" />
-      ),
-    type: n.type,         // Required
-    otherId: n.otherId,   // Required
-  }));
+  //   const markAsRead = (id:any) => {
+  //     setNotifList((prev) =>
+  //       prev.map((notif) =>
+  //         notif.id === id ? { ...notif, read: true } : notif
+  //       )
+  //     );
+  //   };
+  useEffect(() => {
+    const transformed = notifications.map((n) => ({
+      _id: n._id,
+      id: n._id,
+      title: n.type === "booking" ? "Booking Confirmed" : "Notification",
+      description: n.message,
+      time: moment(n.createdAt).fromNow(),
+      read: n.read,
+      icon:
+        n.type === "booking" ? (
+          <Home size={16} className="text-green-500" />
+        ) : (
+          <Calendar size={16} className="text-blue-500" />
+        ),
+      type: n.type, // Required
+      otherId: n.otherId, // Required
+    }));
 
-  setNotifList(transformed);
-}, [notifications]);
+    setNotifList(transformed);
+  }, [notifications]);
 
-  
   const markAsRead = async (id: string) => {
-    console.log(id,"formark not")
-    await markNotificationAsRead(id); 
+    console.log(id, "formark not");
+    await markNotificationAsRead(id);
     setNotifList((prev) =>
-      prev.map((notif) =>
-        notif._id === id ? { ...notif, read: true } : notif
-      )
+      prev.map((notif) => (notif._id === id ? { ...notif, read: true } : notif))
     );
   };
 
-  const removeNotification = (id:any) => {
+  const removeNotification = (id: any) => {
     setNotifList((prev) => prev.filter((notif) => notif._id !== id));
   };
 
@@ -134,11 +131,11 @@ useEffect(() => {
               <h3 className="font-semibold text-gray-800">Notifications</h3>
               <div className="flex items-center gap-2">
                 <button
-onClick={async () => {
-  for (const notif of notifList.filter((n) => !n.read)) {
-    await markAsRead(notif._id);
-  }
-}}
+                  onClick={async () => {
+                    for (const notif of notifList.filter((n) => !n.read)) {
+                      await markAsRead(notif._id);
+                    }
+                  }}
                   className="text-xs text-yellow-600 hover:text-yellow-800 transition flex items-center"
                 >
                   <Check size={14} className="mr-1" />
@@ -148,7 +145,7 @@ onClick={async () => {
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-200 overflow-y-auto">
               {notifList.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <Bell size={32} className="mx-auto mb-2 opacity-30" />
@@ -157,15 +154,15 @@ onClick={async () => {
               ) : (
                 <ul>
                   <AnimatePresence>
-                    {notifList.map((notification) => (
+                    {notifList.slice(0, visibleCount).map((notification) => (
                       <motion.li
                         key={notification._id}
                         initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
+                        animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         layout
                         className={`border-b border-gray-100 relative ${
-                          !notification.read ? 'bg-yellow-50' : ''
+                          !notification.read ? "bg-yellow-50" : ""
                         }`}
                       >
                         <div className="p-4 pr-12">
@@ -174,15 +171,19 @@ onClick={async () => {
                               {notification.icon}
                             </div>
                             <div>
-                            <h4 className="font-medium text-gray-900">
-            {notification.type === 'booking' && notification.otherId ? (
-              <Link to={`/user/bookings/${notification.otherId}`} className="cursor-pointer hover:underline">
-                {notification.title}
-              </Link>
-            ) : (
-              notification.title
-            )}
-          </h4>
+                              <h4 className="font-medium text-gray-900">
+                                {notification.type === "booking" &&
+                                notification.otherId ? (
+                                  <Link
+                                    to={`/user/bookings/${notification.otherId}`}
+                                    className="cursor-pointer hover:underline"
+                                  >
+                                    {notification.title}
+                                  </Link>
+                                ) : (
+                                  notification.title
+                                )}
+                              </h4>
 
                               <p className="text-sm text-gray-600">
                                 {notification.description}
@@ -194,18 +195,20 @@ onClick={async () => {
                           </div>
 
                           <div className="absolute top-3 right-3 flex">
-                          {!notification.read && (
-  <button
-    onClick={() => markAsRead(notification._id)} 
-    className="text-gray-400 hover:text-yellow-600 p-1 transition"
-    title="Mark as read"
-  >
-    <Check size={16} />
-  </button>
-)}
+                            {!notification.read && (
+                              <button
+                                onClick={() => markAsRead(notification._id)}
+                                className="text-gray-400 hover:text-yellow-600 p-1 transition"
+                                title="Mark as read"
+                              >
+                                <Check size={16} />
+                              </button>
+                            )}
 
                             <button
-                              onClick={() => removeNotification(notification._id)}
+                              onClick={() =>
+                                removeNotification(notification._id)
+                              }
                               className="text-gray-400 hover:text-red-600 p-1 transition"
                               title="Remove"
                             >
@@ -219,14 +222,25 @@ onClick={async () => {
                 </ul>
               )}
             </div>
+            {visibleCount < notifList.length && (
+  <div className="text-center mt-4">
+    <button
+      onClick={showMore}
+      className="text-[#b68451] hover:text-[#8a6233] text-sm font-medium underline"
+    >
+      View more
+    </button>
+  </div>
+)}
+
 
             {/* Footer */}
-            <div className="p-3 bg-gray-50 border-t border-gray-100">
+            {/* <div className="p-3 bg-gray-50 border-t border-gray-100">
               <button className="text-sm text-center w-full text-yellow-600 hover:text-yellow-800 transition flex items-center justify-center">
                 View all notifications
                 <ChevronRight size={16} className="ml-1" />
               </button>
-            </div>
+            </div> */}
           </motion.div>
         )}
       </AnimatePresence>

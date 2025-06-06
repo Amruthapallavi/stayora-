@@ -6,7 +6,7 @@ import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import IOwnerService from "../services/interfaces/IOwnerService";
 import { IPropertyService } from "../services/interfaces/IPropertyService";
-import { VerifyPaymentDTO } from "../DTO/booking/bookingControllerDTO";
+// import { VerifyPaymentDTO } from "../DTO/booking/bookingControllerDTO";
 
 // interface MulterRequest extends Request {
 //   file?: Express.Multer.File;
@@ -52,7 +52,6 @@ export class OwnerController implements IOwnerController {
       const { email, otp } = req.body;
       console.log(req.body,"reqbody");
       const result = await this.ownerService.verifyOTP(email, otp);
-      console.log(result,"result owner")
       res.status(result.status).json({
         message: result.message,
       });
@@ -68,9 +67,7 @@ export class OwnerController implements IOwnerController {
    async login(req: Request, res: Response): Promise<void> {
       try {
         const { email, password } = req.body;
-        console.log(req.body,"owner login data")
         const result = await this.ownerService.loginOwner(email, password,res);
-console.log(result.refreshToken,"refreshToken");
         res.cookie("auth-token", result.token, {
           httpOnly: true,
           secure: Boolean(process.env.NODE_ENV === "production"),
@@ -101,7 +98,6 @@ console.log(result.refreshToken,"refreshToken");
       async  forgotPassword(req: Request, res: Response): Promise<void> {
         try {
           const { email } = req.body;
-          console.log(email, "from req.body");
       
           if (!email) {
             res.status(STATUS_CODES.BAD_REQUEST).json({
@@ -111,7 +107,6 @@ console.log(result.refreshToken,"refreshToken");
           }
       
           const result = await this.ownerService.resendOTP(email);
-        console.log(result,"from")
           res.status(result.status).json({
             message: result.message,
           });
@@ -125,7 +120,6 @@ console.log(result.refreshToken,"refreshToken");
       async resetPassword(req:Request , res:Response) :Promise<void>{
           try {
             const {email,newPassword}= req.body;
-            console.log(req.body)
             if(!email || !newPassword ){
                 res.status(STATUS_CODES.BAD_REQUEST).json({
                   error: "Email and password is required",
@@ -146,7 +140,6 @@ console.log(result.refreshToken,"refreshToken");
           async resendOTP(req: Request, res: Response): Promise<void> {
             try {
               const { email } = req.body;
-              console.log(req.body,"for resent otp")
               if (!email) {
                throw new Error("email is required");
               }
@@ -180,9 +173,7 @@ console.log(result.refreshToken,"refreshToken");
 async getProfileData(req:Request, res:Response):Promise<void>{
   try {
     const id=req.params.id;
-    console.log(id);
     const result = await this.ownerService.getProfileData(id);
-    console.log(result,"from owner controller");
     res.status(result.status).json({
       user: result.user,
     });
@@ -203,7 +194,6 @@ const formData= req.body;
         });
         return;
       }
-      console.log(id,formData)
       const result = await this.ownerService.updateProfile(id,formData);
     res.status(result.status).json({
       message:result.message,
@@ -215,15 +205,12 @@ const formData= req.body;
 }
  async subscription(req:Request,res:Response):Promise<void>{
   try {
-    console.log(req.body,"req.body for subscription")
     const {planName,price,allowedProperties}=req.body;
     const ownerId=(req as any).userId;
     if (!price || typeof price !== "number") {
            res.status(400).json({ message: "Invalid price amount" });
         }
-    console.log(ownerId,"for subscription")
     const order = await this.ownerService.subscription(price,planName,ownerId,allowedProperties);
-    console.log(order,"subscription order")
         res.status(200).json(order);
   } catch (error) {
      console.error("Error in subscription controller:", error);
@@ -283,7 +270,6 @@ async changePassword  (req: Request, res: Response): Promise<void> {
   try {
     const userId = req.params.id;
     const { oldPassword, newPassword } = req.body;
-console.log(userId);
     if (!oldPassword || !newPassword) {
       res.status(STATUS_CODES.BAD_REQUEST).json({ message: "Both old and new passwords are required." });
       return;
@@ -308,7 +294,7 @@ async getOwnerStatus(req: Request, res: Response): Promise<void> {
        res.status(result.status).json({ message: result.message });
     }
     res.status(result.status).json({
-      status: result.user?.status, // e.g., "active", "blocked"
+      status: result.user?.status,
       user: result.user?.id,
     });
   } catch (err) {
@@ -327,7 +313,6 @@ async fetchWalletData(req:Request,res:Response):Promise<void>{
         return;
       }
       const result = await this.ownerService.fetchWalletData(id);
-      console.log(result)
     res.status(result.status).json({
       message:result.message,
       data:result.data,
@@ -343,7 +328,6 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
   try {
 
     const id=req.params.id;
-    console.log(id);
     const result = await this.ownerService.getPropertyById(id);
     res.status(result.status).json({
       Property: result.property,
@@ -360,7 +344,6 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
   try {
     const id= req.params.id;
   const data = req.body;
-  console.log(id,"data to update", data);
   const result = await this.propertyService.updateProperty(id,data);
   res.status(result.status).json({
     message:result.message,
@@ -387,7 +370,7 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
     res.cookie("auth-token", newAccessToken, {
       httpOnly: true,
       sameSite: "strict",
-      secure: false, // true in production
+      secure: true, 
       maxAge: 15 * 60 * 1000,
     });
 
@@ -404,7 +387,6 @@ async getDashboardData(req: Request, res: Response): Promise<void> {
        res.status(400).json({ error: 'Owner ID is missing' });
     }
     const result = await this.ownerService.getDashboardData(ownerId);
-console.log(result,"for dashborad")
     res.status(result.status).json({
       data: result.data,
       message: result.message,

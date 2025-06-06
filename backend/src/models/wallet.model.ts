@@ -8,10 +8,14 @@ const transactionSchema = new Schema(
       required:true
 
     },
+    message:{
+    type:String,
+
+    },
     bookingId: {
       type: String,
-      required: true,
     },
+
     paymentType: {
       type: String,
       enum: Object.values(PaymentType),

@@ -15,7 +15,11 @@ import TYPES from "../config/DI/types";
 import mongoose, { Types } from "mongoose";
 import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 import { IWalletRepository } from "../repositories/interfaces/IWalletRepository";
-import { GovtIdStatus, SubscriptionPlan, UserStatus } from "../models/status/status";
+import {
+  GovtIdStatus,
+  SubscriptionPlan,
+  UserStatus,
+} from "../models/status/status";
 import { IWalletWithTotals } from "../DTO/PropertyDTO";
 import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
 import { mapOwnerToDTO } from "../mappers/ownerMapper";
@@ -28,7 +32,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-
 @injectable()
 export class OwnerService implements IOwnerService {
   constructor(
@@ -37,7 +40,7 @@ export class OwnerService implements IOwnerService {
     @inject(TYPES.WalletRepository)
     private walletRepository: IWalletRepository,
     @inject(TYPES.NotificationService)
-    private notificationService:INotificationService
+    private notificationService: INotificationService
   ) {}
 
   private sanitizeUser(user: IOwner) {
@@ -233,7 +236,11 @@ export class OwnerService implements IOwnerService {
 
   async getProfileData(
     id: string
-  ): Promise<{ user: OwnerResponseDTO |null; status: number; message: string }> {
+  ): Promise<{
+    user: OwnerResponseDTO | null;
+    status: number;
+    message: string;
+  }> {
     try {
       const user = await this.ownerRepository.findById(id);
 
@@ -246,7 +253,7 @@ export class OwnerService implements IOwnerService {
       }
 
       return {
-        user:mapOwnerToDTO(user),
+        user: mapOwnerToDTO(user),
         status: STATUS_CODES.OK,
         message: "Successfully fetched",
       };
@@ -499,70 +506,85 @@ export class OwnerService implements IOwnerService {
     }
   }
 
- async subscription(price: number, planName: string, ownerId: string, allowedProperties: number): Promise<{ id: string; amount: number; currency: string;  }> {
-   try {
-    const options = {
-        amount: price *100 , 
+  async subscription(
+    price: number,
+    planName: string,
+    ownerId: string,
+    allowedProperties: number
+  ): Promise<{ id: string; amount: number; currency: string }> {
+    try {
+      const options = {
+        amount: price * 100,
         currency: "INR",
         receipt: `receipt_order_${Date.now()}`,
       };
-      console.log("Creating order with options:", options); // Debug log
-if (!price || isNaN(price) || price <= 0) {
-  throw new Error("Invalid price value");
-}
+      if (!price || isNaN(price) || price <= 0) {
+        throw new Error("Invalid price value");
+      }
 
       const order = await razorpay.orders.create(options);
       // const owner=await this.ownerRepository.find(ownerId.toString)
       // console.log(owner,"for subs")
       return {
         id: order.id,
-        amount: Number(order.amount), 
+        amount: Number(order.amount),
         currency: order.currency,
       };
-   } catch (error) {
-     console.error("subscription order creation failed:", error);
+    } catch (error) {
+      console.error("subscription order creation failed:", error);
       throw new Error("Failed to create subscription order");
-   }
- }
+    }
+  }
 
-async verifySubscription(payload: verifySubscriptionPayload): Promise<{ isValid: boolean; }> {
-         try {
-          const { razorpay_order_id, razorpay_payment_id, razorpay_signature,ownerId, planName,price,allowedProperties } = payload;
-         const keySecret = process.env.RAZORPAY_KEY_SECRET;
-         console.log("verify payment")
+  async verifySubscription(
+    payload: verifySubscriptionPayload
+  ): Promise<{ isValid: boolean }> {
+    try {
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        ownerId,
+        planName,
+        price,
+        allowedProperties,
+      } = payload;
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
       if (!keySecret) {
-        throw new Error("RAZORPAY_KEY_SECRET is not defined in environment variables");
+        throw new Error(
+          "RAZORPAY_KEY_SECRET is not defined in environment variables"
+        );
       }
-const generatedSignature = crypto
+      const generatedSignature = crypto
         .createHmac("sha256", keySecret)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest("hex");
-  
-      const isValid = generatedSignature === razorpay_signature;
-      console.log(isValid)
-      if (isValid) {
-           const response=   await this.ownerRepository.update(ownerId, {
-  subscriptionPlan: SubscriptionPlan[planName as keyof typeof SubscriptionPlan],
-                subscriptionPrice: price,
-                isSubscribed:true,
-                allowedProperties:allowedProperties,
-              });
-            }
-          const notificationMessage = `You have successfully subscribed to the ${planName} plan. Enjoy your premium benefits!`;
 
-             await this.notificationService.createNotification(
-            ownerId.toString(),
-            "Owner",
-            "Subscription",
-            notificationMessage,
-            null
-          );        
-          return {isValid}
-         } catch (error) {
-          console.error("subscription payment verification error:", error);
+      const isValid = generatedSignature === razorpay_signature;
+      if (isValid) {
+        const response = await this.ownerRepository.update(ownerId, {
+          subscriptionPlan:
+            SubscriptionPlan[planName as keyof typeof SubscriptionPlan],
+          subscriptionPrice: price,
+          isSubscribed: true,
+          allowedProperties: allowedProperties,
+        });
+      }
+      const notificationMessage = `You have successfully subscribed to the ${planName} plan. Enjoy your premium benefits!`;
+
+      await this.notificationService.createNotification(
+        ownerId.toString(),
+        "Owner",
+        "Subscription",
+        notificationMessage,
+        null
+      );
+      return { isValid };
+    } catch (error) {
+      console.error("subscription payment verification error:", error);
       throw new Error("Failed to verify subscription payment");
-         }
- }
+    }
+  }
 
   async getOwnerStatus(id: string): Promise<{
     user: OwnerResponseDTO | null;
@@ -581,7 +603,7 @@ const generatedSignature = crypto
       }
 
       return {
-        user:mapOwnerToDTO(user),
+        user: mapOwnerToDTO(user),
         status: STATUS_CODES.OK,
         message: "User fetched successfully",
       };
@@ -597,7 +619,7 @@ const generatedSignature = crypto
 
   async getPropertyById(
     id: string
-  ): Promise<{ property: IProperty |null; status: number; message: string }> {
+  ): Promise<{ property: IProperty | null; status: number; message: string }> {
     try {
       const property = await this.ownerRepository.findPropertyById(id);
 
@@ -609,7 +631,7 @@ const generatedSignature = crypto
         };
       }
 
-      return { 
+      return {
         property,
         status: STATUS_CODES.OK,
         message: "Property fetched successfully",
@@ -624,26 +646,24 @@ const generatedSignature = crypto
     }
   }
 
-  async fetchWalletData(
-    id: string
-  ): Promise<{
+  async fetchWalletData(id: string): Promise<{
     message: string;
     status: number;
-    data: IWalletWithTotals ;
+    data: IWalletWithTotals;
   }> {
     try {
       if (!id) {
         return {
-  message: "Invalid User ID",
-  status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-  data: {
-    userId: new mongoose.Types.ObjectId(),
-    balance: 0,
-    transactionDetails: [],
-    totalCredit: 0,
-    totalDebit: 0,
-  },
-};
+          message: "Invalid User ID",
+          status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+          data: {
+            userId: new mongoose.Types.ObjectId(),
+            balance: 0,
+            transactionDetails: [],
+            totalCredit: 0,
+            totalDebit: 0,
+          },
+        };
       }
 
       const data = await this.walletRepository.findOne({
@@ -651,20 +671,19 @@ const generatedSignature = crypto
       });
 
       if (!data) {
-  const emptyWallet: IWalletWithTotals = {
-    userId: new mongoose.Types.ObjectId(id),
-    balance: 0,
-    transactionDetails: [],
-    totalCredit: 0,
-    totalDebit: 0,
-  };
-  return {
-    message: "No transactions found",
-    data: emptyWallet,
-    status: STATUS_CODES.OK,
-  };
-}
-
+        const emptyWallet: IWalletWithTotals = {
+          userId: new mongoose.Types.ObjectId(id),
+          balance: 0,
+          transactionDetails: [],
+          totalCredit: 0,
+          totalDebit: 0,
+        };
+        return {
+          message: "No transactions found",
+          data: emptyWallet,
+          status: STATUS_CODES.OK,
+        };
+      }
 
       let totalDebit = 0;
       let totalCredit = 0;
@@ -691,24 +710,18 @@ const generatedSignature = crypto
     } catch (error) {
       console.error("Error fetching wallet data:", error);
       return {
-  message: "Internal Server Error",
-  status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-  data: {
-    userId: new mongoose.Types.ObjectId(id),
-    balance: 0,
-    transactionDetails: [],
-    totalCredit: 0,
-    totalDebit: 0,
-  },
-
-
-};
+        message: "Internal Server Error",
+        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+        data: {
+          userId: new mongoose.Types.ObjectId(id),
+          balance: 0,
+          transactionDetails: [],
+          totalCredit: 0,
+          totalDebit: 0,
+        },
+      };
     }
   }
-
- 
 }
 
 export default OwnerService;
-
-

@@ -146,7 +146,44 @@ export const createPropertySlice: StateCreator<AppState, [], [], propertyState> 
                 throw error;
               }
             },
+             locationProperties: async () => {
+                   try {
+                      const { authType } = get();
+                         if (!authType || authType !== "user")
+                               throw new Error("Not authorized as user");
+                             return await userService.locationProperties();
+                           } catch (error) {
+                             console.error("Failed to fetch property", error);
+                             throw error;
+                           }
+                         },
+        getReviews: async (propertyId: string) => {
+              try {
+                const { authType } = get();
       
+                if (!authType) {
+                  throw new Error("Not authorized");
+                }
+               let response;
+                if (authType === "user") {
+                 response=  await userService.getReviews(propertyId);
+                 return response;
+                }
+      
+                if (authType === "owner") {
+                  return await ownerService.getReviews(propertyId);
+                }
+      
+                if (authType === "admin") {
+                  return await adminService.getReviews(propertyId);
+                }
+      
+                throw new Error("Unknown role");
+              } catch (error) {
+                console.error("Failed to fetch property:", error);
+                throw error;
+              }
+            },
             getAllProperties: async (page: number, limit: number,search?:string) => {
               try {
                 const { authType } = get();

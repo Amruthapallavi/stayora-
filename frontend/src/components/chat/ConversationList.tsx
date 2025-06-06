@@ -12,7 +12,6 @@ const ConversationList = ({
   conversations,
 
 }: ConversationListProps) => {
-  console.log(onlineUsers,"online users")
   return (
     <ScrollArea className="h-[calc(100vh-12rem)] pr-4">
       <div className="space-y-2">

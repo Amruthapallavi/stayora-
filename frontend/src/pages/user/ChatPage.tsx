@@ -27,6 +27,7 @@ import {
   MessageSquare,
   ArrowLeft,
   Star,
+  
 } from "lucide-react";
 import { IProperty } from "../../types/property";
 import { Message } from "../../types/user";
@@ -75,9 +76,11 @@ const ChatPage = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
     fetchConversations();
@@ -87,7 +90,6 @@ const ChatPage = () => {
     if (!user) return;
     try {
       const res = await listConversations();
-
       setConversations((prevConversations) =>
         res.map((conv: any) => {
           const partnerId =
@@ -142,7 +144,8 @@ const ChatPage = () => {
       socket.off("onlineUsers");
     };
   }, [socket]);
-  console.log(onlineUsers, "users online");
+
+
   useEffect(() => {
     const fetchProperty = async () => {
       if (!propertyData && propertyId) {
@@ -291,6 +294,19 @@ const ChatPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      const maxSize = 5 * 1024 * 1024; 
+      if (file.size > maxSize) {
+        notifyError("File size should be less than 5MB");
+        return;
+      }
+      
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        notifyError("Please select a valid image file (JPG, PNG, GIF, WebP)");
+        return;
+      }
+      
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -303,11 +319,56 @@ const ChatPage = () => {
   const handleCancelUpload = () => {
     setSelectedFile(null);
     setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+          notifyError("File size should be less than 5MB");
+          return;
+        }
+        
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          notifyError("Please select a valid image file");
+          return;
+        }
+        
+        setSelectedFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        notifyError("Please drop an image file");
+      }
+    }
+  };
+console.log(conversations,"conversations")
   const reloadData = async () => {
     try {
       const updatedConversations = await listConversations();
-
       setConversations(updatedConversations);
     } catch (err) {
       console.error("Failed to reload data:", err);
@@ -319,7 +380,6 @@ const ChatPage = () => {
       try {
         const res = await getNotifications();
         setNotifications(res.data);
-        console.log(res, "for notificationn");
       } catch (err) {
         console.error("Failed to fetch notifications", err);
       }
@@ -329,7 +389,7 @@ const ChatPage = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !property) return;
+    if ((!messageText.trim() && !selectedFile) || !property) return;
 
     try {
       setSending(true);
@@ -341,22 +401,23 @@ const ChatPage = () => {
       formData.append("senderModel", "User");
       formData.append("receiver", ownerId || "");
       formData.append("receiverModel", "Owner");
-      formData.append("content", messageText);
+      formData.append("content", messageText || ""); // Allow empty text if image is present
       formData.append("room", room);
       formData.append("propertyId", property._id);
 
       if (selectedFile) {
         formData.append("image", selectedFile);
       }
-
       const response = await sendMessage(formData);
       const newMessage = response.data;
+      
+      // setMessages(prev => [...prev, newMessage]);
+      
       await reloadData();
-      console.log(newMessage, "new msg");
+      
       if (socket) {
         socket.emit("sendMessage", newMessage, room);
       }
-
 
       setConversations((prev) => {
         const updatedConversations = [...prev];
@@ -395,6 +456,7 @@ const ChatPage = () => {
       setSending(false);
     }
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -411,6 +473,56 @@ const ChatPage = () => {
     } else {
       return date.toLocaleDateString();
     }
+  };
+
+  const renderMessageContent = (msg: Message, isOwnMessage: boolean) => {
+    return (
+      <div
+        className={`px-4 py-2 rounded-lg max-w-xs md:max-w-md break-words ${
+          isOwnMessage
+            ? "bg-yellow-600 text-white rounded-br-none"
+            : "bg-white border border-gray-200 rounded-bl-none"
+        }`}
+      >
+        {/* Text content */}
+        {msg.content && (
+          <div className={(msg.image || msg.images?.length) ? "mb-2" : ""}>
+  {msg.content}
+</div>
+
+        )}
+        
+        {/* Single image field */}
+        {msg.image && (
+          <div className="mt-2">
+            <img
+              src={msg.image}
+              alt="Message attachment"
+              className="rounded max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => window.open(msg.image, '_blank')}
+              style={{ maxHeight: '200px' }}
+            />
+          </div>
+        )}
+        
+        {/* Multiple images field */}
+        {Array.isArray(msg.images) && msg.images.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {msg.images.map((img, idx) => (
+              <div key={idx} className="relative">
+                <img
+                  src={img}
+                  alt="Message attachment"
+                  className="rounded max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(img, '_blank')}
+                  style={{ maxHeight: '200px' }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -601,8 +713,9 @@ const ChatPage = () => {
 
                         <div className="flex justify-between items-center">
                           <p className="text-sm text-gray-600 truncate max-w-[180px]">
-                            {conversation.lastMessage?.content ||
-                              "No messages yet"}
+                            {conversation.lastMessage?.image ? "📷 Image" : 
+                             conversation.lastMessage?.content ||
+                             "No messages yet"}
                           </p>
                           {conversation.unreadCount > 0 && (
                             <span className="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
@@ -619,8 +732,13 @@ const ChatPage = () => {
 
             {/* Chat Messages */}
             <div
-              className="md:col-span-6 flex flex-col bg-white rounded-lg shadow-md overflow-hidden"
+              className={`md:col-span-6 flex flex-col bg-white rounded-lg shadow-md overflow-hidden ${
+                isDragOver ? 'ring-2 ring-yellow-500 ring-opacity-50' : ''
+              }`}
               style={{ height: "85vh" }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
               {/* Chat Header */}
               <div className="p-4 border-b bg-white flex items-center">
@@ -636,10 +754,24 @@ const ChatPage = () => {
                 <div className="flex-1">
                   <h3 className="font-bold">{chatPartner?.name || "Chat"}</h3>
                   <p className="text-xs text-gray-500">
-                    {chatPartner?.email || ""}
+                    {onlineUsers.includes(String(chatPartner?._id)) ? (
+                      <span className="text-green-500">● Online</span>
+                    ) : (
+                      chatPartner?.email || ""
+                    )}
                   </p>
                 </div>
               </div>
+
+              {/* Drag overlay */}
+              {isDragOver && (
+                <div className="absolute inset-0 bg-yellow-50 bg-opacity-90 flex items-center justify-center z-10 pointer-events-none">
+                  <div className="text-yellow-600 text-center">
+                    <Paperclip size={48} className="mx-auto mb-2" />
+                    <p className="text-lg font-medium">Drop image here to send</p>
+                  </div>
+                </div>
+              )}
 
               {/* Messages Container */}
               <div
@@ -652,21 +784,19 @@ const ChatPage = () => {
                     <p>No messages yet. Start the conversation!</p>
                   </div>
                 ) : (
-                 messages.map((msg, i) => {
-  const senderId =
-    typeof msg.sender === "string" ? msg.sender : msg.sender._id;
+                  messages.map((msg, i) => {
+                    const senderId =
+                      typeof msg.sender === "string" ? msg.sender : msg.sender._id;
 
-  const isOwnMessage = senderId === (user?.userId || user?.id);
+                    const isOwnMessage = senderId === (user?.userId || user?.id);
 
-  const previousSender = messages[i - 1]?.sender;
-  const previousSenderId =
-    typeof previousSender === "string"
-      ? previousSender
-      : previousSender?._id;
+                    const previousSender = messages[i - 1]?.sender;
+                    const previousSenderId =
+                      typeof previousSender === "string"
+                        ? previousSender
+                        : previousSender?._id;
 
-  const showAvatar = i === 0 || previousSenderId !== senderId;
-
- 
+                    const showAvatar = i === 0 || previousSenderId !== senderId;
 
                     return (
                       <div
@@ -694,28 +824,7 @@ const ChatPage = () => {
                             !isOwnMessage && !showAvatar ? "ml-10" : ""
                           }`}
                         >
-                          <div
-                            className={`px-4 py-2 rounded-lg max-w-xs md:max-w-md break-words ${
-                              isOwnMessage
-                                ? "bg-yellow-600 text-white rounded-br-none"
-                                : "bg-white border border-gray-200 rounded-bl-none"
-                            }`}
-                          >
-                            {msg.content}
-                            {Array.isArray(msg.images) &&
-                              msg.images.length > 0 && (
-                                <div className="mt-2">
-                                  {msg.images.map((img, idx) => (
-                                    <img
-                                      key={idx}
-                                      src={img}
-                                      alt="Message attachment"
-                                      className="rounded max-w-full h-auto"
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                          </div>
+                          {renderMessageContent(msg, isOwnMessage)}
                           <div
                             className={`text-xs text-gray-500 mt-1 ${
                               isOwnMessage ? "text-right" : "text-left"
@@ -727,6 +836,7 @@ const ChatPage = () => {
                             })}
                           </div>
                         </div>
+
 
                         {isOwnMessage && showAvatar && (
                           <Avatar className="h-8 w-8 ml-2">

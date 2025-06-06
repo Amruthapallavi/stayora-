@@ -36,7 +36,6 @@ const [selectedUser, setSelectedUser] = useState<IOwner | null>(null);
             
             // Load property details
             const propertyResponse = await getPropertyById(id || '');
-            console.log(propertyResponse,"property")
             if (!propertyResponse.Property) {
               notifyError('Property not found');
               return;
@@ -105,14 +104,9 @@ setOwnerData(propertyResponse?.ownerData ?? null);
               });
           
               if (confirm.isConfirmed) {
-                console.log("Rejected property ID:", propertyId);
-                console.log("Reason:", reason);
                 const response= await rejectProperty(propertyId,reason);
-                console.log(response,"checking");
                 notifySuccess(response?.message);
           window.location.reload();
-                // Call your backend API here if needed
-                // await rejectProperty(propertyId, reason);
               }
             } catch (error) {
               console.error("Error during rejection:", error);
@@ -366,7 +360,6 @@ setOwnerData(propertyResponse?.ownerData ?? null);
           onClick={(e) => {
             e.stopPropagation();
             handleApprove(property._id);
-            console.log("Approve property", property._id);
           }}
         >
           Approve Property
@@ -377,7 +370,6 @@ setOwnerData(propertyResponse?.ownerData ?? null);
           onClick={(e) => {
             e.stopPropagation();
             handleReject(property._id);
-            console.log("Reject property", property._id);
           }}
         >
           Reject Property

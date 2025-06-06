@@ -244,15 +244,19 @@ const UserBookingDetails = () => {
           </div>
 
           <div className="space-y-6">
-            {ownerData && (
-              <BookingOwnerCard
-                owner={{
-                  name: ownerData.name,
-                  phone: ownerData.phone,
-                  email: ownerData.email,
-                }}
-              />
-            )}
+  {ownerData && (
+    <BookingOwnerCard
+      owner={{
+        id: booking.ownerId,
+        name: ownerData.name,
+        phone: ownerData.phone,
+        email: ownerData.email,
+        propertyId: booking.propertyId?._id,
+      }}
+      type="owner" 
+    />
+  )}
+
             <BookingPaymentSummary
               monthlyRent={booking.rentPerMonth}
               duration={`${booking.rentalPeriod} months`}

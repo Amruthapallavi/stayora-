@@ -893,17 +893,19 @@ user: mapUserToDTO(user),
         { status: PropertyStatus.Active }
       );
         const transactionId = generateTransactionId();
- await this.walletRepository.updateUserWalletTransaction(
+        const message = `Refund Completed - Property Name ${property?.title} (Cancelled)`
+        await this.walletRepository.updateUserWalletTransaction(
           booking?.userId?.toString() ?? '',
-          id,
+          booking.bookingId,
+          message,
           booking?.totalCost ?? 0,
           'credit',
           transactionId
         );
-        console.log("creditt")
         await this.walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? '',
-          id,
+          booking.bookingId,
+          message,
           booking?.totalCost ?? 0,
           'debit',
           transactionId,

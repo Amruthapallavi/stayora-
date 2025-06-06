@@ -1,6 +1,6 @@
 import {  INotificationApiResponse } from "./notification";
 import { IAdminDashboardData } from "./admin";
-import { IResponse } from "./response";
+import { IResponse, IReviewResponse } from "./response";
 import { IUser, IUserResponse } from "./user";
 import { IOwner, OwnersResponse } from "./owner";
 import { IProperty, IPropertyDetails, PropertyResponse } from "./property";
@@ -62,6 +62,7 @@ updateProperty: (propertyId: string, formData: Partial<IProperty>) => Promise<vo
   submitReview:(bookingId:string,reviewRate:number,reviewText:string)=>Promise<void>;
   rejectProperty: (propertyId: string, reason: string) => Promise<IResponse>;
   addProperty: (propertyData: FormData) => Promise<void>;
+  getReviews:(propertyId:string)=>Promise<IReviewResponse>;
 }
 
 export interface chatState {

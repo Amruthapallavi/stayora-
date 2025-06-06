@@ -23,7 +23,6 @@ export const authMiddleware = (allowedRoles: string[]) => {
         type: string;
       };
 
-      console.log(decoded, "decoded");
 
       if (!allowedRoles.includes(decoded.type)) {
         res

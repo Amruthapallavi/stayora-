@@ -48,7 +48,6 @@ const AdminUsers = () => {
     setIsLoading(true);
     try {
       const response = await listAllUsers(page, limit, search || "");
-      console.log(response, "users");
       setUsers(response.users);
       setTotalUsers(response.totalUsers ?? totalUsers);
       setTotalPages(response.totalPages ? response.totalPages : 1);
@@ -66,7 +65,6 @@ const AdminUsers = () => {
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
-    console.log("User ID:", id, "Current Status:", currentStatus);
 
     Swal.fire({
       title: "Are you sure?",
@@ -82,10 +80,8 @@ const AdminUsers = () => {
       if (result.isConfirmed) {
         try {
           const newStatus = currentStatus === "Active" ? "Blocked" : "Active";
-          console.log("New Status:", newStatus, id);
 
           const response = await updateUserStatus(id, newStatus);
-          console.log("Response from updateUserStatus:", response);
 
           if (!response || response.error) {
             throw new Error(response?.message || "Failed to update status");
@@ -99,7 +95,6 @@ const AdminUsers = () => {
 
           // notifySuccess(`User ${newStatus} successfully`);
           showSuccessAlert(`User ${newStatus} successfully`);
-          console.log("Success notification should trigger");
         } catch (error) {
           console.error("Error updating status:", error);
           showErrorAlert(`Error updating user status`);

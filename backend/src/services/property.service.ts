@@ -13,6 +13,7 @@ import { PropertyStatus } from "../models/status/status";
 import { mapOwnerToDTO } from "../mappers/ownerMapper";
 import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
 import { IReviewRepository } from "../repositories/interfaces/IReviewRepository";
+import { IReviewResponse } from "../DTO/commonDTOs";
 
 @injectable()
 export class PropertyService implements IPropertyService {
@@ -55,7 +56,6 @@ const owner = await this.ownerRepository.findOne({ _id: ownerId });
   };
 }
 
-console.log(owner,"add proeprty")
       if (
         !data.title ||
         !data.rentPerMonth ||
@@ -171,7 +171,6 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     currentPage: number;
   }> {
     try {
-      console.log(searchTerm,"serach")
       const { properties, totalPages, totalProperties } =
         await this.ownerRepository.findOwnerProperty(
           ownerId,
@@ -507,6 +506,23 @@ await this.propertyRepository.updateRatingAndReviewCount(
     return {
       status: STATUS_CODES.INTERNAL_SERVER_ERROR,
       message: "Failed to add review.",
+    };
+  }
+}
+async getReviews(propertyId: string): Promise<{ reviews: IReviewResponse[]; status: number; message: string; }> {
+  try {
+    const reviews = await this.reviewRepository.findReviews(propertyId);
+      return {
+      reviews,
+      status: STATUS_CODES.OK,
+      message: "Review fetched successfully.",
+    };
+  } catch (error) {
+     console.error("Error adding review:", error);
+    return {
+      reviews:[],
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      message: "Failed to fetch review.",
     };
   }
 }

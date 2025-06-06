@@ -52,8 +52,7 @@ const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, p
         },
         modal: {
           ondismiss: () => {
-            console.log("Payment cancelled by user.");
-            onFailure(); // Call failure callback
+            onFailure(); 
           },
         },
       };
