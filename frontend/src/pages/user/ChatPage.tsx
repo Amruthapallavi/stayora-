@@ -168,7 +168,7 @@ const ChatPage = () => {
   useEffect(() => {
     if (!user) return;
     const socketInstance = io(
-  import.meta.env.DEV ? "http://localhost:8000" : "https://amrithap.live",
+  import.meta.env.DEV ? "http://localhost:8000" : "https://api.amrithap.live",
   {
     query: {
       userId: user.id,
@@ -454,6 +454,7 @@ console.log(conversations,"conversations")
       setImagePreview(null);
       notifySuccess("Message sent");
       await fetchConversations();
+      window.location.reload();
     } catch (err) {
       console.error("Send error:", err);
       notifyError("Failed to send message");
