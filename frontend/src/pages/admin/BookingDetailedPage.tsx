@@ -62,17 +62,7 @@ const BookingDetail = () => {
     setSelectedUser(user);
     setIsModal(true);
   };
-  if (!booking) {
-    return (
-      <div className="flex h-[80vh] flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold">Booking Not Found</h2>
-        <p className="text-gray-500 mb-4">The booking you're looking for doesn't exist.</p>
-        <Button onClick={() => navigate('/admin/bookings')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Bookings
-        </Button>
-      </div>
-    );
-  }
+
 
   if (loading) {
     return (
@@ -85,7 +75,17 @@ const BookingDetail = () => {
       </AdminLayout>
     );
   }
-
+  if (!booking) {
+    return (
+      <div className="flex h-[80vh] flex-col items-center justify-center">
+        <h2 className="text-2xl font-bold">Booking Not Found</h2>
+        <p className="text-gray-500 mb-4">The booking you're looking for doesn't exist.</p>
+        <Button onClick={() => navigate('/admin/bookings')}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Bookings
+        </Button>
+      </div>
+    );
+  }
   return (
     <AdminLayout>
     <div className="space-y-6">
