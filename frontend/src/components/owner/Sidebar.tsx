@@ -32,6 +32,8 @@ type SidebarProps = {
 const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const [isPropertiesOpen, setIsPropertiesOpen] = useState(false);
   const navigate = useNavigate();
+  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
+
   const { isAuthenticated, user, getUserData, logout } = useAuthStore();
 
   const handleLogout = async (e: React.MouseEvent) => {
@@ -45,23 +47,22 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-  
-    const fetchOwnerData = async () => {
-      try {
-        const response = await getUserData(user.id, "owner");
-        if (response && response.user) {
-          user.isSubscribed = response.user.isSubscribed;
-        }
-      } catch (error) {
-        console.error("Failed to fetch owner data:", error);
+useEffect(() => {
+  if (!user) return;
+
+  const fetchOwnerData = async () => {
+    try {
+      const response = await getUserData(user.id, "owner");
+      if (response && response.user) {
+        setIsSubscribed(response.user.isSubscribed);
       }
-    };
-  
-    fetchOwnerData();
-  }, [user?.id]);
-  
+    } catch (error) {
+      console.error("Failed to fetch owner data:", error);
+    }
+  };
+
+  fetchOwnerData();
+}, [user?.id]);
 
   return (
     <div className="flex">
@@ -97,7 +98,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
               {isAuthenticated && <p className="text-xs text-yellow-200">{user?.email}</p>}
               
               {/* Subscription Status Badge */}
-              {user && !user.isSubscribed && (
+             {user && isSubscribed === false &&  (
                 <Badge 
                   variant="outline" 
                   className="mt-2 bg-gradient-to-r from-rose-400 to-orange-300 text-white border-none animate-pulse"
@@ -143,7 +144,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
         </nav>
 
         {/* Subscribe Now Section */}
-        {user && !user.isSubscribed && (
+        {user && isSubscribed === false  && (
           <div className={`mt-auto mb-4 ${isOpen ? '' : 'flex justify-center'}`}>
             {isOpen ? (
               <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 rounded-lg shadow-lg">
