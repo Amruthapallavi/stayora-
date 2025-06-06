@@ -36,6 +36,7 @@ const BookingDetails = () => {
       try {
         setLoading(true);
         const bookingData = await bookingDetails(id);
+        console.log(bookingData,"booking data from owner")
         if (bookingData) {
           setBooking(bookingData.bookingData);
           setUserData(bookingData.userData);
@@ -136,7 +137,17 @@ const handleConfirmBooking=()=>{
           </div>
 
           <div className="space-y-6">
-{userData && <BookingOwnerCard owner={userData} />}
+{userData && (
+  <BookingOwnerCard
+    owner={{
+      id: userData.id,
+      name: userData.name,
+      phone: userData.phone,
+      email: userData.email,
+      propertyId: booking?.productId?._id, 
+    }}
+  />
+)}
             <BookingPaymentSummary
               monthlyRent={booking.rentPerMonth}
               duration={`${booking.rentalPeriod} months`}

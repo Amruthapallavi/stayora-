@@ -37,7 +37,7 @@ const ChatBox: React.FC<Props> = ({ user, receiverId, propertyId, className }) =
   const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
   const [sending, setSending] = useState(false);
   const [
-    chatPartner,
+    _chatPartner,
      setChatPartner] = useState<ChatPartner | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
