@@ -135,9 +135,12 @@ const UserBookingDetails = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin h-10 w-10 border-t-2 border-golden rounded-full"></div>
-      </div>
+          <h2 className="text-2xl font-semibold text-gray-700">
+            Booking Not Found
+          </h2>
+          <p className="text-gray-500 mt-2">
+            The booking you're looking for doesn't exist.
+          </p>
           <Link to="/bookings">
             <Button className="mt-4">View All Bookings</Button>
           </Link>
