@@ -14,7 +14,9 @@ const UserHomePage = () => {
 
   const [loading, setLoading] = useState(true);
   const limit = 3;
-
+ const handleLocationSelect = (location: string) => {
+    console.log("Selected location:", location);
+  };
   useEffect(() => {
     async function fetchProperties(page: number = 1) {
       setLoading(true);
@@ -174,7 +176,7 @@ const UserHomePage = () => {
             </div>
           </div>
         </section>
-        <PopularLocations />
+        <PopularLocations onSelectLocation={handleLocationSelect} />
         <CTASection />
       </div>
     </UserLayout>
