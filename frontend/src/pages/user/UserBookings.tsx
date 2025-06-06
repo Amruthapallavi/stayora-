@@ -11,30 +11,41 @@ import { notifyError } from "../../utils/notifications";
 const Bookings = () => {
   const { userBookings } = useAuthStore();
   const [bookings, setBookings] = useState<IBookingList[]>([]);
+const [loading, setLoading] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const response: IBookingResponse = await userBookings(currentPage);
-        setBookings(response.bookings);
-        setTotalPages(response.totalPages);
-      } catch (error) {
-        console.error("Failed to fetch bookings", error);
-      }
-    };
+ useEffect(() => {
+  const fetchBookings = async () => {
+    try {
+      setLoading(true); 
+      const response: IBookingResponse = await userBookings(currentPage);
+      setBookings(response.bookings);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      console.error("Failed to fetch bookings", error);
+    } finally {
+      setLoading(false); 
+    }
+  };
 
-    fetchBookings();
-  }, [currentPage]);
+  fetchBookings();
+}, [currentPage]);
+
 
   const handlePageChange = (page: number) => {
     if (page > 0 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
-
+ if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-t-2 border-golden rounded-full"></div>
+      </div>
+    );
+  }
   return (
     <UserLayout>
       <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
@@ -54,9 +65,15 @@ const Bookings = () => {
 
           {bookings.length === 0 ? (
             <div className="bg-white p-12 rounded-lg shadow-sm text-center">
-                 <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin h-10 w-10 border-t-2 border-golden rounded-full"></div>
-      </div>
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-10 w-10 text-gray-400" />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                No Bookings Yet
+              </h2>
+              <p className="text-gray-600 mb-6">
+                You haven't made any property bookings yet.
+              </p>
               <Link
                 to="/user/properties"
                 className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
