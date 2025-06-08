@@ -6,7 +6,6 @@ import { adminService } from '../../api/services/adminService';
 import { userService } from '../../api/services/userService';
 import { paymentService } from '../../api/services/paymentService';
 import { IBookingDetailsResponse } from '../../types/booking';
-import { ICart } from '../../types/cart';
 
 export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = (_set, get) => ({
 
