@@ -165,10 +165,12 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
       setCurrentStep(1);
     }
   }, []);
+
 useEffect(() => {
   localStorage.removeItem("bookingCompleted");
   setCurrentStep(1);
-}, []);
+}, [propertyId]);
+
   const handleStepChange = async (step: number) => {
     if (currentStep === 4) return;
 
