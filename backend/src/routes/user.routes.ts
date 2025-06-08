@@ -64,6 +64,7 @@ userRoutes.post("/checkout/save-addons",authMiddleware(["user"]), userCtr .saveA
 userRoutes.post("/razorpay/order/:id",authMiddleware(["user"]),bookingCtr.createBooking.bind(bookingCtr));
 userRoutes.post("/razorpay/verify",authMiddleware(["user"]),bookingCtr.verifyPayment.bind(bookingCtr));
 userRoutes.get("/bookings",authMiddleware(["user"]), userCtr .getUserBookings.bind(userCtr));
+userRoutes.post("/wallet/place-order/:id",authMiddleware(["user"]),bookingCtr.bookingFromWallet.bind(bookingCtr));
 userRoutes.get("/bookings/:id",authMiddleware(["user"]),bookingCtr.userBookingDetails.bind(bookingCtr));
 userRoutes.post("/bookings/cancel/:id",authMiddleware(["user"]), userCtr .cancelBooking.bind(userCtr));
 userRoutes.patch("/change-password/:id",authMiddleware(["user"]), userCtr .changePassword.bind(userCtr));

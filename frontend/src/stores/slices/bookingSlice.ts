@@ -4,8 +4,9 @@ import { bookingState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { adminService } from '../../api/services/adminService';
 import { userService } from '../../api/services/userService';
-import { razorpayService } from '../../api/services/paymentService';
+import { paymentService } from '../../api/services/paymentService';
 import { IBookingDetailsResponse } from '../../types/booking';
+import { ICart } from '../../types/cart';
 
 export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = (_set, get) => ({
 
@@ -126,6 +127,17 @@ export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = 
           throw error;
         }
       },
+      payFromWallet:async (propertyId:string):Promise<any>=>{
+         try {
+          const { authType } = get();
+          if (!authType || authType !== "user")
+            throw new Error("Not authorized as user");
+          return await paymentService.payFromWallet(propertyId);
+         } catch (error) {
+           console.error("Failed to book property from wallet", error);
+          throw error;
+         }
+      },
 
       clearCart: async (): Promise<void> => {
         try {
@@ -143,7 +155,7 @@ export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = 
           const { authType } = get();
           if (!authType || authType !== "user")
             throw new Error("Not authorized");
-          const response = await razorpayService.createOrder(amount, productId);
+          const response = await paymentService.createOrder(amount, productId);
 
           return response;
         } catch (error) {
@@ -156,7 +168,7 @@ export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = 
           const { authType } = get();
           if (!authType || authType !== "user")
             throw new Error("Not authorized");
-          const response = await razorpayService.verifyPayment(paymentData);
+          const response = await paymentService.verifyPayment(paymentData);
           return response;
         } catch (error) {
           console.error("Failed to verify Razorpay payment", error);

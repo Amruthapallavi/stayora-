@@ -51,7 +51,12 @@ export const ProtectedRoute = ({ allowedTypes }: ProtectedRouteProps) => {
     }
   }, [isAuthenticated, location.pathname]);
 
-  if (checkingStatus) return <div>Loading...</div>;
+  if (checkingStatus) return <div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-t-2 border-golden rounded-full"></div>
+      </div>
+  
+  </div>;
 
   if (!isAuthenticated || !isUserValid) {
     const redirectPath = location.pathname.includes("/owner")

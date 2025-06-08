@@ -9,8 +9,12 @@ const verifyPayment = async (paymentData: any) => {
   const res = await userApi.post("/razorpay/verify", paymentData);
   return res.data;
 };
-
-export const razorpayService = {
+const payFromWallet = async(propertyId:string)=>{
+  const res = await userApi.post(`/wallet/place-order/${propertyId}`);
+  return res.data;
+}
+export const paymentService = {
   createOrder,
   verifyPayment,
+  payFromWallet,
 };

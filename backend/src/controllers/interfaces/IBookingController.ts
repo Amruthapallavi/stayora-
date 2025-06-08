@@ -9,5 +9,5 @@ export interface IBookingController {
   listAllBookings(req: Request, res: Response): Promise<void>;
   AllbookingDetails(req: Request, res: Response): Promise<void>;
   cancelBooking(req: Request, res: Response): Promise<void>;
-
+  bookingFromWallet(req:Request,res:Response):Promise<void>;
 }

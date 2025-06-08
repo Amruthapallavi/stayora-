@@ -18,14 +18,14 @@ export class BookingController implements IBookingController {
     async createBooking(req: Request, res: Response): Promise<void> {
       try {
       const { amount }: CreateBookingDTO = req.body;
-        const productId= req.params.id;
+        const propertyId= req.params.id;
         const userId = (req as any).userId;
     
         if (!amount || typeof amount !== "number") {
            res.status(400).json({ message: "Invalid amount" });
         }
     
-        const order = await this.bookingService.createBookingOrder(amount,productId,userId);
+        const order = await this.bookingService.createBookingOrder(amount,propertyId,userId);
         res.status(200).json(order);
       } catch (error) {
         console.error("Error creating Razorpay order:", error);
@@ -68,6 +68,27 @@ const {
         console.error("Error verifying Razorpay payment:", error);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           message: error instanceof Error ? error.message : "Payment verification failed",
+        });
+      }
+    }
+    async bookingFromWallet(req: Request, res: Response): Promise<void> {
+      try {
+        const propertyId= req.params.id;
+        const userId = (req as any).userId;
+        const result =await this.bookingService.bookingFromWallet(userId,propertyId);
+          if (!result.isValid) {
+           res.status(400).json({ success: false, message: "booking from wallet failed...try another payment method..." });
+        }
+          res.status(200).json({
+          success: true,
+          message: "successfully booking completed",
+          booking: result.booking, 
+        });
+    
+      } catch (error) {
+        console.error("booking error:", error);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+          message: error instanceof Error ? error.message : "Booking failed",
         });
       }
     }

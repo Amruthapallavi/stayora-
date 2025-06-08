@@ -92,7 +92,7 @@ export interface bookingState {
     propertyId: string
   ): Promise<void>;
   saveAddOns(addOns: string[], propertyId: string): Promise<void>;
-
+  payFromWallet:(propertyId:string)=>Promise<any>;
   getCartDetails(id: string): Promise<ICart>;
   clearCart(): Promise<void>;
   userBookings: (currentPage: number) => Promise<IBookingResponse>;

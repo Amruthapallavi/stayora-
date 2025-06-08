@@ -10,7 +10,7 @@ import { IUser } from "../../models/user.model";
 export interface IBookingService {
   createBookingOrder(
     amount: number,
-    productId: string,
+    propertyId: string,
     userId: string
   ): Promise<{
     id: string;
@@ -25,7 +25,7 @@ export interface IBookingService {
     isValid: boolean;
     booking: IBooking | null;
   }>;
-
+bookingFromWallet(userId:string,propertyId:string):Promise<{isValid:boolean;booking:IBooking | null}>;
   listBookingsByOwner(
     ownerId: string,
     page:number,

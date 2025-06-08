@@ -7,6 +7,8 @@ import {
   Phone,
   Mail,
   Map,
+  Wallet,
+  Loader2,
 } from "lucide-react";
 import {
   Tabs,
@@ -32,18 +34,46 @@ import { notifyError } from "../../utils/notifications";
 import RazorpayPaymentButton from "../../components/RazorpayPayment";
 import { IBooking } from "../../types/booking";
 import { IService } from "../../types/service";
+import BookingConfirmationPage from "./bookingConfirmation";
 
 interface CheckoutProps {}
+
+const PaymentLoadingDialog = ({ isOpen }: { isOpen: boolean }) => {
+  if (!isOpen) return null;
+
+  return (
+  <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+    <div className="border border-[#b38e5d] rounded-2xl shadow-2xl p-10 max-w-md w-full mx-4 bg-white relative">
+      <div className="absolute top-4 right-4 animate-pulse">
+        <Loader2 className="h-6 w-6 text-[#b38e5d]" />
+      </div>
+      <div className="text-center">
+        <div className="w-16 h-16 rounded-full border-4 border-[#b38e5d] flex items-center justify-center mx-auto mb-6">
+          <Loader2 className="h-8 w-8 text-[#b38e5d] animate-spin" />
+        </div>
+        <h3 className="text-2xl font-semibold text-[#b38e5d] mb-3">
+          Processing Payment
+        </h3>
+        <p className="text-gray-600 text-base">
+          Please wait a moment while we complete your booking.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+};
 
 const CheckoutPage: React.FC<CheckoutProps> = () => {
   const {
     getCartDetails,
     saveBookingDates,
     saveAddOns,
-    // clearCart,
     listServices,
+    fetchWalletData,
+    payFromWallet,
   } = useAuthStore();
-  // const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -53,7 +83,8 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [searchParams] = useSearchParams();
   const [services, setServices] = useState<IService[]>([]);
-  
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
 
   const steps = [
     { number: 1, label: "Rooms" },
@@ -63,7 +94,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   ];
 
   const propertyId = searchParams.get("propertyId");
-  // const propertyName = searchParams.get("propertyName");
   const min = bookingDetails?.property?.minLeasePeriod;
   const max = bookingDetails?.property?.maxLeasePeriod;
   const [rentalPeriod, setRentalPeriod] = useState<number>(min);
@@ -96,6 +126,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
 
     loadCartData();
   }, [propertyId]);
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -110,6 +141,20 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
 
     fetchServices();
   }, []);
+
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const balance = await fetchWalletData(user?.id);
+        setWalletBalance(balance?.data?.balance ?? 0);
+      } catch (error) {
+        console.error("Failed to fetch wallet balance", error);
+      }
+    };
+
+    fetchWalletBalance();
+  }, [user.id]);
+
   useEffect(() => {
     const completed = localStorage.getItem("bookingCompleted") === "true";
 
@@ -146,7 +191,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
           }
         } else {
           const errMsg = "Missing move-in date or end date";
-
           notifyError(errMsg);
           setIsLoading(false);
           return;
@@ -207,26 +251,63 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
 
     return total;
   };
+
   const getAmountInPaise = () => {
     return Math.round(calculateTotalPrice() * 100);
   };
 
   const handleCompleteBooking = async (booking: IBooking) => {
     try {
-      setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    setCurrentStep(5);
+      await new Promise((resolve) => setTimeout(resolve, 2000)); 
       setBookingData(booking);
       localStorage.setItem("bookingCompleted", "true");
-      setIsLoading(false);
+      setIsPaymentProcessing(false);
+
       handleStepChange(4);
     } catch (error) {
-      setIsLoading(false);
+      setIsPaymentProcessing(false);
       toast.error("Failed to complete booking");
     }
   };
 
+  const handleWalletPayment = async () => {
+    const totalAmount = calculateTotalPrice();
+    
+    if (walletBalance < totalAmount) {
+      toast.error("Insufficient wallet balance");
+      return;
+    }
+    try {
+      // setIsPaymentProcessing(true);
+      setCurrentStep(5);
+      const propertyId=bookingDetails?.property._id;
+      const response = await payFromWallet(propertyId);
+     
+      if (response.success) {
+        await handleCompleteBooking(response.booking);
+        toast.success("Payment successful from wallet!");
+      } else {
+        throw new Error(response.message || "Wallet payment failed");
+      }
+    } catch (error) {
+      setIsPaymentProcessing(false);
+      toast.error("Wallet payment failed. Please try again.");
+      console.error("Wallet payment error:", error);
+    }
+  };
+ if(currentStep===4){
+  return(
+ <BookingConfirmationPage
+    bookingData={bookingData}
+ moveInDate={moveInDate ?? null}  
+   endDate={endDate?? null}
+  />  )
+ }
   return (
     <UserLayout>
+      <PaymentLoadingDialog isOpen={isPaymentProcessing} />
+      
       <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Checkout Steps */}
@@ -262,8 +343,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-                {/* Move-in Date and Rental Period Selection - Now in one line */}
-
+                {/* Move-in Date and Rental Period Selection */}
                 <div className="flex flex-col space-y-6 mb-8">
                   <div className="flex flex-wrap md:flex-nowrap gap-4">
                     <div className="w-full md:w-1/2">
@@ -288,7 +368,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                             selected={moveInDate}
                             onSelect={(date) => setMoveInDate(date)}
                             disabled={(date) =>
-                              date < new Date() || currentStep === 4
+                              date < new Date() || currentStep === 4 || currentStep ===3 || currentStep === 5 || currentStep===6
                             } 
                             initialFocus
                             className="p-3 pointer-events-auto"
@@ -302,7 +382,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                       </label>
                       <input
                         type="number"
-                        disabled={currentStep === 4}
+  disabled={currentStep === 3 || currentStep === 4 || currentStep ===5 || currentStep === 6}
                         min={min}
                         max={max}
                         value={rentalPeriod}
@@ -328,10 +408,10 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Content based on current step */}
                 {currentStep === 1 && (
                   <div className="border rounded-lg overflow-hidden">
-                    {/* <h1>{bookingDetails?.property?.title}</h1> */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                       <div className="md:col-span-1">
                         <img
@@ -400,6 +480,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                     </div>
                   </div>
                 )}
+
                 {currentStep === 2 && (
                   <div className="border rounded-lg overflow-hidden p-6">
                     <h3 className="text-xl font-semibold text-gray-800 mb-6">
@@ -466,16 +547,86 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                       Payment Details
                     </h3>
 
-                    <Tabs defaultValue="credit-card" className="w-full">
-                      <TabsList className="grid grid-cols-3 mb-6">
-                        <TabsTrigger value="credit-card">
-                          Credit Card
-                        </TabsTrigger>
+                    <Tabs defaultValue="wallet" className="w-full">
+                      <TabsList className="grid grid-cols-4 mb-6">
+                        <TabsTrigger value="wallet">My Wallet</TabsTrigger>
                         <TabsTrigger value="razorpay">RazorPay</TabsTrigger>
-                        <TabsTrigger value="bank-transfer">
-                          Bank Transfer
-                        </TabsTrigger>
+                        <TabsTrigger value="credit-card">Credit Card</TabsTrigger>
+                        <TabsTrigger value="bank-transfer">Bank Transfer</TabsTrigger>
                       </TabsList>
+
+                      <TabsContent value="wallet" className="space-y-4">
+                        <div className="bg-gradient-to-r from-[#b38e5d] to-[#8b6b3b] rounded-lg p-6 text-white">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <Wallet size={24} />
+                              <h4 className="text-lg font-semibold">My Wallet</h4>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm opacity-90">Available Balance</p>
+                              <p className="text-2xl font-bold">₹{walletBalance}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="border-t border-white/20 pt-4">
+                            <div className="flex justify-between mb-2">
+                              <span>Total Amount:</span>
+                              <span className="font-semibold">₹{calculateTotalPrice().toLocaleString("en-IN")}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Remaining Balance:</span>
+                              <span className={`font-semibold ${
+                                walletBalance >= calculateTotalPrice() ? 'text-green-200' : 'text-red-200'
+                              }`}>
+                                ₹{(walletBalance - calculateTotalPrice()).toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {walletBalance >= calculateTotalPrice() ? (
+                          <button
+                            onClick={handleWalletPayment}
+                            disabled={isPaymentProcessing}
+                            className="w-full bg-[#b38e5d] text-white py-3 px-6 rounded-md hover:bg-[#8b6b3b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {isPaymentProcessing ? (
+                              <>
+                                <Loader2 className="animate-spin h-4 w-4" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Wallet size={20} />
+                                Pay from Wallet
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-red-600 mb-3">
+                              Insufficient wallet balance. Please add funds or choose another payment method.
+                            </p>
+                            <button className="text-[#b38e5d] underline hover:text-[#8b6b3b]">
+                              Add Money to Wallet
+                            </button>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="razorpay">
+                        <div className="text-center py-10">
+                          <p className="mb-4 text-gray-600">
+                            Click below to pay securely with Razorpay
+                          </p>
+                          <RazorpayPaymentButton
+                            amount={getAmountInPaise()}
+                            productId={bookingDetails?.property._id}
+                            onSuccess={handleCompleteBooking}
+                            onFailure={() => setCurrentStep(6)} 
+                          />
+                        </div>
+                      </TabsContent>
 
                       <TabsContent value="credit-card" className="space-y-4">
                         <div>
@@ -524,20 +675,6 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="razorpay">
-                        <div className="text-center py-10">
-                          <p className="mb-4 text-gray-600">
-                            Click below to pay securely with Razorpay
-                          </p>
-                          <RazorpayPaymentButton
-                            amount={getAmountInPaise()}
-                            productId={bookingDetails?.property._id}
-                            onSuccess={handleCompleteBooking}
-                            onFailure={() => setCurrentStep(6)} 
-                          />
-                        </div>
-                      </TabsContent>
-
                       <TabsContent value="bank-transfer">
                         <div className="space-y-2 py-4">
                           <p className="text-gray-700">
@@ -576,82 +713,28 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                   </div>
                 )}
 
-                {currentStep === 4 && (
-                  <div className="border rounded-lg overflow-hidden p-6 text-center">
-                    <div className="mb-6">
-                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-10 w-10 text-green-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-                        Booking Confirmed!
-                      </h3>
-                      <p className="text-gray-600">
-                        Your reservation has been completed successfully.
-                      </p>
-                    </div>
+           {/* {currentStep === 4 && (
+  <BookingConfirmationPage
+    bookingData={bookingData}
+ moveInDate={moveInDate ?? null}  
+   endDate={endDate?? null}
+  />
+)} */}
 
-                    <div className="max-w-md mx-auto p-6 bg-gray-50 rounded-md mb-6">
-                      <div className="text-left space-y-2">
-                        <p className="flex justify-between">
-                          <span className="text-gray-600">
-                            Booking Reference:
-                          </span>
-                          <span className="font-medium">
-                            {bookingData?.bookingId}
-                          </span>
-                        </p>
-                        <p className="flex justify-between">
-                          <span className="text-gray-600">Move-in Date:</span>
-                          <span className="font-medium">
-                            {moveInDate
-                              ? format(moveInDate, "MMM d, yyyy")
-                              : "-"}
-                          </span>
-                        </p>
-                        <p className="flex justify-between">
-                          <span className="text-gray-600">End Date:</span>
-                          <span className="font-medium">
-                            {endDate ? format(endDate, "MMM d, yyyy") : "-"}
-                          </span>
-                        </p>
-                        <p className="flex justify-between">
-                          <span className="text-gray-600">Total Amount:</span>
-                          <span className="font-medium">
-                            {bookingData?.totalCost}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
+                {currentStep === 5 && (
+  <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-50">
+    <div className="text-center animate-pulse">
+      <div className="w-16 h-16 rounded-full border-4 border-[#b38e5d] flex items-center justify-center mx-auto mb-4">
+        <Loader2 className="h-8 w-8 text-[#b38e5d] animate-spin" />
+      </div>
+      <h2 className="text-xl font-semibold text-[#b38e5d] mb-2">
+        Please wait while we confirm your payment
+      </h2>
+      <p className="text-gray-600">Finalizing your booking...</p>
+    </div>
+  </div>
+)}
 
-                    <div className="flex justify-center gap-4">
-                      <Link
-                        to="/user/bookings"
-                        className="px-6 py-2 border border-[#b38e5d] rounded-md text-[#b38e5d] hover:bg-[#f8f5f0]"
-                      >
-                        View Booking
-                      </Link>
-                      <Link
-                        to="/user/home"
-                        className="bg-[#b38e5d] text-white px-6 py-2 rounded-md hover:bg-[#8b6b3b] transition-colors"
-                      >
-                        Return Home
-                      </Link>
-                    </div>
-                  </div>
-                )}
 
                 {currentStep === 6 && (
                   <div className="border rounded-lg overflow-hidden p-6 text-center">
@@ -701,6 +784,8 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
             </div>
 
             {/* Stay Summary */}
+            {[1, 2, 3].includes(currentStep) && (
+
             <div className="lg:col-span-1">
               <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
@@ -829,6 +914,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

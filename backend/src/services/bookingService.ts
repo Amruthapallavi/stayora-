@@ -31,7 +31,7 @@ import { UserResponseDTO } from "../DTO/UserResponseDto";
 import { mapUsersToDTOs, mapUserToDTO } from "../mappers/userMapper";
 import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
 import { mapOwnerToDTO } from "../mappers/ownerMapper";
-import { generateTransactionId } from "../config/TransactionId";
+import { generateTransactionId, generateWalletPaymentId } from "../config/TransactionId";
 
 dotenv.config();
 
@@ -58,7 +58,7 @@ export class BookingService implements IBookingService {
   ) {}
   async createBookingOrder(
     amount: number,
-    productId: string,
+    propertyId: string,
     userId: string
   ): Promise<CreateBookingOrderResponseDTO> {
     try {
@@ -70,7 +70,7 @@ export class BookingService implements IBookingService {
       const order = await razorpay.orders.create(options);
       const cartProperty = await this.bookingRepository.getCartProperty(
         userId,
-        productId
+        propertyId
       );
 
       if (!cartProperty || !cartProperty.propertyId) {
@@ -84,7 +84,9 @@ export class BookingService implements IBookingService {
       if (!property) {
         throw new Error("Property not found");
       }
-
+    if(property.status === PropertyStatus.Booked){
+      throw new Error("Property already Booked...Please choose another one.")
+    }
       const ownerId = property.ownerId;
       let booking: IBooking | null = null;
 
@@ -95,7 +97,7 @@ export class BookingService implements IBookingService {
           "razorpay",
           ownerId.toString()
         );
-        await this.bookingRepository.removeCartProperty(userId, productId);
+        await this.bookingRepository.removeCartProperty(userId, propertyId);
       } else {
         console.log("No matching cart property found.");
       }
@@ -189,14 +191,7 @@ export class BookingService implements IBookingService {
         const transactionId = generateTransactionId();
         const message = `Booking Completed - Property Name: ${propertyName}`;
 
-        await this.walletRepository.updateUserWalletTransaction(
-          booking?.userId?.toString() ?? "",
-          booking.bookingId,
-          message,
-          booking?.totalCost ?? 0,
-          "debit",
-          transactionId
-        );
+        
         await this.walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? "",
           booking.bookingId,
@@ -216,7 +211,125 @@ export class BookingService implements IBookingService {
       throw new Error("Failed to verify Razorpay payment");
     }
   }
+ 
+  async bookingFromWallet(userId: string, propertyId: string): Promise<{isValid:boolean,booking:IBooking | null }> {
+    try {
+       const cartProperty = await this.bookingRepository.getCartProperty(
+        userId,
+        propertyId
+      );
+      
+      if (!cartProperty || !cartProperty.propertyId) {
+        throw new Error("Property not found in cart");
+      }
+            const walletData = await this.walletRepository.fetchWalletData(userId)
+            if (walletData?.balance === undefined) {
+  throw new Error("Wallet balance not available.");
+}
 
+      if(cartProperty.totalCost > walletData?.balance){
+           throw new Error("Insufficient balance. Please choose another payment method to continue")
+      }
+      const property = (await this.bookingRepository.findPropertyById(
+        cartProperty.propertyId.toString()
+      )) as IProperty;
+
+      if (!property) {
+        throw new Error("Property not found");
+      }
+   if(property.status === PropertyStatus.Booked){
+      throw new Error("Property already Booked...Please choose another one.")
+    }
+      const ownerId = property.ownerId;
+      let booking: IBooking | null = null;
+
+      if (cartProperty) {
+        booking = await this.saveBookingFromCart(
+          userId,
+          cartProperty,
+          "wallet",
+          ownerId.toString()
+        );
+        await this.bookingRepository.removeCartProperty(userId, propertyId);
+        const bookingId = booking._id as string;
+        const paymentId=generateWalletPaymentId();
+       await this.bookingRepository.updateBookingDetails(bookingId, {
+          paymentStatus: PaymentStatus.Completed,
+          bookingStatus: BookingStatus.Confirmed,
+          paymentId:paymentId ,
+        });
+
+        if (booking && booking.propertyId) {
+          await this.bookingRepository.updatePropertyStatus(
+            booking.propertyId.toString(),
+            "booked"
+          );
+        } else {
+          console.warn("Property ID not found for booking");
+        }
+        const user = booking?.userId
+          ? await this.userRepository.getUserById(booking.userId.toString())
+          : null;
+
+        const userName = user?.name ?? "A user";
+        const propertyName = booking?.propertyName ?? "a property";
+
+        const notificationMessage = `${userName} has successfully booked the property "${propertyName}".`;
+
+        if (!booking?.ownerId) {
+          throw new Error("ownerId is missing in the booking");
+        }
+
+        await this.notificationService.createNotification(
+          booking.ownerId.toString(),
+          "Owner",
+          "booking",
+          notificationMessage,
+          booking._id ? booking._id.toString() : null
+        );
+
+        const userNotificationMessage = `Your booking for the property "${propertyName}" was successful.`;
+
+        await this.notificationService.createNotification(
+          booking.userId.toString(),
+          "User",
+          "booking",
+          userNotificationMessage,
+          booking._id?.toString() ?? null
+        );
+
+        const transactionId = generateTransactionId();
+        const message = `Booking Completed - Property Name: ${propertyName}`;
+
+        await this.walletRepository.updateUserWalletTransaction(
+          booking?.userId?.toString() ?? "",
+          booking.bookingId,
+          message,
+          booking?.totalCost ?? 0,
+          "debit",
+          transactionId
+        );
+        await this.walletRepository.updateUserWalletTransaction(
+          booking?.ownerId?.toString() ?? "",
+          booking.bookingId,
+          message,
+          booking?.totalCost ?? 0,
+          "credit",
+          transactionId
+        );
+      
+      } else {
+        console.log("No matching cart property found.");
+      }
+  return {
+    isValid:true,
+    booking:booking,
+  }
+    } catch (error) {
+      console.error("booking from wallet failed:", error);
+      throw new Error("Failed to book property from wallet");
+    }
+  }
   async cancelBooking(id: string, reason: string): Promise<IResponse> {
     try {
       const booking = await this.bookingRepository.findById(id);
