@@ -7,6 +7,7 @@ import { PublicOnlyRoute } from "./components/auth/PublicRoutes";
 import LazyLoadErrorBoundary from "./components/error/LazyLoadErrorBoundary";
 import Welcome from "./pages/welcome";
 import NotFound from "./pages/owners/NotFound";
+import About from "./pages/user/UserAbout";
 const UserSignup = lazy(() => import("./pages/user/UserSignup"));
 const UserOtpVerification = lazy(() => import("./pages/user/UserOtpVerification"));
 const UserLogin = lazy(() => import("./pages/user/UserLogin"));
@@ -216,7 +217,6 @@ const App = () => {
           }
         />
 
-        {/* Protected User Routes */}
         <Route element={<ProtectedRoute allowedTypes={["user"]} />}>
           <Route>
             <Route 
@@ -234,6 +234,14 @@ const App = () => {
                   <UserProfile />
                 </Suspense>
               }
+            />
+             <Route 
+              path="/user/about" 
+              element={
+                <Suspense fallback={<LoadingDashboard />}>
+                  <About />
+                </Suspense>
+              } 
             />
             <Route 
               path="/user/properties" 
@@ -302,7 +310,6 @@ const App = () => {
           </Route>
         </Route>
 
-        {/* Protected Owner Routes */}
         <Route element={<ProtectedRoute allowedTypes={["owner"]} />}>
           <Route>
             <Route 
@@ -404,7 +411,6 @@ const App = () => {
           </Route>
         </Route>
 
-        {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute allowedTypes={["admin"]} />}>
           <Route>
             <Route 
@@ -482,7 +488,6 @@ const App = () => {
           </Route>
         </Route>
 
-        {/* Special routes */}
         <Route
           path="/auth/google/callback"
           element={
@@ -492,7 +497,6 @@ const App = () => {
           }
         />
         
-        {/* 404 - Not lazy loaded as it's simple */}
         <Route path="*" element={<NotFound />} />
         </Routes>
       </LazyLoadErrorBoundary>
