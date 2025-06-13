@@ -24,7 +24,7 @@ const AdminBookings = () => {
   const [bookings, setBookings] = useState<ISimpleBooking[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [filteredBookings, setFilteredBookings] = useState<ISimpleBooking[]>(
+  const [_filteredBookings, setFilteredBookings] = useState<ISimpleBooking[]>(
     []
   );
   const [currentPage, setCurrentPage] = useState(1);
