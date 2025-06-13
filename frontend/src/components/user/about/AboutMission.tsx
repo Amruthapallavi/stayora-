@@ -10,7 +10,7 @@ const AboutMission = () => {
               Your Gateway to Exceptional Stays
             </h2>
             <p className="text-lg text-amber-800 mb-6">
-              StayOra connects travelers like you with stunning rental properties across the globe. Whether you're planning a weekend getaway, business trip, or extended vacation, we make it easy to find and book the perfect accommodation.
+              StayOra connects users like you with stunning rental properties across the globe. Whether you're planning to relocate somewhere else, or extended vacation, we make it easy to find and book the perfect house for you.
             </p>
             <p className="text-lg text-amber-700 mb-8">
               Want to earn extra income? Register as a property owner by clicking "Grow Your Business" or login as an existing owner to add your properties to our platform and start earning today.
