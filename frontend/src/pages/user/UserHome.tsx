@@ -14,8 +14,7 @@ const UserHomePage = () => {
 
   const [loading, setLoading] = useState(true);
   const limit = 3;
- const handleLocationSelect = (location: string) => {
-    console.log("Selected location:", location);
+ const handleLocationSelect = (_location: string) => {
   };
   useEffect(() => {
     async function fetchProperties(page: number = 1) {
@@ -72,7 +71,7 @@ const UserHomePage = () => {
                 Discover the best and most beautiful houses at affordable
                 prices, loved by our users.
               </p>
-              <button className="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded-lg font-semibold text-lg transition">
+              <button className="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded-lg font-semibold text-lg transition" onClick={()=> navigate('/user/properties')}>
                 Explore Listings
               </button>
             </div>

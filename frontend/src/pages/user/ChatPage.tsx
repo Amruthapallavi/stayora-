@@ -27,12 +27,13 @@ import {
   MessageSquare,
   ArrowLeft,
   Star,
-  
+  Smile,
 } from "lucide-react";
 import { IProperty } from "../../types/property";
 import { Message } from "../../types/user";
 import NotificationsTab from "../../components/NotificationTab";
 import Navbar from "../../components/user/Navbar";
+import EmojiPicker from 'emoji-picker-react';
 
 interface ChatPartner {
   _id: string;
@@ -62,7 +63,7 @@ const ChatPage = () => {
   );
   const [loading, setLoading] = useState(true);
   const [loadingConversations, setLoadingConversations] = useState(true);
-
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [messageText, setMessageText] = useState("");
@@ -70,6 +71,7 @@ const ChatPage = () => {
   const [sending, setSending] = useState(false);
   const [chatPartner, setChatPartner] = useState<ChatPartner | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+const [emojiPickerPosition, setEmojiPickerPosition] = useState({ top: 0, left: 0 });
 
   const [isMobileInfoVisible, setIsMobileInfoVisible] = useState(false);
   const [isMobileConversationsVisible, setIsMobileConversationsVisible] =
@@ -78,6 +80,7 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -134,6 +137,43 @@ const ChatPage = () => {
 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
+  const handleEmojiClick = (emojiObject: any) => {
+    setMessageText(prevText => prevText + emojiObject.emoji);
+    setShowEmojiPicker(false);
+  };
+
+ const handleEmojiButtonClick = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pickerHeight = 350; 
+  
+  const top = rect.top - pickerHeight < 0 
+    ? rect.bottom + 5 
+    : rect.top - pickerHeight - 5;
+    
+  const left = Math.max(10, rect.left - 150); 
+  
+  setEmojiPickerPosition({ top, left });
+  setShowEmojiPicker(!showEmojiPicker);
+};
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showEmojiPicker && 
+          !emojiButtonRef.current?.contains(event.target as Node) &&
+          !(event.target as Element)?.closest('.EmojiPickerReact')) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -145,7 +185,6 @@ const ChatPage = () => {
       socket.off("onlineUsers");
     };
   }, [socket]);
-
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -190,75 +229,82 @@ const ChatPage = () => {
     const room = [senderId, ownerId].sort().join("-");
     socket.emit("joinRoom", room);
 
-    const handleReceiveMessage = (newMessage: Message) => {
-      const currentUserId = user?.userId || user?.id;
+   const handleReceiveMessage = (newMessage: Message) => {
+  const currentUserId = user?.userId || user?.id;
 
-      const senderId =
-        typeof newMessage.sender === "string"
-          ? newMessage.sender
-          : newMessage.sender._id;
+  const senderId =
+    typeof newMessage.sender === "string"
+      ? newMessage.sender
+      : newMessage.sender._id;
 
-      const receiverId =
-        typeof newMessage.receiver === "string"
-          ? newMessage.receiver
-          : newMessage.receiver._id;
+  const receiverId =
+    typeof newMessage.receiver === "string"
+      ? newMessage.receiver
+      : newMessage.receiver._id;
 
-      const partnerId = senderId === currentUserId ? receiverId : senderId;
+  const partnerId = senderId === currentUserId ? receiverId : senderId;
 
-      const isMessageForSelectedConversation =
-        (senderId === currentUserId && receiverId === ownerId) ||
-        (receiverId === currentUserId && senderId === ownerId);
+  const isMessageForSelectedConversation =
+    (senderId === currentUserId && receiverId === ownerId) ||
+    (receiverId === currentUserId && senderId === ownerId);
 
-      if (
-        isMessageForSelectedConversation &&
-        !messages.some((msg) => msg._id === newMessage._id)
-      ) {
-        setMessages((prev) => [...prev, newMessage]);
-        const senderId = user.userId || user.id;
-        markMessagesAsRead(ownerId, senderId).catch((err) =>
-          console.error("Failed to mark as read", err)
-        );
-      }
+  // Only add to messages if it's for the currently selected conversation
+  if (
+    isMessageForSelectedConversation &&
+    !messages.some((msg) => msg._id === newMessage._id)
+  ) {
+    setMessages((prev) => [...prev, newMessage]);
+    const senderId = user.userId || user.id;
+    markMessagesAsRead(ownerId, senderId).catch((err) =>
+      console.error("Failed to mark as read", err)
+    );
+  }
 
-      setConversations((prev) => {
-        const updatedConversations = [...prev];
-        const index = updatedConversations.findIndex(
-          (conv) => conv.partnerId === partnerId
-        );
-        const conversationIndex = updatedConversations.findIndex(
-          (conv) =>
-            conv.partnerId === partnerId ||
-            (conv.partner && conv.partner._id === partnerId)
-        );
+  // Update conversations list for ALL incoming messages
+  setConversations((prev) => {
+    const updatedConversations = [...prev];
+    const conversationIndex = updatedConversations.findIndex(
+      (conv) =>
+        conv.partnerId === partnerId ||
+        (conv.partner && conv.partner._id === partnerId)
+    );
 
-        if (conversationIndex !== -1) {
-          const existing = updatedConversations[index];
-          const updated = {
-            ...existing,
-            lastMessage: newMessage,
-            lastMessageTime: newMessage.createdAt,
-            unreadCount: isMessageForSelectedConversation
-              ? 0
-              : (existing.unreadCount || 0) + 1,
-          };
-          updatedConversations.splice(index, 1);
-          updatedConversations.unshift(updated);
-        } else {
-          updatedConversations.unshift({
-            partnerId,
-            partner:
-              senderId === currentUserId
-                ? newMessage.receiver
-                : newMessage.sender,
-            lastMessage: newMessage,
-            lastMessageTime: newMessage.createdAt,
-            unreadCount: 1,
-          });
-        }
+    if (conversationIndex !== -1) {
+      // Update existing conversation
+      const existing = updatedConversations[conversationIndex];
+      const updated = {
+        ...existing,
+        lastMessage: newMessage,
+        lastMessageTime: newMessage.createdAt,
+        // Only increment unread count if message is NOT for the currently selected conversation
+        // AND the message is not sent by the current user
+        unreadCount: isMessageForSelectedConversation || senderId === currentUserId
+          ? 0  // Don't increment if it's the current conversation or user sent the message
+          : (existing.unreadCount || 0) + 1,
+      };
+      
+      // Remove from current position and add to top
+      updatedConversations.splice(conversationIndex, 1);
+      updatedConversations.unshift(updated);
+    } else {
+      // Create new conversation
+      const newConversation = {
+        partnerId,
+        partner:
+          senderId === currentUserId
+            ? newMessage.receiver
+            : newMessage.sender,
+        lastMessage: newMessage,
+        lastMessageTime: newMessage.createdAt,
+        // Only set unread count to 1 if message is not for current conversation and not sent by current user
+        unreadCount: isMessageForSelectedConversation || senderId === currentUserId ? 0 : 1,
+      };
+      updatedConversations.unshift(newConversation);
+    }
 
-        return updatedConversations;
-      });
-    };
+    return updatedConversations;
+  });
+};
 
     socket.on("receiveMessage", handleReceiveMessage);
 
@@ -370,7 +416,7 @@ const ChatPage = () => {
       }
     }
   };
-console.log(conversations,"conversations")
+
   const reloadData = async () => {
     try {
       const updatedConversations = await listConversations();
@@ -539,7 +585,6 @@ console.log(conversations,"conversations")
       </UserLayout>
     );
   }
-
   return (
     
       <div className="bg-gray-50 min-h-screen ">
@@ -735,8 +780,7 @@ console.log(conversations,"conversations")
                 )}
               </div>
             </div>
-
-            {/* Chat Messages */}
+{/* Chat Messages */}
             <div
               className={`md:col-span-6 flex flex-col bg-white rounded-lg shadow-md overflow-hidden ${
                 isDragOver ? 'ring-2 ring-yellow-500 ring-opacity-50' : ''
@@ -782,81 +826,83 @@ console.log(conversations,"conversations")
               {/* Messages Container */}
               <div
                 ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4"
+                className="flex-1 overflow-y-auto p-4 bg-gray-50"
               >
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                    <MessageSquare size={48} className="mb-2 opacity-30" />
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                ) : (
-                  messages.map((msg, i) => {
-                    const senderId =
-                      typeof msg.sender === "string" ? msg.sender : msg.sender._id;
+                <div className="space-y-4">
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                      <MessageSquare size={48} className="mb-2 opacity-30" />
+                      <p>No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    messages.map((msg, i) => {
+                      const senderId =
+                        typeof msg.sender === "string" ? msg.sender : msg.sender._id;
 
-                    const isOwnMessage = senderId === (user?.userId || user?.id);
+                      const isOwnMessage = senderId === (user?.userId || user?.id);
 
-                    const previousSender = messages[i - 1]?.sender;
-                    const previousSenderId =
-                      typeof previousSender === "string"
-                        ? previousSender
-                        : previousSender?._id;
+                      const previousSender = messages[i - 1]?.sender;
+                      const previousSenderId =
+                        typeof previousSender === "string"
+                          ? previousSender
+                          : previousSender?._id;
 
-                    const showAvatar = i === 0 || previousSenderId !== senderId;
+                      const showAvatar = i === 0 || previousSenderId !== senderId;
 
-                    return (
-                      <div
-                        key={msg._id}
-                        className={`flex ${
-                          isOwnMessage ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {!isOwnMessage && showAvatar && (
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage
-                              src={chatPartner?.profileImage}
-                              alt={chatPartner?.name}
-                            />
-                            <AvatarFallback className="bg-gray-100">
-                              {chatPartner?.name?.charAt(0) || (
-                                <User size={16} />
-                              )}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-
+                      return (
                         <div
-                          className={`flex flex-col ${
-                            !isOwnMessage && !showAvatar ? "ml-10" : ""
+                          key={msg._id}
+                          className={`flex ${
+                            isOwnMessage ? "justify-end" : "justify-start"
                           }`}
                         >
-                          {renderMessageContent(msg, isOwnMessage)}
+                          {!isOwnMessage && showAvatar && (
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage
+                                src={chatPartner?.profileImage}
+                                alt={chatPartner?.name}
+                              />
+                              <AvatarFallback className="bg-gray-100">
+                                {chatPartner?.name?.charAt(0) || (
+                                  <User size={16} />
+                                )}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+
                           <div
-                            className={`text-xs text-gray-500 mt-1 ${
-                              isOwnMessage ? "text-right" : "text-left"
+                            className={`flex flex-col ${
+                              !isOwnMessage && !showAvatar ? "ml-10" : ""
                             }`}
                           >
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {renderMessageContent(msg, isOwnMessage)}
+                            <div
+                              className={`text-xs text-gray-500 mt-1 ${
+                                isOwnMessage ? "text-right" : "text-left"
+                              }`}
+                            >
+                              {new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
                           </div>
+
+                          {isOwnMessage && showAvatar && (
+                            <Avatar className="h-8 w-8 ml-2">
+                              <AvatarImage src={user?.profileImage} alt="You" />
+                              <AvatarFallback className="bg-yellow-100 text-yellow-800">
+                                {user?.name?.charAt(0) || <User size={16} />}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
                         </div>
-
-
-                        {isOwnMessage && showAvatar && (
-                          <Avatar className="h-8 w-8 ml-2">
-                            <AvatarImage src={user?.profileImage} alt="You" />
-                            <AvatarFallback className="bg-yellow-100 text-yellow-800">
-                              {user?.name?.charAt(0) || <User size={16} />}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
+                      );
+                    })
+                  )}
+                  {/* Move messagesEndRef outside the map and at the end */}
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
 
               {/* Image Preview */}
@@ -878,30 +924,75 @@ console.log(conversations,"conversations")
                 </div>
               )}
 
+              {showEmojiPicker && (
+                <div 
+                  className="emoji-picker-container fixed z-50"
+                  style={{
+                    top: `${emojiPickerPosition.top}px`,
+                    left: `${emojiPickerPosition.left}px`
+                  }}
+                >
+                  <EmojiPicker 
+                    onEmojiClick={handleEmojiClick}
+                    width={300}
+                    height={350}
+                    searchDisabled={false}
+                    skinTonesDisabled={false}
+                    previewConfig={{
+                      showPreview: false
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Message Input */}
-              <form
+             <form
                 onSubmit={handleSendMessage}
-                className="p-3 border-t bg-white flex items-center"
+                className="p-3 border-t bg-white flex items-center gap-2"
               >
-                <label className="cursor-pointer mr-2 text-gray-500 hover:text-yellow-600">
+                {/* File Upload Button */}
+                <label className="cursor-pointer text-gray-500 hover:text-yellow-600 transition-colors">
                   <Paperclip size={20} />
                   <input
+                    ref={fileInputRef}
                     type="file"
                     className="hidden"
                     accept="image/*"
                     onChange={handleFileChange}
                   />
                 </label>
+
+                {/* Emoji Button */}
+                <Button
+                  ref={emojiButtonRef}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 text-gray-500 hover:text-yellow-600 transition-colors"
+                  onClick={handleEmojiButtonClick}
+                >
+                  <Smile size={20} />
+                </Button>
+
+                {/* Message Input */}
                 <Input
                   type="text"
                   placeholder="Type a message..."
-                  className="flex-1 rounded-full"
+                  className="flex-1 rounded-full border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
                 />
+
+                {/* Send Button */}
                 <Button
                   type="submit"
-                  className="ml-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center"
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center transition-colors"
                   disabled={sending || (!messageText.trim() && !selectedFile)}
                 >
                   {sending ? (
@@ -911,6 +1002,39 @@ console.log(conversations,"conversations")
                   )}
                 </Button>
               </form>
+            
+
+{/* Emoji Picker Overlay - place this right after the form, before closing the chat container div */}
+{showEmojiPicker && (
+  <>
+    {/* Background overlay to close picker */}
+    <div 
+      className="fixed inset-0 z-40"
+      onClick={() => setShowEmojiPicker(false)}
+    />
+    
+    {/* Emoji Picker */}
+    <div 
+      className="fixed z-50 shadow-lg rounded-lg overflow-hidden"
+      style={{
+        top: `${emojiPickerPosition.top}px`,
+        left: `${emojiPickerPosition.left}px`,
+        maxWidth: '300px'
+      }}
+    >
+      <EmojiPicker 
+        onEmojiClick={handleEmojiClick}
+        width={300}
+        height={350}
+        searchDisabled={false}
+        skinTonesDisabled={false}
+        previewConfig={{
+          showPreview: false
+        }}
+      />
+    </div>
+  </>
+)}
             </div>
 
             {/* Property Info */}

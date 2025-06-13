@@ -5,7 +5,7 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { BellDot, Check, MessageCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import {
@@ -43,8 +43,11 @@ const OwnerChatPage = () => {
   const selectedConvObject = conversations.find(
     (c) => c._id === selectedConversation
   );
-  const ownerId = selectedConvObject?.partner?._id;
-  const [visibleCount, setVisibleCount] = useState(2);
+  const ownerId = useMemo(() => 
+    selectedConvObject?.partner?._id,
+    [selectedConvObject]
+  ); 
+   const [visibleCount, setVisibleCount] = useState(2);
 const showMore = () => setVisibleCount(prev => prev + 4);
   const [_notifList, setNotifList] = useState<DisplayNotification[]>([]);
 
@@ -126,13 +129,19 @@ const showMore = () => setVisibleCount(prev => prev + 4);
       const selected = conversations.find(
         (c) => c._id === selectedConversation
       );
+      console.log(selected,"selected conversation");
+      console.log(user.id,"user id");
       if (selected?.lastMessage.propertyId) {
         try {
           const res = await getPropertyById(selected.lastMessage.propertyId);
           setPropertyData(res.Property);
+           const chatPartnerId =
+          selected.lastMessage.sender === user.id
+            ? selected.lastMessage.receiver
+            : selected.lastMessage.sender;
           const result = await getConversation(
             user.id,
-            selected.lastMessage.sender
+            chatPartnerId
           );
           setMessages(result.data);
           setPartner(result.chatPartner);
@@ -282,7 +291,7 @@ const showMore = () => setVisibleCount(prev => prev + 4);
   // const removeNotification = (id:any) => {
   //   setNotifList((prev) => prev.filter((notif) => notif._id !== id));
   // };
-  function formatChatTimestamp(dateStr: string) {
+  const formatChatTimestamp = useCallback((dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
 
@@ -308,7 +317,8 @@ const showMore = () => setVisibleCount(prev => prev + 4);
         day: "numeric",
       });
     }
-  }
+  }, []);
+
  const markAsRead = async (id: string) => {
     await markNotificationAsRead(id); 
     setNotifList((prev) =>
@@ -317,8 +327,12 @@ const showMore = () => setVisibleCount(prev => prev + 4);
       )
     );
   };
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  if (loadingConversations) {
+const unreadCount = useMemo(() => 
+    notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
+
+    if (loadingConversations) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-golden"></div>
@@ -388,7 +402,9 @@ const showMore = () => setVisibleCount(prev => prev + 4);
               </div>
 
               <div className="md:col-span-2 space-y-6">
-                <div className="h-[calc(100vh-22rem)] bg-white/70 backdrop-blur-md rounded-lg border border-[#b68451]/10 shadow-lg hover:shadow-xl transition-all duration-300">
+                
+                <div className="h-[calc(100vh-22rem)] bg-white/70 backdrop-blur-md rounded-lg border border-[#b68451]/10 shadow-lg hover:shadow-xl transition-all duration-300 min-h-[600px]">
+
                   {selectedConversation && partner ? (
                     <Conversation
                       conversation={messages}
@@ -421,6 +437,7 @@ const showMore = () => setVisibleCount(prev => prev + 4);
                       Select a conversation to start messaging
                     </div>
                   )}
+                  
                 </div>
 
                 {propertyData && <PropertySummary property={propertyData} />}

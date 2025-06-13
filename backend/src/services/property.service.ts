@@ -1,4 +1,4 @@
-import mongoose, { Types } from "mongoose";
+import  { Types } from "mongoose";
 import { IProperty } from "../models/property.model";
 import { IPropertyService } from "./interfaces/IPropertyService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
@@ -285,7 +285,6 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
       const properties = await this.propertyRepository.findFilteredProperties(
         filters
       );
-
       return properties || [];
     } catch (error) {
       console.error("Error in PropertyService:", error);

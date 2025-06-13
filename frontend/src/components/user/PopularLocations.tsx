@@ -69,7 +69,6 @@ const locationData = Object.entries(groupedLocations)
   }))
   .sort((a, b) => parseInt(b.count) - parseInt(a.count)) 
   .slice(0, 4); 
-console.log("Grouped locations:", groupedLocations);
 
 function toTitleCase(str: string) {
   return str

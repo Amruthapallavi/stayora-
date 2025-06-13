@@ -49,6 +49,10 @@ export const ownerService = {
     });
     return response.data;
   },
+   deleteNotification: async (notificationId:string) => {
+        const response = await ownerApi.delete(`/notification/${notificationId}`);
+        return response.data;
+      },
    getReviews: async ( propertyId: string): Promise<IReviewResponse> => {
       const response = await ownerApi.get(`/reviews/${propertyId}`);
       return response.data;

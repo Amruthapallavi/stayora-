@@ -47,7 +47,6 @@ const AdminBookings = () => {
     }
 
     setFilteredBookings(filtered);
-    console.log(filteredBookings);
   };
 
   useEffect(() => {

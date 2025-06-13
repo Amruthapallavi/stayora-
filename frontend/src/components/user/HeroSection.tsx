@@ -14,7 +14,6 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ searchFilters, handleFilterChange, handleSearch }: HeroSectionProps) => {
-    // const navigate=useNavigate();
   return (
     <section className="relative py-24 lg:py-36 overflow-hidden">
   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80')] bg-cover bg-center"></div>

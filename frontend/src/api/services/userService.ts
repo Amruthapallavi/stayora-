@@ -15,12 +15,37 @@ export const userService = {
     const response = await userApi.get(`/property/${id}`);
     return response.data;
   },
-  filteredProperties: async (data: any): Promise<any> => {
-    const queryParams = new URLSearchParams(data).toString();
+    listFeatures: async () => {
+      const response = await userApi.get("/features");
+      return response.data.features;
+    },
+    getReviewByUser:async(bookingId:string):Promise<any>=>{
+        const response=await userApi.get(`/booking/user-review/${bookingId}`);
+        return response.data;
+    },
+filteredProperties: async (data: any): Promise<any> => {
+  const response = await userApi.get(`/property/filtered`, {
+    params: data,
+    paramsSerializer: (params) =>
+      new URLSearchParams(
+        Object.entries(params).reduce((acc, [key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(v => acc.append(key, v));
+          } else {
+            acc.append(key, value);
+          }
+          return acc;
+        }, new URLSearchParams())
+      ).toString(),
+  });
 
-    const response = await userApi.get(`/property/filtered?${queryParams}`);
-    return response.data;
-  },
+  return response.data;
+},
+ deleteNotification: async (notificationId:string) => {
+      const response = await userApi.delete(`/notification/${notificationId}`);
+      return response.data;
+    },
+
   locationProperties:async (): Promise<any> => {
     const response = await userApi.get("/loc-properties");
     return response.data;

@@ -91,3 +91,10 @@ export interface IBookingData {
   bookingId: string;
 }
 
+export interface IReviewUserResponse{
+  user:string;
+  mail:string;
+  createdAt:string;
+  reviewText:string;
+  rating:number;
+}

@@ -23,7 +23,6 @@ export const createPropertySlice: StateCreator<AppState, [], [], propertyState> 
     filteredProperties: async (data: any) => {
          const { authType } = get();
          if (!authType) return false;
- 
          try {
            let response;
            switch (authType) {

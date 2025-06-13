@@ -95,18 +95,7 @@ const OwnerListing = () => {
     setCurrentPage(1);
   };
 
-  // const filteredOwners = owners.filter(
-  //   (owner) =>
-  //     owner.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     owner.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     owner.phone.includes(searchQuery)
-  // );
-
-  // const totalPages = Math.ceil(filteredOwners.length / OwnersPerPage);
-  // const currentOwners = filteredOwners.slice(
-  //   (currentPage - 1) * OwnersPerPage,
-  //   currentPage * OwnersPerPage
-  // );
+ 
 
   const ownerCount = totalOwners.length;
   const activeOwners = totalOwners.filter((o) => o.status === "Active").length;

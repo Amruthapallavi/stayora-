@@ -29,7 +29,6 @@ class MailService {
         `,
       });
 
-      console.log(" Rejection email sent successfully!");
     } catch (error) {
       console.error(" Error sending rejection email:", error);
     }
@@ -50,7 +49,6 @@ class MailService {
       `,
     });
 
-    console.log("Approval email sent successfully!");
   } catch (error) {
     console.error("Error sending approval email:", error);
   }

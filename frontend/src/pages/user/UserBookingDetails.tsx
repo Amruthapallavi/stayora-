@@ -11,16 +11,18 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import { IOwner } from "../../types/owner";
 import Swal from "sweetalert2";
+import { IReviewUserResponse } from "../../types/booking";
 
 const UserBookingDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { bookingDetails, cancelBooking, submitReview } = useAuthStore();
+  const { bookingDetails, cancelBooking, submitReview ,getReviewByUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<any>(null);
   const [ownerData, setOwnerData] = useState<IOwner | null | undefined>(null);
   const [showCancelReason, setShowCancelReason] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [reviewText, setReviewText] = useState("");
+    const [userReview, setUserReview] = useState<IReviewUserResponse>();
   const [reviewRating, setReviewRating] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
 
@@ -54,7 +56,20 @@ const UserBookingDetails = () => {
 
     fetchBooking();
   }, [id, navigate, bookingDetails]);
+useEffect(() => {
+    const fetchReview = async () => {
+      try {
+        if (booking?._id) {
+          const response = await getReviewByUser(booking._id);
+          setUserReview(response?.review);
+        }
+      } catch (error) {
+        console.error('Error fetching review:', error);
+      }
+    };
 
+    fetchReview();
+  }, [booking?._id, getReviewByUser]);
   const handleCancelBooking = async () => {
     if (!cancelReason.trim()) {
       return notifyError("Please provide a reason for cancellation.");
@@ -141,7 +156,7 @@ const UserBookingDetails = () => {
           <p className="text-gray-500 mt-2">
             The booking you're looking for doesn't exist.
           </p>
-          <Link to="/bookings">
+          <Link to="/user/bookings">
             <Button className="mt-4">View All Bookings</Button>
           </Link>
         </div>
@@ -203,44 +218,7 @@ const UserBookingDetails = () => {
               </Card>
             </div>
 
-            {/* Review section only if booking is completed */}
-            {booking.bookingStatus === "completed" && (
-              <div className="mt-8">
-                <Card className="p-6 rounded-2xl bg-white shadow-lg space-y-4">
-                  <h2 className="text-2xl font-semibold mb-4">
-                    Submit Your Review
-                  </h2>
-                  <div className="flex items-center space-x-2 mb-3">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        size={28}
-                        className={`cursor-pointer transition-colors duration-200 ${
-                          reviewRating >= star
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                        onClick={() => setReviewRating(star)}
-                      />
-                    ))}
-                  </div>
-                  <textarea
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#b38e5d]"
-                    placeholder="Write your review here..."
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                  />
-                  <Button
-                    onClick={addReview}
-                    disabled={submittingReview}
-                    className="bg-[#b38e5d] hover:bg-[#a1773d] text-white w-full rounded-xl"
-                  >
-                    {submittingReview ? "Submitting..." : "Submit Review"}
-                  </Button>
-                </Card>
-              </div>
-            )}
+
           </div>
 
           <div className="space-y-6">
@@ -306,7 +284,61 @@ const UserBookingDetails = () => {
                   Contact Owner
                 </Button>
               )}
+
+              
             </Card>
+            {booking.bookingStatus === "completed" && (
+  <div className="mt-8">
+    {userReview ? (
+      <Card className="p-6 bg-white border border-gray-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300">
+        <h2 className="text-2xl font-semibold mb-4">Your Review</h2>
+        <div className="flex items-center space-x-2 mb-3">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={28}
+              className={`${
+                userReview.rating >= star ? "text-yellow-400" : "text-gray-300"
+              }`}
+            />
+          ))}
+        </div>
+        <p className="whitespace-pre-wrap">{userReview.reviewText}</p>
+      </Card>
+    ) : (
+      <Card className="p-6 rounded-2xl bg-white shadow-lg space-y-4">
+        <h2 className="text-2xl font-semibold mb-4">Submit Your Review</h2>
+        <div className="flex items-center space-x-2 mb-3">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={28}
+              className={`cursor-pointer transition-colors duration-200 ${
+                reviewRating >= star ? "text-yellow-400" : "text-gray-300"
+              }`}
+              onClick={() => setReviewRating(star)}
+            />
+          ))}
+        </div>
+        <textarea
+          rows={4}
+          className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#b38e5d]"
+          placeholder="Write your review here..."
+          value={reviewText}
+          onChange={(e) => setReviewText(e.target.value)}
+        />
+        <Button
+          onClick={addReview}
+          disabled={submittingReview}
+          className="bg-[#b38e5d] hover:bg-[#a1773d] text-white w-full rounded-xl"
+        >
+          {submittingReview ? "Submitting..." : "Submit Review"}
+        </Button>
+      </Card>
+    )}
+  </div>
+)}
+
           </div>
         </div>
       </div>

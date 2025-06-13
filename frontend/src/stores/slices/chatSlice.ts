@@ -15,7 +15,6 @@ export const createChatSlice: StateCreator<AppState, [], [], chatState> = (_set,
               }
     
               if (authType === "admin") {
-                // return await adminService.listFeatures();
               } else if (authType === "owner") {
                 return await ownerService.sendMessage(data);
               } else if (authType === "user") {
@@ -120,4 +119,28 @@ export const createChatSlice: StateCreator<AppState, [], [], chatState> = (_set,
                 throw error;
               }
             },
+            deleteNotification:async(notificationId:string)=>{
+              try {
+                const { isAuthenticated, authType } = get();
+                if (!isAuthenticated || !authType)
+                  throw new Error("Authentication required");
+      
+                let response;
+      
+                switch (authType) {
+                  case "user":
+                    response = await userService.deleteNotification(notificationId);
+                    break;
+                  case "owner":
+                    response = await ownerService.deleteNotification(notificationId);
+                    break;
+                  default:
+                    throw new Error("Invalid authentication type");
+                }
+                return response; 
+              } catch (error) {
+                console.error("Failed to delete notifications", error);
+                throw error;
+              }
+            }
 })

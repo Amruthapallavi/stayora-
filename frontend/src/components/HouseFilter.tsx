@@ -53,7 +53,6 @@ const HouseFilter: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    console.log("Filters Applied: ", filters);
   };
 
   return (

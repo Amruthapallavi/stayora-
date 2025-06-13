@@ -114,7 +114,6 @@ const EditProperty = () => {
         setOtherFeatures(propertyData.otherFeatures || []);
         
         const featuresResponse = await listAllFeatures();
-        console.log(featuresResponse,"feature response")
         setAllFeatures(featuresResponse);
         
       } catch (error) {

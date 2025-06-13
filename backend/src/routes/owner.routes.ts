@@ -67,6 +67,7 @@ ownerRoutes.post("/bookings/cancel/:id",authMiddleware(["owner"]), bookingCtr .c
 ownerRoutes.get("/conversation",authMiddleware(['owner']),chatCtr.getConversation.bind(chatCtr));
 ownerRoutes.post("/message",authMiddleware(['owner']),uploadMessageImages.single("image"),chatCtr.sendMessage.bind(chatCtr));
 ownerRoutes.patch("/messages/mark-as-read", authMiddleware(["owner"]),chatCtr.markMessagesAsRead.bind(chatCtr));
+ownerRoutes.delete("/notification/:id",authMiddleware(["owner"]),notificationCtr.deleteNotification.bind(notificationCtr));
 
 ownerRoutes.get("/conversations",authMiddleware(['owner']),chatCtr.listConversations.bind(chatCtr));
 ownerRoutes.get("/notifications", authMiddleware(["owner"]), notificationCtr.getNotifications.bind(notificationCtr));

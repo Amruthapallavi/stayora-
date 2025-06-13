@@ -1,6 +1,6 @@
 import { loadRazorpayScript } from "../utils/loadRazorpayScript";
 import { useAuthStore } from "../stores/authStore";
-import { RazorpayOptions } from "./hooks/RazorPay";
+import { RazorpayOptions } from "./hooks/useRazorPay";
 import { RazorpayOrderResponse, RazorpayPaymentButtonProps, RazorpayResponse } from "../types/razorPay";
 
 
@@ -17,7 +17,6 @@ const RazorpayPaymentButton: React.FC<RazorpayPaymentButtonProps> = ({ amount, p
 
     try {
       const order: RazorpayOrderResponse = await createRazorpayOrder(amount,productId);
-      console.log("Created Razorpay Order:", order); 
 
       if (!order?.id) {
         alert("Failed to create Razorpay order.");

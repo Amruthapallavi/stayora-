@@ -108,13 +108,12 @@ export class PropertyController implements IPropertyController {
       const properties = await this.propertyService.getFilteredProperties(
         filters
       );
-
       res.json(properties);
     } catch (error) {
       console.error("Error in PropertyController:", error);
       res.status(500).json({ message: "Internal Server Error" });
     }
-  }
+  } 
 
   async approveProperty(req: Request, res: Response): Promise<void> {
     try {

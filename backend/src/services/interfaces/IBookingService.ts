@@ -1,4 +1,5 @@
 
+import { IReviewUserResponse } from "../../DTO/BookingResponseDTO";
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { IBooking } from "../../models/booking.model";
@@ -46,7 +47,7 @@ bookingFromWallet(userId:string,propertyId:string):Promise<{isValid:boolean;book
     status: number;
     message: string;
   }>;
-
+getUserReview(bookingId:string,userId:string):Promise<{review:IReviewUserResponse | null;status:number;message:string}>;
   userBookingDetails(
     id: string
   ): Promise<{

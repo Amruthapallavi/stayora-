@@ -14,4 +14,5 @@ export interface INotificationService {
   markAsRead(
     notificationId: string
   ): Promise<{ message: string; status: number; data: INotification | null }>;
+  deleteNotification(notificationId:string):Promise<{message:string,status:number}>;
 }

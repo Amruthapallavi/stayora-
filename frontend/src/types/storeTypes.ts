@@ -71,6 +71,7 @@ export interface chatState {
   listConversations: () => Promise<any>;
   getNotifications: () => Promise<INotificationApiResponse>;
   markMessagesAsRead: (convId: string, userId: string) => Promise<void>;
+  deleteNotification:(notificationId:string)=>Promise<IResponse>;
   markNotificationAsRead: (notificationId: string) => Promise<any>;
 }
 
@@ -91,6 +92,7 @@ export interface bookingState {
     endDate: Date,
     propertyId: string
   ): Promise<void>;
+  getReviewByUser:(bookingId:string)=>Promise<any>;
   saveAddOns(addOns: string[], propertyId: string): Promise<void>;
   payFromWallet:(propertyId:string)=>Promise<any>;
   getCartDetails(id: string): Promise<ICart>;

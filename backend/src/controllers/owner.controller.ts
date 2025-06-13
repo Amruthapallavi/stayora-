@@ -50,7 +50,6 @@ export class OwnerController implements IOwnerController {
   async verifyOTP(req: Request, res: Response): Promise<void> {
     try {
       const { email, otp } = req.body;
-      console.log(req.body,"reqbody");
       const result = await this.ownerService.verifyOTP(email, otp);
       res.status(result.status).json({
         message: result.message,

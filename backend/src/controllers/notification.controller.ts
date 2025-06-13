@@ -48,8 +48,26 @@ export class NotificationController implements INotificationController {
             ? error.message
             : "Failed to mark notification as read",
       });
+    } 
+  }
+   async deleteNotification(req: Request, res: Response): Promise<void> {
+    try {
+      const notificationId  = req.params.id;
+      const result = await this.notificationService.deleteNotification(notificationId);
+      res.status(result.status).json({
+        message: result.message,
+      });
+    } catch (error) {
+      console.error("error deleting notification", error);
+      res.status(STATUS_CODES.BAD_REQUEST).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete notification",
+      });
     }
   }
+
 }
 
 export default NotificationController;

@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import bookingService from "../services/bookingService";
 import { STATUS_CODES } from "../utils/constants";
 import { IBookingController } from "./interfaces/IBookingController";
 import { injectable,inject } from "inversify";
@@ -182,6 +181,21 @@ res.status(result.status).json({
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           error: error instanceof Error ? error.message : "Failed to fetch bookings",
         });
+      }
+    }
+    async getUserReview(req: Request, res: Response): Promise<void> {
+      try {
+        const bookingId=req.params.id;
+        const userId = (req as any).userId;
+        const result = await this.bookingService.getUserReview(bookingId,userId);
+         res.status(result.status).json({
+              review: result.review,
+            });
+      } catch (error) {
+         console.error(error);
+            res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+              error: error instanceof Error ? error.message : "Failed to fetch user review",
+            });
       }
     }
      async AllbookingDetails(req:Request,res:Response):Promise<void>{

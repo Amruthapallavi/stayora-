@@ -523,8 +523,7 @@ export class OwnerService implements IOwnerService {
       }
 
       const order = await razorpay.orders.create(options);
-      // const owner=await this.ownerRepository.find(ownerId.toString)
-      // console.log(owner,"for subs")
+      
       return {
         id: order.id,
         amount: Number(order.amount),

@@ -145,7 +145,6 @@ const AdminFeatures = () => {
     
       if (result.isConfirmed) {
         try {
-          console.log("Deleting owner with ID:", id);
           await removeFeature(id);
     
           setFeatures((prev) => prev.filter((feature) => feature._id !== id));

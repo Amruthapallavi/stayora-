@@ -104,10 +104,26 @@ async findAllPropertiesWithOwnerData(
       status: 'active'
     };
   
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange.split(',').map(Number);
-      query.rentPerMonth = { $gte: min, $lte: max };
+  if (filters.priceRange) {
+  let min = 0;
+  let max = Number.MAX_SAFE_INTEGER;
+
+  if (typeof filters.priceRange === 'string') {
+    const parts = filters.priceRange.split(',').map(Number);
+    if (parts.length === 2) {
+      min = parts[0];
+      max = parts[1];
     }
+  } else if (Array.isArray(filters.priceRange)) {
+    if (filters.priceRange.length === 2) {
+      min = Number(filters.priceRange[0]);
+      max = Number(filters.priceRange[1]);
+    }
+  }
+
+  query.rentPerMonth = { $gte: min, $lte: max };
+}
+
   
     if (filters.type) {
       const typeRegex = new RegExp(`^${filters.type}$`, 'i'); 
@@ -127,7 +143,9 @@ async findAllPropertiesWithOwnerData(
     if (filters.bedrooms) {
       query.bedrooms = { $gte: Number(filters.bedrooms) };
     }
-  
+  if (filters.features && Array.isArray(filters.features) && filters.features.length > 0) {
+    query.features = { $all: filters.features };
+  }
     return query;
   }
     async approveProperty (propertyId: string) {

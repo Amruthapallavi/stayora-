@@ -56,6 +56,7 @@ export const ROLES = {
       INCORRECT_PASSWORD:"Current Password not Matching",
       BOOKING_NOT_FOUND:"The Booking not found",
       TOKEN_EXPIRED:"Token expired",
+      NOTIFICATION_NOT_FOUND:"Notification not found",
       REFRESH_TOKEN_INVALID:"Refresh token invalid",
       REFRESH_TOKEN_MISSING:"Refresh token missing",
       BOOKING_CANCEL_NOT_ALLOWED:'Cancellation only availble within 5 days of move-In-date'

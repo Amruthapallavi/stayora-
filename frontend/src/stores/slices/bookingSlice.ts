@@ -59,7 +59,18 @@ export const createBookingSlice: StateCreator<AppState, [], [], bookingState> = 
                 throw error;
               }
             },
-            
+           getReviewByUser:async(bookingId:string)=>{
+            try {
+                const { authType } = get();
+                if (!authType || authType !== "user") {
+                  throw new Error("Not authorized as user");
+                }
+                return await userService.getReviewByUser(bookingId);
+              } catch (error) {
+                console.error("Failed to list users", error);
+                throw error;
+              }
+           }, 
       userBookings: async (page: number = 1, limit: number = 5) => {
         try {
           const { authType } = get();

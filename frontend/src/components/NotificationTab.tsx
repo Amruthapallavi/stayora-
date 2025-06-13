@@ -84,7 +84,6 @@ const showMore = () => {
   }, [notifications]);
 
   const markAsRead = async (id: string) => {
-    console.log(id, "formark not");
     await markNotificationAsRead(id);
     setNotifList((prev) =>
       prev.map((notif) => (notif._id === id ? { ...notif, read: true } : notif))

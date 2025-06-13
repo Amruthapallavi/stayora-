@@ -25,6 +25,7 @@ import {
 import {
   CreateBookingOrderResponseDTO,
   IResponse,
+  IReviewUserResponse,
   VerifyBookingPaymentResponseDTO,
 } from "../DTO/BookingResponseDTO";
 import { UserResponseDTO } from "../DTO/UserResponseDto";
@@ -32,6 +33,7 @@ import { mapUsersToDTOs, mapUserToDTO } from "../mappers/userMapper";
 import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
 import { mapOwnerToDTO } from "../mappers/ownerMapper";
 import { generateTransactionId, generateWalletPaymentId } from "../config/TransactionId";
+import { IReviewRepository } from "../repositories/interfaces/IReviewRepository";
 
 dotenv.config();
 
@@ -54,7 +56,9 @@ export class BookingService implements IBookingService {
     @inject(TYPES.NotificationService)
     private notificationService: INotificationService,
     @inject(TYPES.PropertyRepository)
-    private propertyRepository: IPropertyRepository
+    private propertyRepository: IPropertyRepository,
+     @inject(TYPES.ReviewRepository)
+    private reviewRepository: IReviewRepository
   ) {}
   async createBookingOrder(
     amount: number,
@@ -99,7 +103,7 @@ export class BookingService implements IBookingService {
         );
         await this.bookingRepository.removeCartProperty(userId, propertyId);
       } else {
-        console.log("No matching cart property found.");
+        console.error("No matching cart property found.");
       }
 
       return {
@@ -454,7 +458,37 @@ export class BookingService implements IBookingService {
       };
     }
   }
+  async getUserReview(
+  bookingId: string,
+  userId: string
+): Promise<{ review: IReviewUserResponse | null; status: number; message: string }> {
+  try {
+    const review = await this.reviewRepository.findReviewByUser(bookingId,userId);
 
+    if (!review) {
+      return {
+        review: null,
+        message: "No review found for this booking.",
+        status:STATUS_CODES.OK,
+      };
+    }
+
+    return {
+      review,
+      message: "Review fetched successfully.",
+      status: 200,
+    };
+  } catch (error) {
+    console.error("Error while fetching user review:", error);
+    return {
+      review: null,
+      message: "Internal server error.",
+      status: 500,
+    };
+  }
+}
+
+ 
   async bookingDetails(id: string): Promise<{
     bookingData: IBooking | null;
     userData: UserResponseDTO | null;

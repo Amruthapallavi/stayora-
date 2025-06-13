@@ -57,7 +57,6 @@ const Subscribe = () => {
  const handleSubscribe = async (planName: string, price: number, allowedProperties: number) => {
   try {
     const data = await subscribe(planName, price, allowedProperties);
-    console.log(data, "sub response");
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY,

@@ -35,7 +35,6 @@ const BookingDetail = () => {
         try {
           setLoading(true);
           const bookingData = await bookingDetails(id);
-          console.log(bookingData,"hiyt")
           if (bookingData) {
             setBooking(bookingData.bookingData);
             setUserData(bookingData.userData);

@@ -57,7 +57,6 @@ async getConversation(
   chatPartner: UserResponseDTO | OwnerResponseDTO;
 }> {
   const messages = await this.messageRepository.findConversation(sender, receiver);
-
   const user = await this.userRepository.findOne({ _id: receiver });
   const owner = user ? null : await this.ownerRepository.findOne({ _id: receiver });
 
@@ -65,10 +64,9 @@ async getConversation(
     throw new Error("Chat partner not found");
   }
 
-  // Type guard-based mapping
   const chatPartner = user
     ? mapUserToDTO(user)
-    : mapOwnerToDTO(owner!); // `owner!` is safe here because we already checked it's not null
+    : mapOwnerToDTO(owner!); 
 
   return {
     message: MESSAGES.SUCCESS.CONVERSATION_FETCHED,
@@ -94,9 +92,7 @@ async getConversation(
     convId: string,
     userId: string
   ): Promise<{ message: string; status: number; data: any }> {
-    const updatedCount = await this.messageRepository.markMessagesAsRead(convId, userId);
-    console.log(updatedCount)
-    return {
+    const updatedCount = await this.messageRepository.markMessagesAsRead(convId, userId);    return {
       message: "Messages marked as read",
       status: 200,
       data: { updatedCount }

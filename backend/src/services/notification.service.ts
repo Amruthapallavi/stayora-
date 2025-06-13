@@ -73,6 +73,30 @@ export class NotificationService implements INotificationService {
       status: STATUS_CODES.OK,
       data: updatedNotification,
     };
+  } 
+  async deleteNotification(notificationId: string): Promise<{ message: string; status: number; }> {
+   try {
+       const notification = await this.notificationRepository.find(
+      {notificationId}
+    );
+    if(!notification){
+      return{
+        message:MESSAGES.ERROR.NOTIFICATION_NOT_FOUND,
+        status:STATUS_CODES.NOT_FOUND
+      }
+    }
+    await this.notificationRepository.delete(
+      notificationId,
+    );
+    return {
+      message: MESSAGES.SUCCESS.DELETED_SUCCESSFUL,
+      status: STATUS_CODES.OK,
+    };
+  
+   } catch (error) {
+    console.error("Delete notification Error:", error);
+      throw new Error("Failed to delete notification");
+   }
   }
 }
 

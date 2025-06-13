@@ -878,9 +878,6 @@ user: mapUserToDTO(user),
         paymentStatus: PaymentStatus.Refunded,
       };
 
-      console.log(reason);
-      console.log("updated data", updateData);
-
       const response = await this.bookingRepository.updateBookingDetails(
         id,
         updateData

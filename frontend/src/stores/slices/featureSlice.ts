@@ -2,6 +2,7 @@ import { StateCreator } from 'zustand';
 import { AppState, featureState } from '../../types/storeTypes';
 import { adminService } from '../../api/services/adminService';
 import { ownerService } from '../../api/services/ownerService';
+import { userService } from '../../api/services/userService';
 
 export const createFeatureSlice: StateCreator<AppState, [], [], featureState> = (_set, get) => ({
 
@@ -16,7 +17,10 @@ export const createFeatureSlice: StateCreator<AppState, [], [], featureState> = 
             return await adminService.listFeatures();
           } else if (authType === "owner") {
             return await ownerService.listFeatures();
-          } else {
+          }  else if (authType === "user") {
+            return await userService.listFeatures();
+          } 
+          else {
             throw new Error("Invalid user type");
           }
         } catch (error) {

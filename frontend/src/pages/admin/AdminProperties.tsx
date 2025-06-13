@@ -82,10 +82,7 @@ const AdminProperties: React.FC = () => {
     applyFilters(query, statusFilter);
   };
 
-  // const indexOfLastProperty = currentPage * propertyPerPage;
-  // const indexOfFirstProperty = indexOfLastProperty - propertyPerPage;
-  // const currentProperty = properties.slice(indexOfFirstProperty, indexOfLastProperty);
-  // const totalPages = Math.ceil(properties.length / propertyPerPage);
+ 
   const handleStatusFilter = (status: string | null) => {
     setStatusFilter(status);
     applyFilters(searchQuery, status);

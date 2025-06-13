@@ -17,7 +17,6 @@ export class ServiceService implements IServiceService {
         try {
           const services = await this.serviceRepository.findAllServices();
       
-          console.log("Fetched Services:", services); 
           return {
             services,
             status: STATUS_CODES.OK,

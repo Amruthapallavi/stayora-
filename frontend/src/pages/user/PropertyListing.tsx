@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 import { Building, MapPin, BedDouble, Bath, Home } from "lucide-react";
@@ -10,6 +10,7 @@ import CTASection from "../../components/user/CTASection";
 import PopularLocations from "../../components/user/PopularLocations";
 import { IProperty } from "../../types/property";
 import Pagination from "../../components/user/UserPagination";
+import { debounce } from "lodash";
 
 const PropertyListing = () => {
   const { filteredProperties } = useAuthStore();
@@ -19,12 +20,14 @@ const PropertyListing = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
-  const [searchFilters, setSearchFilters] = useState({
-    location: "",
-    type: "",
-    bedrooms: "",
-    priceRange: [0, 30000] as [number, number],
-  });
+const [searchFilters, setSearchFilters] = useState({
+  location: "",
+  type: "",
+  bedrooms: "",
+  priceRange: [0, 100000] as [number, number],
+  features: [] as string[], 
+});
+
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,46 +66,53 @@ const PropertyListing = () => {
 
     fetchProperties(currentPage, limit);
   }, [currentPage, getAllProperties]);
-  const handleFilterChange = (key: string, value: any) => {
-    setSearchFilters({
-      ...searchFilters,
-      [key]: value,
-    });
-  };
+const handleFilterChange = (key: string, value: any) => {
+  setSearchFilters((prevFilters) => ({
+    ...prevFilters,
+    [key]: value,
+  }));
+};
 
-  //   const debouncedSearch = useCallback(
-  //   debounce(() => {
-  //     handleSearch();
-  //   }, 500),
-  //   [searchFilters]
-  // );
 
-  const handleSearch = async () => {
-    setLoading(true);
-    try {
-      const result = await filteredProperties(searchFilters);
-      setProperties(result);
-      setCurrentPage(1);
-      navigate("/user/properties", { state: { filters: searchFilters } });
-    } catch (error) {
-      console.error("Error filtering properties:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
+ const handleSearch = useCallback(async () => {
+  try {
+    const result = await filteredProperties(searchFilters);
+    setProperties(result);
+    setCurrentPage(1);
+    navigate("/user/properties", { state: { filters: searchFilters } });
+  } catch (error) {
+    console.error("Error filtering properties:", error);
+  } finally {
+    setLoading(false);
+  }
+}, [searchFilters, filteredProperties, navigate]);
+
+const debouncedSearch = useCallback(
+  debounce(() => {
+    handleSearch();
+  }, 500),
+  [handleSearch]
+);
   const resetFilters = () => {
     setSearchFilters({
       location: "",
       type: "",
       bedrooms: "",
-      priceRange: [0, 10000],
+      priceRange: [0, 100000],
+      features:[]
     });
     setProperties(allProperties);
     setCurrentPage(1);
   };
-  const handleLocationSelect = (location: string) => {
-    console.log("Selected location:", location);
+  useEffect(() => {
+  if (searchFilters.location || searchFilters.type || searchFilters.bedrooms || 
+      searchFilters.priceRange[0] > 0 || searchFilters.priceRange[1] < 30000) {
+    debouncedSearch();
+  }
+}, [searchFilters, debouncedSearch]);
+  const handleLocationSelect = (_location: string) => {
   };
   if (loading) {
     return (
@@ -123,7 +133,7 @@ const PropertyListing = () => {
         <HeroSection
           searchFilters={searchFilters}
           handleFilterChange={handleFilterChange}
-          handleSearch={handleSearch}
+  handleSearch={debouncedSearch} 
         />
 
         <div className="container mx-auto px-4 py-16">
@@ -155,6 +165,7 @@ const PropertyListing = () => {
                   <option value="highToLow">Price: High to Low</option>
                 </select>
               </div>
+              
             </div>
           )}
 

@@ -101,7 +101,13 @@ export interface IBookingDetailedData{
   ownerData?:IOwner;
 }
 
-
+export interface IReviewUserResponse{
+  user:string;
+  mail:string;
+  createdAt:string;
+  reviewText:string;
+  rating:number;
+}
 
 export interface IOwnerBookingDetails {
  bookingData:{ _id: string;

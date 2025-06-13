@@ -28,7 +28,6 @@ const Properties = () => {
     try {
       setLoading(true);
       const response = await getProperties(page, limit, searchTerm);
-      console.log(response, "response for owner properties");
       setCurrentPage(response?.currentPage ?? 1);
 
       setProperties(response.properties);
