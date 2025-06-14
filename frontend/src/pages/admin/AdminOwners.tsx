@@ -57,6 +57,7 @@ const OwnerListing = () => {
   const [totalOwners, setTotalOwners] = useState<IOwner[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
   const limit = 5;
 
   useEffect(() => {
@@ -69,6 +70,8 @@ const OwnerListing = () => {
 
   const loadOwners = async (page = 1, search = "") => {
     try {
+            setLoading(true); 
+
       const response = await listAllOwners(page, limit, search);
       setTotalOwners(response.totalOwners ?? totalOwners);
       setOwners(
@@ -84,6 +87,9 @@ const OwnerListing = () => {
       setOwners([]);
 
       notifyError("Failed to load owners.");
+    }finally{
+            setLoading(false); 
+
     }
   };
   const handleViewDetails = (owner: IOwner) => {
@@ -201,7 +207,13 @@ const OwnerListing = () => {
       }
     }
   };
-
+ if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-t-2 border-dark rounded-full"></div>
+      </div>
+    );
+  }
   return (
     <AdminLayout>
       <div className="flex">

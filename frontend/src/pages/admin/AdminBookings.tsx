@@ -27,6 +27,8 @@ const AdminBookings = () => {
   const [_filteredBookings, setFilteredBookings] = useState<ISimpleBooking[]>(
     []
   );
+  const [loading, setLoading] = useState(true);
+
   const [currentPage, setCurrentPage] = useState(1);
   const bookingsPerPage = 2;
 
@@ -52,10 +54,15 @@ const AdminBookings = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
+         setLoading(true); 
+
         const response: IBookingAdminResponse = await listAllBookings();
         setBookings(response.bookings);
       } catch (error) {
         console.error("Failed to fetch bookings:", error);
+      }finally{
+              setLoading(false); 
+
       }
     };
 
@@ -167,7 +174,13 @@ const AdminBookings = () => {
   function handleRowClick(booking: ISimpleBooking) {
     navigate(`/admin/bookings/${booking._id}`);
   }
-
+if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-t-2 border-dark rounded-full"></div>
+      </div>
+    );
+  }
   return (
     <AdminLayout>
       <div className="space-y-6">
