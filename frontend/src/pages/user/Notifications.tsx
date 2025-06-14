@@ -17,16 +17,22 @@ export default function NotificationsPage() {
   const [loadingIds, setLoadingIds] = useState<string[]>([]);
   const [loadingAll, setLoadingAll] = useState(false);
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
+const [loading, setLoading] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+              setLoading(true); 
+
         const res = await getNotifications();
         setNotifications(res.data);
       } catch (err) {
         console.error("Failed to fetch notifications", err);
+      }finally{
+              setLoading(false); 
+
       }
     };
     fetchNotifications();
@@ -123,7 +129,13 @@ export default function NotificationsPage() {
         return "Notification";
     }
   };
-
+if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-10 w-10 border-t-2 border-golden rounded-full"></div>
+      </div>
+    );
+  }
   return (
     <UserLayout>
       <div className="min-h-screen bg-gradient-to-b from-white to-[#f9f7f1] px-6 py-12 flex justify-center items-start">
@@ -166,7 +178,7 @@ export default function NotificationsPage() {
             className="flex-1 overflow-y-auto max-h-[70vh] divide-y divide-[#c9a46c44]"
             style={{ backgroundColor: "#fcfbf7" }}
           >
-            {notifications.length === 0 ? (
+            {notifications.length === 0  ? (
               <div className="flex flex-col items-center justify-center py-28 text-[#c9a46c99] select-none">
                 <Bell size={56} className="opacity-50" />
                 <p className="mt-4 text-xl font-light italic tracking-wide">
