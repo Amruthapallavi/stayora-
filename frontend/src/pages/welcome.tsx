@@ -269,13 +269,13 @@ const Welcome: React.FC = () => {
 
       {/* Featured Properties Section */}
       <section className="py-16 bg-gray-50 px-4">
-        <div className="max-w-7xl mx-auto">
+        {/* <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Featured Properties</h2>
             <p className="text-gray-600 text-lg">Discover some of our most popular listings</p>
-          </div>
+          </div> */}
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((item) => (
               <div key={item} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition">
                 <div className="relative h-60">
@@ -301,14 +301,14 @@ const Welcome: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
+          </div> */}
           
-          <div className="text-center mt-8">
+          {/* <div className="text-center mt-8">
             <Button className="bg-yellow-600 hover:bg-yellow-500 text-white">
               View All Properties
             </Button>
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
       </section>
 
       {/* Testimonials Section */}
@@ -364,8 +364,8 @@ const Welcome: React.FC = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-md">
+          {/* <div className="grid md:grid-cols-2 gap-8"> */}
+            {/* <div className="bg-white p-8 rounded-xl shadow-md">
               <h3 className="text-2xl font-bold mb-4">Get in Touch</h3>
               <form className="space-y-4">
                 <div>
@@ -401,7 +401,7 @@ const Welcome: React.FC = () => {
                   </Button>
                 </div>
               </form>
-            </div>
+            </div> */}
             
             <div className="bg-white p-8 rounded-xl shadow-md">
               <h3 className="text-2xl font-bold mb-4">Contact Information</h3>
@@ -441,7 +441,7 @@ const Welcome: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        {/* </div> */}
       </section>
 
       {/* CTA Section */}

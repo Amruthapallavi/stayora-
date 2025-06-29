@@ -170,7 +170,6 @@ const OwnerListing = () => {
       try {
         await deleteUser(id, "owner");
 
-        // Remove the deleted owner from the list
         setOwners((prevOwners) =>
           prevOwners.filter((owner) => owner.id !== id)
         );

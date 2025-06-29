@@ -13,7 +13,6 @@ export default function BookingConfirmationPage({
   moveInDate,
   endDate,
 }: Props) {
-  // Helper to color payment status
   const paymentStatusColor = (status?: string) => {
     if (!status) return "text-gray-700";
     const lower = status.toLowerCase();
