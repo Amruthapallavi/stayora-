@@ -1,7 +1,7 @@
 // import axios from "axios";
 
 import {  CancelBookingResponse, IBookingDetailsResponse } from "../../types/booking";
-import { IChatThread, IConversationResponse, ISendMessageData, IUpdateReadResponse } from "../../types/chat";
+import { IChatThread, IConversationResponse, IUpdateReadResponse } from "../../types/chat";
 import { IOwner } from "../../types/owner";
 import {
   IProperty,
@@ -29,7 +29,7 @@ export const ownerService = {
     const response = await ownerApi.get("/dashboard");
     return response.data;
   },
-  addProperty: async (propertyData: Partial<IProperty>) => {
+  addProperty: async (propertyData: FormData) => {
     const response = await ownerApi.post("/add-property", propertyData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -115,7 +115,7 @@ export const ownerService = {
     const response = await ownerApi.get("/conversations", {});
     return response.data.data;
   },
-  sendMessage: async (data:ISendMessageData
+  sendMessage: async (data:FormData
   ) => {
     console.log(data,"that send form chat")
     const res = await ownerApi.post("/message", data ,{

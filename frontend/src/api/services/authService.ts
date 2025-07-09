@@ -1,11 +1,10 @@
 import { IOwner } from "../../types/owner";
-import { ISignUpData } from "../../types/user";
 import { adminApi, ownerApi, userApi } from "../api";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const authService = {
-  userSignup: async (userData: ISignUpData) => {
+  userSignup: async (userData: FormData) => {
     const response = await userApi.post("/signup", userData);
     return response.data;
   },
@@ -73,7 +72,7 @@ export const authService = {
   },
  
 
-  ownerSignup: async (ownerData: ISignUpData) => {
+  ownerSignup: async (ownerData: FormData) => {
     console.log(ownerData,"owner sigu=nuop")
     const response = await ownerApi.post("/signup", ownerData, {
       headers: { "Content-Type": "multipart/form-data" },

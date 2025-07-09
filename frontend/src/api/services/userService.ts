@@ -133,14 +133,7 @@ filteredProperties: async (data: PropertyFilter): Promise<IProperty[]> => {
     return response.data;
   },
 
-  sendMessage: async (data: {
-    userId: string;
-    receiverId: string;
-    propertyId: string;
-    content: string;
-    room: string;
-    image:string;
-  }) => {
+  sendMessage: async (data: FormData) => {
     
     const res = await userApi.post("/message", data,{
       headers: { "Content-Type": "multipart/form-data" },
