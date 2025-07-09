@@ -13,11 +13,12 @@ import { Button } from "../components/ui/button";
 const Welcome: React.FC = () => {
   const  { user,isAuthenticated,authType,logout} =useAuthStore();
  const navigate=useNavigate();
-  useEffect(() => {
-    axios
-      .get("http://localhost:3000/")
-      .catch((error) => console.error("Error:", error));
-  }, []);
+ useEffect(() => {
+  axios
+    .get(`${import.meta.env.VITE_BACKEND_URL}/`) 
+    .catch((error) => console.error("Error:", error));
+}, []);
+
   const [showDropdown, setShowDropdown] = useState(false);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);

@@ -31,7 +31,6 @@ const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ planName, price
       return;
     }
 
-    // Call your backend to create order
     const response = await fetch("http://localhost:3000/api/owner/subscribe", {
       method: "POST",
       headers: {
@@ -44,7 +43,7 @@ const SubscriptionButton: React.FC<SubscriptionButtonProps> = ({ planName, price
     const { id, amount, currency } = data;
 
     const options = {
-      key: "YOUR_RAZORPAY_KEY_ID", // Replace with your Razorpay key
+      key: "YOUR_RAZORPAY_KEY_ID", 
       amount: amount.toString(),
       currency: currency,
       name: "Stayora",
