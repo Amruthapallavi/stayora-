@@ -275,7 +275,7 @@ interface IBookingData {
   totalCost: number;
   refundAmount: number;
   addOnCost: number;
-  addOn: any[]; // You can define a proper interface if addons have a structure
+  addOn: any[];
   ownerId: string;
   userId: string;
   propertyId: IPropertyDetails;
@@ -370,3 +370,26 @@ export interface IOwnerData {
 
 
 
+export interface GetReviewByUserResponse {
+  review: Review | null;
+}
+
+export interface Review {
+  _id: string;
+  userId: string;
+  propertyId: string;
+  rating: number;
+  comment: string;
+  createdAt: string; 
+  updatedAt: string;
+}
+
+
+export interface CancelBookingResponse {
+  message: string;
+}
+export interface IPaymentVerificationResponse {
+  success: boolean;
+  message: string;
+  booking: IBooking;
+}

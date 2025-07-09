@@ -115,15 +115,15 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthState> = (set, 
     }
   },
 
-  forgotPassword: async (email, authType) => {
+  forgotPassword: async (email:string, authType) => {
     try {
       let response;
       switch (authType) {
         case "user":
-          response = await authService.userForgotPassword({ email });
+          response = await authService.userForgotPassword(email );
           break;
         case "owner":
-          response = await authService.OwnerForgotPassword({ email });
+          response = await authService.OwnerForgotPassword(email);
           break;
       }
       return response;

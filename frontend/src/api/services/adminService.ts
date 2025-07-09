@@ -1,9 +1,10 @@
-import { IFeature } from "../../types/feature";
+import { FeatureData, IFeature } from "../../types/feature";
 import {  IBookingDetailsResponse } from "../../types/booking";
 import { OwnersResponse } from "../../types/owner";
 import { IProperty, IPropertyDetails } from "../../types/property";
 import { adminApi } from "../api";
 import { IReviewResponse } from "../../types/response";
+import {  IServiceData } from "../../types/service";
 
 export const adminService = {
   getDashboardData: async () => {
@@ -62,7 +63,8 @@ export const adminService = {
 
     return response.data;
   },
-  addService: async (serviceData: any) => {
+  addService: async (serviceData: IServiceData) => {
+    console.log(serviceData,"service data")
     const response = await adminApi.post("/add-service", serviceData);
     return response.data;
   },
@@ -86,7 +88,8 @@ export const adminService = {
     const response = await adminApi.get("/features");
     return response.data.features;
   },
-  addFeature: async (featureData: any) => {
+  addFeature: async (featureData: FeatureData) => {
+    console.log(featureData,"feature data")
     const response = await adminApi.post("/add-feature", featureData);
     return response.data;
   },

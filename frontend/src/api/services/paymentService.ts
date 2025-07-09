@@ -1,3 +1,4 @@
+import { IPaymentVerificationRequest } from "../../types/razorPay";
 import { userApi } from "../api";
 
 const createOrder = async (amount: number,id:string) => {
@@ -5,7 +6,7 @@ const createOrder = async (amount: number,id:string) => {
   return res.data;
 };
 
-const verifyPayment = async (paymentData: any) => {
+const verifyPayment = async (paymentData: IPaymentVerificationRequest) => {
   const res = await userApi.post("/razorpay/verify", paymentData);
   return res.data;
 };

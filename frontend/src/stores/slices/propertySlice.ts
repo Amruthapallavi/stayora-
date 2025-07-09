@@ -4,6 +4,7 @@ import { propertyState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';
 import { adminService } from '../../api/services/adminService';
+import { IProperty, PropertyFilter } from '../../types/property';
 
 export const createPropertySlice: StateCreator<AppState, [], [], propertyState> = (_set, get) => ({
   
@@ -20,27 +21,31 @@ export const createPropertySlice: StateCreator<AppState, [], [], propertyState> 
           }
         },
   
-    filteredProperties: async (data: any) => {
-         const { authType } = get();
-         if (!authType) return false;
-         try {
-           let response;
-           switch (authType) {
-             case "user":
-               response = await userService.filteredProperties(data);
-               break;
-             case "owner":
-               break;
-             default:
-               return false;
-           }
-           return response;
-         } catch (error) {
-           console.error("Error checking user status", error);
-           return false;
-         }
-       },
-         updateProperty: async (propertyId: string,formData:any) => {
+  filteredProperties: async (data: PropertyFilter): Promise<IProperty[] | []> => {
+  const { authType } = get();
+  if (!authType) 
+    return [];
+
+  try {
+    let response: IProperty[] | null = null;
+
+    switch (authType) {
+      case "user":
+        response = await userService.filteredProperties(data);
+        break;
+
+      default:
+        return [];
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error checking user status", error);
+    return [];
+  }
+},
+
+         updateProperty: async (propertyId: string,formData:Partial<IProperty>) => {
                try {
                  const { authType } = get();
                  if (!authType || authType !== "owner")
@@ -145,17 +150,17 @@ export const createPropertySlice: StateCreator<AppState, [], [], propertyState> 
                 throw error;
               }
             },
-             locationProperties: async () => {
-                   try {
-                      const { authType } = get();
-                         if (!authType || authType !== "user")
-                               throw new Error("Not authorized as user");
-                             return await userService.locationProperties();
-                           } catch (error) {
-                             console.error("Failed to fetch property", error);
-                             throw error;
-                           }
-                         },
+            //  locationProperties: async () => {
+            //        try {
+            //           const { authType } = get();
+            //              if (!authType || authType !== "user")
+            //                    throw new Error("Not authorized as user");
+            //                  return await userService.locationProperties();
+            //                } catch (error) {
+            //                  console.error("Failed to fetch property", error);
+            //                  throw error;
+            //                }
+            //              },
         getReviews: async (propertyId: string) => {
               try {
                 const { authType } = get();

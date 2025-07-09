@@ -4,6 +4,7 @@ import { chatState } from '../../types/storeTypes';
 import { ownerService } from '../../api/services/ownerService';
 import { userService } from '../../api/services/userService';
 import { notificationService } from '../../api/services/notificationService';
+import { IUpdateReadResponse } from '../../types/chat';
 
 export const createChatSlice: StateCreator<AppState, [], [], chatState> = (_set, get) => ({
 
@@ -68,7 +69,7 @@ export const createChatSlice: StateCreator<AppState, [], [], chatState> = (_set,
                 throw error;
               }
             },
-            markMessagesAsRead: async (convId: string, userId: string) => {
+            markMessagesAsRead: async (convId: string, userId: string): Promise<IUpdateReadResponse> => {
               try {
                 const { isAuthenticated, authType } = get();
       

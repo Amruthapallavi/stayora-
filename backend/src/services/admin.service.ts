@@ -497,19 +497,3 @@ export default AdminService;
 
 
 
-
-
- // async getAdminDashboardStats(): Promise<{
-  //   totalUsers: number;
-  //   totalVendors: number;
-  //   status: number;
-  // }> {
-  //   // const totalUsers = await userRepository.countDocuments({});
-  //   // const totalVendors = await ownerRepository.countDocuments({});
-
-  //   return {
-  //     // totalUsers,
-  //     // totalVendors,
-  //     status: STATUS_CODES.OK,
-  //   };
-  // }

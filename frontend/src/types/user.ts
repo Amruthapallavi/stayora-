@@ -17,6 +17,14 @@ status: string;
     isVerified:boolean;
   }
 
+export interface ISignUpData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword?: string; 
+  govtId?: File; 
+}
 
  export interface Message {
     _id: string;

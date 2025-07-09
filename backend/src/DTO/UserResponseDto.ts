@@ -1,3 +1,4 @@
+import { Request } from "express";
 
 export interface AddressDTO {
   houseNo: string;
@@ -20,3 +21,10 @@ export interface UserResponseDTO {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface RequestWithUser extends Request {
+  user?: {
+    userId: string;
+  };
+}
+

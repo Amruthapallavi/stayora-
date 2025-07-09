@@ -1,10 +1,11 @@
 import { IOwner } from "../../types/owner";
+import { ISignUpData } from "../../types/user";
 import { adminApi, ownerApi, userApi } from "../api";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const authService = {
-  userSignup: async (userData: any) => {
+  userSignup: async (userData: ISignUpData) => {
     const response = await userApi.post("/signup", userData);
     return response.data;
   },
@@ -49,7 +50,7 @@ export const authService = {
     const response = await userApi.post("/logout");
     return response.data;
   },
-  userForgotPassword:async(email:any)=>{
+  userForgotPassword:async(email:string)=>{
     const response = await userApi.post("/forgot-pass",email);
     return response.data;
   },
@@ -62,7 +63,9 @@ export const authService = {
     return response.data;
   },
   verifySubscription:async(paymentData:any)=>{
+    console.log(paymentData,"payment data verifySubscription any")
   const response = await ownerApi.post("/verify-subscription",{paymentData});
+  console.log(response.data,"verifySubscription return data")
     return response.data;
   },
   getGoogleAuthUrl: () => {
@@ -70,7 +73,8 @@ export const authService = {
   },
  
 
-  ownerSignup: async (ownerData: any) => {
+  ownerSignup: async (ownerData: ISignUpData) => {
+    console.log(ownerData,"owner sigu=nuop")
     const response = await ownerApi.post("/signup", ownerData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -99,7 +103,7 @@ export const authService = {
     return response.data;
 
   },
-  OwnerForgotPassword:async(email:any)=>{
+  OwnerForgotPassword:async(email:string)=>{
     const response = await ownerApi.post("/forgot-pass",email);
     return response.data;
   },

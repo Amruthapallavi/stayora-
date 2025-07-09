@@ -8,7 +8,7 @@ import './src/utils/cron';
 import { initializeSocket } from "./src/config/socket";
 
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT;
 
 const startServer = async () => {
   try {

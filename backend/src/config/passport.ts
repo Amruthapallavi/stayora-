@@ -36,7 +36,6 @@ passport.use(
           return done(null, user);
         }
 
-        // If user is not found, return an error to redirect to signup
         return done(null, false);
       } catch (error) {
         return done(error);
@@ -45,12 +44,10 @@ passport.use(
   )
 );
 
-// Serialize User (for session)
 passport.serializeUser((user: any, done) => {
   done(null, user._id.toString());
 });
 
-// Deserialize User (for session)
 passport.deserializeUser(async (id: string, done) => {
   try {
     const user = await User.findById(id);

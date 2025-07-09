@@ -276,10 +276,9 @@ const [emojiPickerPosition, setEmojiPickerPosition] = useState({ top: 0, left: 0
         ...existing,
         lastMessage: newMessage,
         lastMessageTime: newMessage.createdAt,
-        // Only increment unread count if message is NOT for the currently selected conversation
-        // AND the message is not sent by the current user
+     
         unreadCount: isMessageForSelectedConversation || senderId === currentUserId
-          ? 0  // Don't increment if it's the current conversation or user sent the message
+          ? 0  
           : (existing.unreadCount || 0) + 1,
       };
       
@@ -320,12 +319,12 @@ const [emojiPickerPosition, setEmojiPickerPosition] = useState({ top: 0, left: 0
       try {
         const senderId = user.userId || user.id;
         const result = await getConversation(senderId, ownerId);
-
+console.log(result,"checking partner");
         if (result && result.data) {
           setMessages(result.data || []);
 
-          if (result.data.partner) {
-            setChatPartner(result.data.partner);
+          if (result.chatPartner) {
+            setChatPartner(result.chatPartner);
           }
         }
         setChatPartner(result.chatPartner);

@@ -1,13 +1,17 @@
 import { userApi } from "../api";
 import { IUser } from "../../types/user";
-import {  IPropertyDetails } from "../../types/property";
-import {  IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
+import {  IProperty, IPropertyDetails, PropertyFilter, 
+  // PropertyResponse 
+} from "../../types/property";
+import {  CancelBookingResponse, IBookingDetailsResponse, IBookingResponse } from "../../types/booking";
 import { IServiceResponse } from "../../types/service";
 import { WalletData } from "../../types/wallet";
-import { IReviewResponse } from "../../types/response";
+import { IResponse, IReviewResponse } from "../../types/response";
+import { IChatThread, IConversationResponse, IUpdateReadResponse } from "../../types/chat";
+import { CartResponse } from "../../types/cart";
 
 export const userService = {
-  getAllProperties: async (page:number,limit:number): Promise<any> => {
+  getAllProperties: async (page:number,limit:number): Promise< any> => {
     const response = await userApi.get(`/all-Properties?page=${page}&limit=${limit}`);
     return response.data;
   },
@@ -21,9 +25,11 @@ export const userService = {
     },
     getReviewByUser:async(bookingId:string):Promise<any>=>{
         const response=await userApi.get(`/booking/user-review/${bookingId}`);
+        console.log(response.data,"getReviewByUser");
         return response.data;
     },
-filteredProperties: async (data: any): Promise<any> => {
+filteredProperties: async (data: PropertyFilter): Promise<IProperty[]> => {
+  console.log(data,"filered fdta")
   const response = await userApi.get(`/property/filtered`, {
     params: data,
     paramsSerializer: (params) =>
@@ -46,21 +52,26 @@ filteredProperties: async (data: any): Promise<any> => {
       return response.data;
     },
 
-  locationProperties:async (): Promise<any> => {
-    const response = await userApi.get("/loc-properties");
-    return response.data;
-  },
-  getConversation: async (sender: string, receiver: string): Promise<any> => {
+  // locationProperties:async (): Promise<void> => {
+  //   const response = await userApi.get("/loc-properties");
+  //   console.log(response.data,"locationProperties");
+  //   return response.data;
+  // },
+
+  getConversation: async (sender: string, receiver: string): Promise<IConversationResponse> => {
     const response = await userApi.get("/conversation", {
       params: { sender, receiver },
     });
+        console.log(response.data,"get conversation user");
+
     return response.data;
   },
 
-  markMessageAsRead: async (convId: string, userId: string): Promise<any> => {
+  markMessageAsRead: async (convId: string, userId: string): Promise<IUpdateReadResponse> => {
     const response = await userApi.patch("/messages/mark-as-read", {
       params: { convId, userId },
     });
+
     return response.data;
   },
  submitReview: async (
@@ -75,8 +86,9 @@ filteredProperties: async (data: any): Promise<any> => {
   });
   return response.data;
 },
-  listConversations: async (): Promise<any[]> => {
+  listConversations: async (): Promise<IChatThread[]> => {
     const response = await userApi.get("/conversations", {});
+
     return response.data.data;
   },
   saveBookingDates: async (
@@ -126,7 +138,7 @@ filteredProperties: async (data: any): Promise<any> => {
     receiverId: string;
     propertyId: string;
     content: string;
-    room: any;
+    room: string;
     image:string;
   }) => {
     
@@ -136,19 +148,21 @@ filteredProperties: async (data: any): Promise<any> => {
     return res.data;
   },
 
-  getCartDetails: async (id: string): Promise<any> => {
+  getCartDetails: async (id: string): Promise<CartResponse> => {
     const response = await userApi.get(`/checkout/${id}`);
+
     return response.data;
   },
   changePassword: async (data: {
     userId: string;
     oldPass: string;
     newPass: string;
-  }): Promise<any> => {
+  }): Promise<IResponse> => {
     const response = await userApi.patch(`/change-password/${data.userId}`, {
       oldPassword: data.oldPass,
       newPassword: data.newPass,
     });
+    console.log(response.data,"change password user");
 
     return response.data;
   },
@@ -169,8 +183,9 @@ filteredProperties: async (data: any): Promise<any> => {
     const response = await userApi.get(`/profile/${id}`);
     return response.data;
   },
-  cancelBooking: async (id: string, reason: string): Promise<any> => {
+  cancelBooking: async (id: string, reason: string): Promise<CancelBookingResponse> => {
     const response = await userApi.post(`/bookings/cancel/${id}`, { reason });
+
     return response.data;
   },
 };

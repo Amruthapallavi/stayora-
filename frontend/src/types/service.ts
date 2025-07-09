@@ -2,7 +2,7 @@
 
 
 export interface IService{
-    _id:string,
+    _id:string | undefined,
     serviceId?:string,
     name: string;
     description: string;
@@ -19,6 +19,15 @@ export interface IService{
 export interface IServiceResponse {
   services: IService[];
 }
+export interface IServiceData {
+  name: string;
+  description: string;
+  price: string; 
+  image: string; 
+  contactMail: string;
+  contactNumber: string;
+}
+
 
 export interface Service {
   _id: string;

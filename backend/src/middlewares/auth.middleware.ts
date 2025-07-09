@@ -30,13 +30,12 @@ export const authMiddleware = (allowedRoles: string[]) => {
         return;
       }
 
-      // Assign correct ID based on type
       if (decoded.type === "owner") {
-        (req as any).userId = decoded.ownerId; // Assign ownerId
+        (req as any).userId = decoded.ownerId; 
       } else if (decoded.type === "user") {
-        (req as any).userId = decoded.userId; // Assign userId
+        (req as any).userId = decoded.userId; 
       } else if (decoded.type === "admin") {
-        (req as any).userId = decoded.adminId; // Assign adminId
+        (req as any).userId = decoded.adminId; 
       }
 
       (req as any).userType = decoded.type;

@@ -1,6 +1,7 @@
 // import axios from "axios";
 
-import {  IBookingDetailsResponse } from "../../types/booking";
+import {  CancelBookingResponse, IBookingDetailsResponse } from "../../types/booking";
+import { IChatThread, IConversationResponse, ISendMessageData, IUpdateReadResponse } from "../../types/chat";
 import { IOwner } from "../../types/owner";
 import {
   IProperty,
@@ -28,13 +29,13 @@ export const ownerService = {
     const response = await ownerApi.get("/dashboard");
     return response.data;
   },
-  addProperty: async (propertyData: any) => {
+  addProperty: async (propertyData: Partial<IProperty>) => {
     const response = await ownerApi.post("/add-property", propertyData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
   },
-  getConversation: async (sender: string, receiver: string): Promise<any> => {
+  getConversation: async (sender: string, receiver: string): Promise<IConversationResponse> => {
     const response = await ownerApi.get("/conversation", {
       params: { sender, receiver },
     });
@@ -43,7 +44,7 @@ export const ownerService = {
   markMessageAsRead: async (
     convId: string,
     userId: string
-  ): Promise<IResponse> => {
+  ): Promise<IUpdateReadResponse> => {
     const response = await ownerApi.patch("/messages/mark-as-read", {
       params: { convId, userId },
     });
@@ -61,12 +62,11 @@ export const ownerService = {
     userId: string;
     oldPass: string;
     newPass: string;
-  }): Promise<any> => {
+  }): Promise<IResponse> => {
     const response = await ownerApi.patch(`/change-password/${data.userId}`, {
       oldPassword: data.oldPass,
       newPassword: data.newPass,
     });
-
     return response.data;
   },
   updateProperty: async (id: string, formData: Partial<IProperty>) => {
@@ -96,6 +96,7 @@ export const ownerService = {
     const response = await ownerApi.get(
       `/bookings?page=${page}&limit=${limit}`
     );
+    console.log(response.data,"get owner booking any")
     return response.data;
   },
   getPropertyById: async (id: string): Promise<IPropertyDetails> => {
@@ -110,24 +111,20 @@ export const ownerService = {
     const response = await ownerApi.get(`/wallet/${id}`);
     return response.data;
   },
-  listConversations: async (): Promise<any[]> => {
+  listConversations: async (): Promise<IChatThread[]> => {
     const response = await ownerApi.get("/conversations", {});
     return response.data.data;
   },
-  sendMessage: async (data: {
-    userId: string;
-    receiverId: string;
-    propertyId: string;
-    content: string;
-    room: any;
-    image:string;
-  }) => {
+  sendMessage: async (data:ISendMessageData
+  ) => {
+    console.log(data,"that send form chat")
     const res = await ownerApi.post("/message", data ,{
       headers: { "Content-Type": "multipart/form-data" },
     });
+
     return res.data;
   },
-  cancelBooking: async (id: string, reason: string): Promise<any> => {
+  cancelBooking: async (id: string, reason: string): Promise<CancelBookingResponse> => {
     const response = await ownerApi.post(`/bookings/cancel/${id}`, { reason });
     return response.data;
   },

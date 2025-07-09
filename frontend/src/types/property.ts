@@ -57,6 +57,13 @@ export interface PropertyResponse {
   totalProperties?:number;
 }
 
+export interface PropertyFilter {
+  bedrooms: string;
+  features: string[];
+  location: string;
+  priceRange: [number, number];
+}
+
 
 export interface IPropertyDetails{
   Property:IProperty;
