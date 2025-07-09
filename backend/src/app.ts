@@ -12,9 +12,9 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 const accessLogStream = rfs.createStream('access.log', {
-  interval: '1d',         // rotate daily
-  maxFiles: 30,           // keep logs for 30 days
-  path: path.join(__dirname, 'logs') // logs directory
+  interval: '1d',        
+  maxFiles: 30,           
+  path: path.join(__dirname, 'logs') 
 });
 
 app.use(morgan("dev"));

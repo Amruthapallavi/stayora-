@@ -1,7 +1,7 @@
 import {  INotificationApiResponse } from "./notification";
 import { IAdminDashboardData } from "./admin";
 import { IResponse, IReviewResponse } from "./response";
-import { ISignUpData, IUser, IUserResponse } from "./user";
+import {  IUser, IUserResponse } from "./user";
 import { IOwner, OwnersResponse } from "./owner";
 import { IProperty, IPropertyDetails, PropertyFilter, PropertyResponse } from "./property";
 import {
@@ -16,7 +16,7 @@ import { ICart } from "./cart";
 import { FeatureData, IFeature } from "./feature";
 import {  IServiceData, IServiceResponse } from "./service";
 import { WalletData } from "./wallet";
-import { IChatThread, IConversationResponse, ISendMessageData, IUpdateReadResponse } from "./chat";
+import { IChatThread, IConversationResponse, IUpdateReadResponse } from "./chat";
 
 type AuthType = "user" | "owner" | "admin";
 
@@ -26,7 +26,7 @@ export interface AuthState {
   isAuthenticated: boolean;
 
   login: (email: string, password: string, authType: AuthType) => Promise<void>;
- signup: (data: ISignUpData, authType: AuthType) => Promise<IResponse>
+ signup: (data: FormData, authType: AuthType) => Promise<IResponse>
   verifyOtp: (email: string, otp: string, authType: AuthType) => Promise<void>;
   resendOtp: (email: string, authType: AuthType) => Promise<void>;
   forgotPassword: (email: string, authType: AuthType) => Promise<void>;
@@ -63,12 +63,12 @@ updateProperty: (propertyId: string, formData: Partial<IProperty>) => Promise<vo
   filteredProperties: (data: PropertyFilter) => Promise<IProperty[] |[]>;
   submitReview:(bookingId:string,reviewRate:number,reviewText:string)=>Promise<void>;
   rejectProperty: (propertyId: string, reason: string) => Promise<IResponse>;
-  addProperty: (propertyData: Partial<IProperty>) => Promise<IResponse>;
+  addProperty: (propertyData: FormData) => Promise<IResponse>;
   getReviews:(propertyId:string)=>Promise<IReviewResponse>;
 }
 
 export interface chatState {
-  sendMessage: (data: ISendMessageData) => Promise<any>;
+  sendMessage: (data: FormData) => Promise<any>;
   getConversation: (sender: string, receiver: string) => Promise<IConversationResponse>;
   listConversations: () => Promise<IChatThread[]>;
   getNotifications: () => Promise<INotificationApiResponse>;

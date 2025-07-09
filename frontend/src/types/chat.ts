@@ -76,7 +76,7 @@ interface IChatPartner {
   isSubscribed: boolean;
   isVerified: boolean;
   name: string;
-  phone: number;   
+  phone: string;   
 
   rejectionReason: string | null;
   status: string;
@@ -85,7 +85,13 @@ interface IChatPartner {
   updatedAt: string;
 }
 
-
+export interface ChatPartner {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  profileImage?: string;
+}
 export interface IConversationResponse {
   message: string;
   data: IChatMessage[];
@@ -99,4 +105,20 @@ export interface ISendMessageData {
   content: string;
   room: string;
   image: string; 
+}
+export interface Message {
+  id: string;
+  content: string;
+  sender: string;
+  timestamp: string;
+  isOwner: boolean;
+  image?: string; 
+}
+
+export interface ConversationProps {
+  conversation: any[];
+  selectedConversation: string;
+  propertyId: string;
+  partner: ChatPartner;
+  onMessageSent?: (message: { content: string; timestamp: string }) => void;
 }

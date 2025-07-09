@@ -2,7 +2,7 @@
 
 
 export interface IService{
-    _id:string | undefined,
+    _id:string ,
     serviceId?:string,
     name: string;
     description: string;
@@ -22,7 +22,7 @@ export interface IServiceResponse {
 export interface IServiceData {
   name: string;
   description: string;
-  price: string; 
+  price: number; 
   image: string; 
   contactMail: string;
   contactNumber: string;

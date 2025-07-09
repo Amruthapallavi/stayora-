@@ -3,26 +3,12 @@ import { ScrollArea } from "../../components/ui/scroll-area";
 import { notifyError, notifySuccess } from "../../utils/notifications";
 import { useAuthStore } from "../../stores/authStore";
 import io from "socket.io-client";
-import { IUser } from "../../types/user";
 import { Paperclip, Smile } from "lucide-react";
 import EmojiPicker from 'emoji-picker-react';
+import { 
+  // ChatPartner,
+   ConversationProps, Message } from "../../types/chat";
 
-interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  timestamp: string;
-  isOwner: boolean;
-  image?: string; 
-}
-
-interface ConversationProps {
-  conversation: any[];
-  selectedConversation: string;
-  propertyId: string;
-  partner: IUser;
-  onMessageSent?: (message: { content: string; timestamp: string }) => void;
-}
 
 const Conversation = ({
   conversation,
@@ -200,7 +186,7 @@ const Conversation = ({
   }, [conversation]);
 
   useEffect(() => {
-    const socketInstance = io("http://localhost:8000");
+    const socketInstance = io("http://localhost:3000");
     setSocket(socketInstance);
 
     return () => {

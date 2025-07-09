@@ -17,9 +17,10 @@ import ConversationList from "../../components/chat/ConversationList";
 import PropertySummary from "../../components/chat/PropertySummary";
 import Conversation from "../../components/chat/Conversation";
 import OwnerLayout from "../../components/owner/OwnerLayout";
-import { IUser, Message } from "../../types/user";
+import { Message } from "../../types/user";
 import moment from "moment";
 import { DisplayNotification } from "../../components/NotificationTab";
+import { ChatPartner } from "../../types/chat";
 
 const OwnerChatPage = () => {
   const [selectedConversation, setSelectedConversation] = useState<
@@ -38,7 +39,7 @@ const OwnerChatPage = () => {
   const [propertyData, setPropertyData] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [socket, setSocket] = useState<any>(null);
-  const [partner, setPartner] = useState<IUser>();
+  const [partner, setPartner] = useState<ChatPartner>();
   const [notifications, setNotifications] = useState<any[]>([]);
   const selectedConvObject = conversations.find(
     (c) => c._id === selectedConversation
@@ -144,6 +145,7 @@ const showMore = () => setVisibleCount(prev => prev + 4);
             chatPartnerId
           );
           setMessages(result.data);
+          console.log(result,"for chekcing")
           setPartner(result.chatPartner);
           await markMessagesAsRead(selectedConversation, user.id);
           await reloadData();
@@ -160,7 +162,7 @@ const showMore = () => setVisibleCount(prev => prev + 4);
   useEffect(() => {
     if (!user) return;
      const socketInstance = io(
-  import.meta.env.DEV ? "http://localhost:8000" : "https://api.amrithap.live",
+  import.meta.env.DEV ? "http://localhost:3000" : "https://api.amrithap.live",
   {
     query: {
       userId: user.id,

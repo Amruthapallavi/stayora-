@@ -15,7 +15,7 @@ const Welcome: React.FC = () => {
  const navigate=useNavigate();
   useEffect(() => {
     axios
-      .get("http://localhost:8000/")
+      .get("http://localhost:3000/")
       .catch((error) => console.error("Error:", error));
   }, []);
   const [showDropdown, setShowDropdown] = useState(false);

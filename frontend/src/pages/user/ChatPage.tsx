@@ -34,14 +34,8 @@ import { Message } from "../../types/user";
 import NotificationsTab from "../../components/NotificationTab";
 import Navbar from "../../components/user/Navbar";
 import EmojiPicker from 'emoji-picker-react';
+import { ChatPartner } from "../../types/chat";
 
-interface ChatPartner {
-  _id: string;
-  name: string;
-  email: string;
-  phone: number;
-  profileImage?: string;
-}
 
 const ChatPage = () => {
   let { propertyId, ownerId } = useParams();
@@ -207,7 +201,7 @@ const [emojiPickerPosition, setEmojiPickerPosition] = useState({ top: 0, left: 0
   useEffect(() => {
     if (!user) return;
     const socketInstance = io(
-  import.meta.env.DEV ? "http://localhost:8000" : "https://api.amrithap.live",
+  import.meta.env.DEV ? "http://localhost:3000" : "https://api.amrithap.live",
   {
     query: {
       userId: user.id,
