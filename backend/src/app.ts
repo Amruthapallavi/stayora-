@@ -26,6 +26,7 @@ app.use(
     credentials: true,
   })
 );
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
