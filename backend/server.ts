@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
-import app from "./app";
-import connectDB from "./config/db";
+import app from "./src/app";
+import connectDB from "./src/config/db";
 import http from "http";
-import './utils/cron';
+import './src/utils/cron';
 
-import { initializeSocket } from "./config/socket";
+import { initializeSocket } from "./src/config/socket";
 
 
 const PORT = process.env.PORT;
