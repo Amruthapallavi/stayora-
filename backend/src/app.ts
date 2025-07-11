@@ -22,7 +22,7 @@ app.use(morgan("dev"));
 app.use(morgan("combined", { stream: accessLogStream }));
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'https://www.amrithap.live',
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );

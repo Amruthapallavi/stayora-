@@ -1,6 +1,4 @@
 import * as React from "react";
-import { useEffect } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa";
 import { useAuthStore } from "../stores/authStore";
@@ -13,11 +11,6 @@ import { Button } from "../components/ui/button";
 const Welcome: React.FC = () => {
   const  { user,isAuthenticated,authType,logout} =useAuthStore();
  const navigate=useNavigate();
- useEffect(() => {
-  axios
-    .get(`${import.meta.env.VITE_BACKEND_URL}/`) 
-    .catch((error) => console.error("Error:", error));
-}, []);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const aboutRef = useRef<HTMLDivElement>(null);
