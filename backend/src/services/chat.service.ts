@@ -17,11 +17,11 @@ import { mapUserToDTO } from "../mappers/userMapper";
 export class ChatService implements IChatService {
   constructor(
     @inject(TYPES.MessageRepository)
-      private messageRepository: IMessageReposiotry,
+      private _messageRepository: IMessageReposiotry,
       @inject(TYPES.UserRepository)
-      private userRepository: IUserRepository,
+      private _userRepository: IUserRepository,
       @inject(TYPES.OwnerRepository)
-      private ownerRepository: IOwnerRepository
+      private _ownerRepository: IOwnerRepository
     
   ){}  
 
@@ -32,7 +32,7 @@ export class ChatService implements IChatService {
     const receiverObj = new mongoose.Types.ObjectId(input.receiver);
     const propertyObj = new mongoose.Types.ObjectId(input.propertyId );
 
-    const message = await this.messageRepository.create({
+    const message = await this._messageRepository.create({
       sender: senderObj,
       senderModel: input.senderModel,
       receiver: receiverObj,
@@ -56,9 +56,9 @@ async getConversation(
   data: IMessage[];
   chatPartner: UserResponseDTO | OwnerResponseDTO;
 }> {
-  const messages = await this.messageRepository.findConversation(sender, receiver);
-  const user = await this.userRepository.findOne({ _id: receiver });
-  const owner = user ? null : await this.ownerRepository.findOne({ _id: receiver });
+  const messages = await this._messageRepository.findConversation(sender, receiver);
+  const user = await this._userRepository.findOne({ _id: receiver });
+  const owner = user ? null : await this._ownerRepository.findOne({ _id: receiver });
 
   if (!user && !owner) {
     throw new Error("Chat partner not found");
@@ -79,7 +79,7 @@ async getConversation(
   async listConversations(
     userId: string
   ): Promise<{ message: string; status: number; data: any[] }> {
-    const conversations = await this.messageRepository.aggregateConversations(
+    const conversations = await this._messageRepository.aggregateConversations(
       userId
     );
     return {
@@ -92,7 +92,7 @@ async getConversation(
     convId: string,
     userId: string
   ): Promise<{ message: string; status: number; data: any }> {
-    const updatedCount = await this.messageRepository.markMessagesAsRead(convId, userId);    return {
+    const updatedCount = await this._messageRepository.markMessagesAsRead(convId, userId);    return {
       message: "Messages marked as read",
       status: 200,
       data: { updatedCount }

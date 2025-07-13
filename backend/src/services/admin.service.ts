@@ -24,15 +24,15 @@ import { DashboardResponseDTO } from "../DTO/DashboardDataDTO";
 export class AdminService implements IAdminService {
   constructor(
     @inject(TYPES.AdminRepository)
-      private adminRepository: IAdminRepository,
+      private _adminRepository: IAdminRepository,
       @inject(TYPES.PropertyRepository)
-      private propertyRepository: IPropertyRepository,
+      private _propertyRepository: IPropertyRepository,
       @inject(TYPES.BookingRepository)
-      private bookingRepository: IBookingRepository,
+      private _bookingRepository: IBookingRepository,
       @inject(TYPES.UserRepository)
-      private userRepository: IUserRepository,
+      private _userRepository: IUserRepository,
       @inject(TYPES.OwnerRepository)
-      private ownerRepository: IOwnerRepository
+      private _ownerRepository: IOwnerRepository
     
   ){}
 
@@ -59,7 +59,7 @@ export class AdminService implements IAdminService {
       throw new Error("Password is required");
     }
 
-    const admin = await this.adminRepository.findByEmail(email);
+    const admin = await this._adminRepository.findByEmail(email);
     if (!admin || admin.role !== "admin") {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -99,7 +99,7 @@ if (!isPasswordValid) {
       jwtRefreshSecret,
       { expiresIn: "7d" }
     );
-    await this.adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
+    await this._adminRepository.updateRefreshToken(admin._id.toString(), refreshToken);
 
     return {
       admin:{
@@ -157,8 +157,8 @@ async listAllUsers(
 }> {
   try {
     const { users, totalUser, totalPages } =
-      await this.adminRepository.findAllUsers(page, limit, searchTerm);
-    const totalUsers=  await this.userRepository.find({role:"user"});
+      await this._adminRepository.findAllUsers(page, limit, searchTerm);
+    const totalUsers=  await this._userRepository.find({role:"user"});
     const userDTOs = mapUsersToDTOs(users);
     const totalUsersDTOs=mapUsersToDTOs(totalUsers);
     return {
@@ -192,8 +192,8 @@ async listAllUsers(
   currentPage: number;}> {
     try {
      const { owners, totalOwner, totalPages } =
-      await this.adminRepository.findAllOwners(page, limit, searchTerm);
-  const totalOwners=await this.ownerRepository.find();
+      await this._adminRepository.findAllOwners(page, limit, searchTerm);
+  const totalOwners=await this._ownerRepository.find();
     const ownerDTOs = mapOwnersToDTOs(owners);
     const totalOwnerDTOs=mapOwnersToDTOs(totalOwners);
     return {
@@ -216,7 +216,7 @@ async listAllUsers(
 }
   async updateUserStatus(id: string, status: string): Promise<{ message: string; status: number }> {
     try {
-      const user = await this.adminRepository.findUser(id);
+      const user = await this._adminRepository.findUser(id);
     if (!user) {
       return {
         message: "user not found",
@@ -251,13 +251,13 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
         allUsers,
         allOwners,
       ] = await Promise.all([
-        this.adminRepository.getUserRegistrations(),
-        this.adminRepository.getOwnerRegistrations(),
-        this.adminRepository.getBookingStats(),
-        this.propertyRepository.find(), 
-        this.bookingRepository.find(),    
-        this.userRepository.find(),
-        this.ownerRepository.find(),
+        this._adminRepository.getUserRegistrations(),
+        this._adminRepository.getOwnerRegistrations(),
+        this._adminRepository.getBookingStats(),
+        this._propertyRepository.find(), 
+        this._bookingRepository.find(),    
+        this._userRepository.find(),
+        this._ownerRepository.find(),
       ]);
       const totalUsers = allUsers.filter(p => p.role === "user").length;
       const activeUsers=allUsers.filter(p => p.status === "Active").length;
@@ -300,7 +300,7 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
       mapData(userStats, "users");
       mapData(ownerStats, "owners");
       mapData(bookingStats, "bookings");
-     const subscriptionRevenue = await this.adminRepository.subscriptionRevenue();
+     const subscriptionRevenue = await this._adminRepository.subscriptionRevenue();
       const userActivityData = Array.from(resultMap.values());
       const revenueData = bookingStats.map(item => ({
         month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
@@ -355,7 +355,7 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
  
   async updateOwnerStatus(id: string, status: string): Promise<{ message: string; status: number }> {
     try {
-      const owner = await this.adminRepository.findOwner(id);
+      const owner = await this._adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "owner not found",
@@ -384,14 +384,14 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
 
   async deleteOwner(id: string): Promise<{ message: string; status: number }> {
     try {
-      const owner = await this.adminRepository.findOwner(id);
+      const owner = await this._adminRepository.findOwner(id);
       if (!owner) {
         return {
           message: "owner not found",
           status: STATUS_CODES.NOT_FOUND, 
         };
       }
-      const result=await this.adminRepository.deleteOwner( id);
+      const result=await this._adminRepository.deleteOwner( id);
       
       return {
         message: MESSAGES.SUCCESS.DELETED_SUCCESSFUL,
@@ -408,7 +408,7 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
   
  async approveOwner(id: string): Promise<{ message: string; status: number }> {
   try {
-    const owner = await this.adminRepository.findOwner(id);
+    const owner = await this._adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "owner not found",
@@ -443,7 +443,7 @@ async getDashboardData(): Promise<DashboardResponseDTO> {
 
 async rejectOwner(id: string, reason: string): Promise<{ message: string; status: number }> {
   try {
-    const owner = await this.adminRepository.findOwner(id);
+    const owner = await this._adminRepository.findOwner(id);
     if (!owner) {
       return {
         message: "Owner not found",
@@ -451,7 +451,7 @@ async rejectOwner(id: string, reason: string): Promise<{ message: string; status
       };
     }
 
-    await this.ownerRepository.update(id, {
+    await this._ownerRepository.update(id, {
       govtIdStatus: GovtIdStatus.Rejected,
       rejectionReason: reason,
     });

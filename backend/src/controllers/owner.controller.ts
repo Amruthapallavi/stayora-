@@ -16,9 +16,9 @@ import { IPropertyService } from "../services/interfaces/IPropertyService";
 export class OwnerController implements IOwnerController {
   constructor(
     @inject(TYPES.OwnerService)
-      private ownerService: IOwnerService,
+      private _ownerService: IOwnerService,
       @inject(TYPES.PropertyService)
-      private propertyService: IPropertyService
+      private _propertyService: IPropertyService
     
   ){}
   async register(req: Request, res: Response): Promise<void> {
@@ -30,7 +30,7 @@ export class OwnerController implements IOwnerController {
         return;
       }
 
-      const result = await this.ownerService.registerOwner({
+      const result = await this._ownerService.registerOwner({
         ...req.body,
         govtId: govtIdProof, 
       });
@@ -50,7 +50,7 @@ export class OwnerController implements IOwnerController {
   async verifyOTP(req: Request, res: Response): Promise<void> {
     try {
       const { email, otp } = req.body;
-      const result = await this.ownerService.verifyOTP(email, otp);
+      const result = await this._ownerService.verifyOTP(email, otp);
       res.status(result.status).json({
         message: result.message,
       });
@@ -66,7 +66,7 @@ export class OwnerController implements IOwnerController {
    async login(req: Request, res: Response): Promise<void> {
       try {
         const { email, password } = req.body;
-        const result = await this.ownerService.loginOwner(email, password,res);
+        const result = await this._ownerService.loginOwner(email, password,res);
         res.cookie("auth-token", result.token, {
           httpOnly: true,
           secure: Boolean(process.env.NODE_ENV === "production"),
@@ -105,7 +105,7 @@ export class OwnerController implements IOwnerController {
             return;
           }
       
-          const result = await this.ownerService.resendOTP(email);
+          const result = await this._ownerService.resendOTP(email);
           res.status(result.status).json({
             message: result.message,
           });
@@ -125,7 +125,7 @@ export class OwnerController implements IOwnerController {
                 });
                 return;
               }
-              const result = await this.ownerService.resetPassword(email,newPassword);
+              const result = await this._ownerService.resetPassword(email,newPassword);
             res.status(result.status).json({
               message:result.message,
             })
@@ -143,7 +143,7 @@ export class OwnerController implements IOwnerController {
                throw new Error("email is required");
               }
         
-              const result = await this.ownerService.resendOTP(email);
+              const result = await this._ownerService.resendOTP(email);
               res.status(result.status).json({
                 message: result.message,
               });
@@ -171,8 +171,8 @@ export class OwnerController implements IOwnerController {
 
 async getProfileData(req:Request, res:Response):Promise<void>{
   try {
-    const id=req.params.id;
-    const result = await this.ownerService.getProfileData(id);
+    const userId=req.params.id;
+    const result = await this._ownerService.getProfileData(userId);
     res.status(result.status).json({
       user: result.user,
     });
@@ -185,15 +185,15 @@ async getProfileData(req:Request, res:Response):Promise<void>{
 }
 async updateProfile(req:Request,res:Response):Promise<void>{
   try {
-    const id= req.params.id;
+    const userId= req.params.id;
 const formData= req.body;
-    if(!id || !formData ){
+    if(!userId || !formData ){
         res.status(STATUS_CODES.BAD_REQUEST).json({
           error: "owner not found",
         });
         return;
       }
-      const result = await this.ownerService.updateProfile(id,formData);
+      const result = await this._ownerService.updateProfile(userId,formData);
     res.status(result.status).json({
       message:result.message,
     })
@@ -209,7 +209,7 @@ const formData= req.body;
     if (!price || typeof price !== "number") {
            res.status(400).json({ message: "Invalid price amount" });
         }
-    const order = await this.ownerService.subscription(price,planName,ownerId,allowedProperties);
+    const order = await this._ownerService.subscription(price,planName,ownerId,allowedProperties);
         res.status(200).json(order);
   } catch (error) {
      console.error("Error in subscription controller:", error);
@@ -236,7 +236,7 @@ async verifySubscription(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const result = await this.ownerService.verifySubscription({
+    const result = await this._ownerService.verifySubscription({
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
@@ -274,7 +274,7 @@ async changePassword  (req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const result = await this.ownerService.changePassword(userId, oldPassword, newPassword);
+    const result = await this._ownerService.changePassword(userId, oldPassword, newPassword);
 
     res.status(result.status).json({ message: result.message });
   } catch (error) {
@@ -287,7 +287,7 @@ async changePassword  (req: Request, res: Response): Promise<void> {
 
 async getOwnerStatus(req: Request, res: Response): Promise<void> {
   try {
-    const result = await this.ownerService.getOwnerStatus(req.params.id);
+    const result = await this._ownerService.getOwnerStatus(req.params.id);
 
     if (!result.user) {
        res.status(result.status).json({ message: result.message });
@@ -304,14 +304,14 @@ async getOwnerStatus(req: Request, res: Response): Promise<void> {
 
 async fetchWalletData(req:Request,res:Response):Promise<void>{
   try {
-    const id= req.params.id;
-    if(!id  ){
+    const userId= req.params.id;
+    if(!userId  ){
         res.status(STATUS_CODES.BAD_REQUEST).json({
           error: "user not found",
         });
         return;
       }
-      const result = await this.ownerService.fetchWalletData(id);
+      const result = await this._ownerService.fetchWalletData(userId);
     res.status(result.status).json({
       message:result.message,
       data:result.data,
@@ -326,8 +326,8 @@ async fetchWalletData(req:Request,res:Response):Promise<void>{
 async getPropertyById(req:Request,res:Response):Promise<void>{
   try {
 
-    const id=req.params.id;
-    const result = await this.ownerService.getPropertyById(id);
+    const propertyId=req.params.id;
+    const result = await this._ownerService.getPropertyById(propertyId);
     res.status(result.status).json({
       Property: result.property,
     });
@@ -341,9 +341,9 @@ async getPropertyById(req:Request,res:Response):Promise<void>{
 
  async updateProperty(req:Request,res:Response):Promise<void>{
   try {
-    const id= req.params.id;
+    const propertyId= req.params.id;
   const data = req.body;
-  const result = await this.propertyService.updateProperty(id,data);
+  const result = await this._propertyService.updateProperty(propertyId,data);
   res.status(result.status).json({
     message:result.message,
   })
@@ -385,7 +385,7 @@ async getDashboardData(req: Request, res: Response): Promise<void> {
     if (!ownerId) {
        res.status(400).json({ error: 'Owner ID is missing' });
     }
-    const result = await this.ownerService.getDashboardData(ownerId);
+    const result = await this._ownerService.getDashboardData(ownerId);
     res.status(result.status).json({
       data: result.data,
       message: result.message,

@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 import OTPService from "../utils/OTPService";
-import { response, Response } from "express";
+import {  Response } from "express";
 import { IOwner } from "../models/owner.model";
 import IOwnerService, { SignupData } from "./interfaces/IOwnerService";
 import { MESSAGES, STATUS_CODES } from "../utils/constants";
@@ -36,11 +36,11 @@ const razorpay = new Razorpay({
 export class OwnerService implements IOwnerService {
   constructor(
     @inject(TYPES.OwnerRepository)
-    private ownerRepository: IOwnerRepository,
+    private _ownerRepository: IOwnerRepository,
     @inject(TYPES.WalletRepository)
-    private walletRepository: IWalletRepository,
+    private _walletRepository: IWalletRepository,
     @inject(TYPES.NotificationService)
-    private notificationService: INotificationService
+    private _notificationService: INotificationService
   ) {}
 
   private sanitizeUser(user: IOwner) {
@@ -61,7 +61,7 @@ export class OwnerService implements IOwnerService {
       throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
     }
 
-    const existingOwner = await this.ownerRepository.findByEmail(email);
+    const existingOwner = await this._ownerRepository.findByEmail(email);
     if (existingOwner) {
       throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
     }
@@ -76,7 +76,7 @@ export class OwnerService implements IOwnerService {
 
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-    await this.ownerRepository.create({
+    await this._ownerRepository.create({
       ...ownerData,
       govtIdStatus: GovtIdStatus.Pending,
       status: UserStatus.Pending,
@@ -94,7 +94,7 @@ export class OwnerService implements IOwnerService {
     email: string,
     otp: string
   ): Promise<{ message: string; status: number }> {
-    const owner = await this.ownerRepository.findByEmail(email);
+    const owner = await this._ownerRepository.findByEmail(email);
     if (!owner) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -107,13 +107,13 @@ export class OwnerService implements IOwnerService {
     owner.status = UserStatus.Pending;
     owner.otpExpires = null;
 
-    await this.ownerRepository.update(owner._id.toString(), owner);
+    await this._ownerRepository.update(owner._id.toString(), owner);
 
     return { message: MESSAGES.SUCCESS.OTP_VERIFIED, status: STATUS_CODES.OK };
   }
 
   async resendOTP(email: string): Promise<{ message: string; status: number }> {
-    const owner = await this.ownerRepository.findByEmail(email);
+    const owner = await this._ownerRepository.findByEmail(email);
     if (!owner) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -131,7 +131,7 @@ export class OwnerService implements IOwnerService {
     owner.otp = newOtp;
     owner.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 10 minutes from now
 
-    await this.ownerRepository.update(owner._id.toString(), owner);
+    await this._ownerRepository.update(owner._id.toString(), owner);
 
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
   }
@@ -147,7 +147,7 @@ export class OwnerService implements IOwnerService {
     refreshToken: string;
     status: number;
   }> {
-    const owner = await this.ownerRepository.findByEmail(email);
+    const owner = await this._ownerRepository.findByEmail(email);
     if (!owner) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -190,7 +190,7 @@ export class OwnerService implements IOwnerService {
       { expiresIn: "7d" }
     );
 
-    await this.ownerRepository.updateRefreshToken(
+    await this._ownerRepository.updateRefreshToken(
       owner._id.toString(),
       refreshToken
     );
@@ -216,7 +216,7 @@ export class OwnerService implements IOwnerService {
     email: string,
     newPassword: string
   ): Promise<{ message: string; status: number }> {
-    const owner = await this.ownerRepository.findByEmail(email);
+    const owner = await this._ownerRepository.findByEmail(email);
     if (!owner) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -227,7 +227,7 @@ export class OwnerService implements IOwnerService {
     owner.otpExpires = null;
     owner.isVerified = true;
 
-    await this.ownerRepository.update(owner._id.toString(), owner);
+    await this._ownerRepository.update(owner._id.toString(), owner);
     return {
       message: MESSAGES.SUCCESS.PASSWORD_RESET,
       status: STATUS_CODES.OK,
@@ -242,7 +242,7 @@ export class OwnerService implements IOwnerService {
     message: string;
   }> {
     try {
-      const user = await this.ownerRepository.findById(id);
+      const user = await this._ownerRepository.findById(id);
 
       if (!user) {
         return {
@@ -271,7 +271,7 @@ export class OwnerService implements IOwnerService {
     ownerId: string
   ): Promise<{ data: any; status: number; message: string }> {
     try {
-      const properties = await this.ownerRepository.getPropertiesByOwner(
+      const properties = await this._ownerRepository.getPropertiesByOwner(
         ownerId
       );
       const propertyIds: string[] = properties.map((p) => String(p._id));
@@ -283,10 +283,10 @@ export class OwnerService implements IOwnerService {
         (p) => p.status === "rejected"
       ).length;
 
-      const bookings = await this.ownerRepository.getBookingsByPropertyIds(
+      const bookings = await this._ownerRepository.getBookingsByPropertyIds(
         propertyIds
       );
-      const bookingsByMonth = await this.ownerRepository.bookingsByMonth(
+      const bookingsByMonth = await this._ownerRepository.bookingsByMonth(
         ownerId
       );
       const totalBookings = bookings.filter(
@@ -337,7 +337,7 @@ export class OwnerService implements IOwnerService {
         };
       }
 
-      const user = await this.ownerRepository.findById(id);
+      const user = await this._ownerRepository.findById(id);
       if (!user) {
         return {
           message: "User not found",
@@ -406,7 +406,7 @@ export class OwnerService implements IOwnerService {
         ? [data.selectedFeatures]
         : [];
 
-      const featureDocs = await this.ownerRepository.getFeatureNamesByIds(
+      const featureDocs = await this._ownerRepository.getFeatureNamesByIds(
         selectedFeatureIds
       );
 
@@ -475,7 +475,7 @@ export class OwnerService implements IOwnerService {
     newPassword: string
   ): Promise<{ status: number; message: string }> {
     try {
-      const user = await this.ownerRepository.findUserById(userId);
+      const user = await this._ownerRepository.findUserById(userId);
       if (!user) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -491,7 +491,7 @@ export class OwnerService implements IOwnerService {
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await this.ownerRepository.updateUserPassword(userId, hashedPassword);
+      await this._ownerRepository.updateUserPassword(userId, hashedPassword);
 
       return {
         status: STATUS_CODES.OK,
@@ -561,7 +561,7 @@ export class OwnerService implements IOwnerService {
 
       const isValid = generatedSignature === razorpay_signature;
       if (isValid) {
-        const response = await this.ownerRepository.update(ownerId, {
+        const response = await this._ownerRepository.update(ownerId, {
           subscriptionPlan:
             SubscriptionPlan[planName as keyof typeof SubscriptionPlan],
           subscriptionPrice: price,
@@ -571,7 +571,7 @@ export class OwnerService implements IOwnerService {
       }
       const notificationMessage = `You have successfully subscribed to the ${planName} plan. Enjoy your premium benefits!`;
 
-      await this.notificationService.createNotification(
+      await this._notificationService.createNotification(
         ownerId.toString(),
         "Owner",
         "Subscription",
@@ -591,7 +591,7 @@ export class OwnerService implements IOwnerService {
     message: string;
   }> {
     try {
-      const user = await this.ownerRepository.findUserById(id);
+      const user = await this._ownerRepository.findUserById(id);
 
       if (!user) {
         return {
@@ -620,7 +620,7 @@ export class OwnerService implements IOwnerService {
     id: string
   ): Promise<{ property: IProperty | null; status: number; message: string }> {
     try {
-      const property = await this.ownerRepository.findPropertyById(id);
+      const property = await this._ownerRepository.findPropertyById(id);
 
       if (!property) {
         return {
@@ -665,7 +665,7 @@ export class OwnerService implements IOwnerService {
         };
       }
 
-      const data = await this.walletRepository.findOne({
+      const data = await this._walletRepository.findOne({
         userId: new mongoose.Types.ObjectId(id),
       });
 

@@ -9,11 +9,11 @@ import { IServiceService } from "../services/interfaces/IServiceService";
 export class ServiceController implements IServiceController {
   constructor(
     @inject(TYPES.ServiceService)
-    private serviceService: IServiceService
+    private _serviceService: IServiceService
   ) {}
   async listServices(req: Request, res: Response): Promise<void> {
     try {
-      const result = await this.serviceService.listServices();
+      const result = await this._serviceService.listServices();
       res.status(result.status).json({
         services: result.services,
       });
@@ -29,7 +29,7 @@ export class ServiceController implements IServiceController {
     try {
       const serviceData = req.body;
       const serviceImage = req.file?.path;
-      const result = await this.serviceService.createService(serviceData);
+      const result = await this._serviceService.createService(serviceData);
       res.status(result.status).json({
         message: result.message,
       });
@@ -39,9 +39,9 @@ export class ServiceController implements IServiceController {
   }
 
   async updateServiceStatus(req: Request, res: Response): Promise<void> {
-    const id = req.params.id;
+    const serviceId = req.params.id;
     const status = req.body.status;
-    const result = await this.serviceService.updateServiceStatus(id, status);
+    const result = await this._serviceService.updateServiceStatus(serviceId, status);
 
     res.status(result.status).json({
       message: result.message,

@@ -19,17 +19,15 @@ import { IReviewResponse } from "../DTO/commonDTOs";
 export class PropertyService implements IPropertyService {
   constructor(
     @inject(TYPES.PropertyRepository)
-    private propertyRepository: IPropertyRepository,
+    private _propertyRepository: IPropertyRepository,
     @inject(TYPES.FeatureRepository)
-    private featureRepository: IFeatureRepository,
-    @inject(TYPES.UserRepository)
-    private userRepository: IUserRepository,
+    private _featureRepository: IFeatureRepository,
     @inject(TYPES.OwnerRepository)
-    private ownerRepository: IOwnerRepository,
+    private _ownerRepository: IOwnerRepository,
     @inject(TYPES.BookingRepository)
-    private bookingRepository: IBookingRepository,
+    private _bookingRepository: IBookingRepository,
     @inject(TYPES.ReviewRepository)
-    private reviewRepository:IReviewRepository
+    private _reviewRepository:IReviewRepository
   ) {}
   async createProperty(req: {
     data: Partial<IProperty> & {
@@ -45,9 +43,9 @@ export class PropertyService implements IPropertyService {
       if (!ownerId) {
         return { status: 400, message: "Owner ID is missing" };
       }
-const owner = await this.ownerRepository.findOne({ _id: ownerId });
+const owner = await this._ownerRepository.findOne({ _id: ownerId });
      if (owner?.allowedProperties !== undefined && owner.allowedProperties < 1) {
-    await this.ownerRepository.update(ownerId, { isSubscribed: false });
+    await this._ownerRepository.update(ownerId, { isSubscribed: false });
 
 
   return {
@@ -84,7 +82,7 @@ const owner = await this.ownerRepository.findOne({ _id: ownerId });
 
       if (data.title && parsedMapLocation?.lat && parsedMapLocation?.lng) {
         const similarProperties =
-          await this.propertyRepository.findSimilarProperties(
+          await this._propertyRepository.findSimilarProperties(
             data.title.trim(),
             {
               latitude: parsedMapLocation.lat,
@@ -107,7 +105,7 @@ const owner = await this.ownerRepository.findOne({ _id: ownerId });
         ? [data.selectedFeatures]
         : [];
 
-      const featureDocs = await this.featureRepository.getFeatureNamesByIds(
+      const featureDocs = await this._featureRepository.getFeatureNamesByIds(
         selectedFeatureIds
       );
 
@@ -145,9 +143,9 @@ const owner = await this.ownerRepository.findOne({ _id: ownerId });
         images: images || [],
       };
 
-      await this.propertyRepository.create(propertyData);
+      await this._propertyRepository.create(propertyData);
 if (owner && typeof owner.allowedProperties === "number" && owner.allowedProperties > 0) {
-  await this.ownerRepository.update(owner.id, {
+  await this._ownerRepository.update(owner.id, {
     allowedProperties: owner.allowedProperties - 1,
   });
 }      return { status: 201, message: "Property added successfully" };
@@ -172,7 +170,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
   }> {
     try {
       const { properties, totalPages, totalProperties } =
-        await this.ownerRepository.findOwnerProperty(
+        await this._ownerRepository.findOwnerProperty(
           ownerId,
           page,
           limit,
@@ -204,7 +202,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     id: string
   ): Promise<{ status: number; message: string }> {
     try {
-      await this.propertyRepository.deletePropertyById(id);
+      await this._propertyRepository.deletePropertyById(id);
 
       return {
         status: STATUS_CODES.OK,
@@ -227,7 +225,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
   }> {
     try {
       const {properties, totalPages} =
-        await this.propertyRepository.findAllPropertiesWithOwnerData(page,limit,searchTerm);
+        await this._propertyRepository.findAllPropertiesWithOwnerData(page,limit,searchTerm);
 
       return {
         properties: properties || [],
@@ -253,7 +251,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     data: Partial<IProperty>
   ): Promise<{ data: IProperty | null; status: number; message: string }> {
     try {
-   const updatedProperty = await this.propertyRepository.update(id, {
+   const updatedProperty = await this._propertyRepository.update(id, {
       ...data,
       status: PropertyStatus.Pending
     });
@@ -282,7 +280,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
 
   async getFilteredProperties(filters: any): Promise<IProperty[]> {
     try {
-      const properties = await this.propertyRepository.findFilteredProperties(
+      const properties = await this._propertyRepository.findFilteredProperties(
         filters
       );
       return properties || [];
@@ -296,7 +294,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     id: string
   ): Promise<{ status: number; message: string }> {
     try {
-      await this.propertyRepository.approveProperty(id);
+      await this._propertyRepository.approveProperty(id);
 
       return {
         status: STATUS_CODES.OK,
@@ -316,7 +314,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     status: string
   ): Promise<{ status: number; message: string }> {
     try {
-      await this.propertyRepository.blockUnblockProperty(id, status);
+      await this._propertyRepository.blockUnblockProperty(id, status);
 
       return {
         status: STATUS_CODES.OK,
@@ -335,7 +333,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     id: string
   ): Promise<{ status: number; message: string }> {
     try {
-      await this.propertyRepository.deleteProperty(id);
+      await this._propertyRepository.deleteProperty(id);
 
       return {
         status: STATUS_CODES.OK,
@@ -355,7 +353,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     reason: string
   ): Promise<{ message: string; status: number }> {
     try {
-      const property = await this.propertyRepository.findById(id);
+      const property = await this._propertyRepository.findById(id);
       if (!property) {
         return {
           message: "property not found",
@@ -377,7 +375,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
       // });
 
       // await Mail.sendRejectionMail(owner.email, reason);
-      const response = await this.propertyRepository.update(id, updatedData);
+      const response = await this._propertyRepository.update(id, updatedData);
 
       return {
         message: "Rejected successfully & email sent",
@@ -401,7 +399,7 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
     message: string;
   }> {
     try {
-      const property = (await this.propertyRepository.findPropertyById(
+      const property = (await this._propertyRepository.findPropertyById(
         id
       )) as IProperty;
 
@@ -420,14 +418,14 @@ if (owner && typeof owner.allowedProperties === "number" && owner.allowedPropert
       }
 
       const ownerId = property.ownerId.toString();
-      const owner = await this.ownerRepository.findById(ownerId);
+      const owner = await this._ownerRepository.findById(ownerId);
       let ownerDTO = null;
 
       if (owner) {
         ownerDTO = mapOwnerToDTO(owner);
       }
 
-      const booking = await this.bookingRepository.findPropertyBookings(id);
+      const booking = await this._bookingRepository.findPropertyBookings(id);
       return {
         property,
         booking,
@@ -454,7 +452,7 @@ async addReview(
   reviewText: string
 ): Promise<{ status: number; message: string }> {
   try {
-    const booking = await this.bookingRepository.findById(bookingId);
+    const booking = await this._bookingRepository.findById(bookingId);
 
     if (!booking) {
       return {
@@ -470,7 +468,7 @@ async addReview(
       };
     }
 
-    const existingReview = await this.reviewRepository.findOne({ bookingId });
+    const existingReview = await this._reviewRepository.findOne({ bookingId });
 
     if (existingReview) {
       return {
@@ -479,19 +477,19 @@ async addReview(
       };
     }
 
-await this.reviewRepository.create({
+await this._reviewRepository.create({
   bookingId: new Types.ObjectId(bookingId),
   propertyId: booking.propertyId,
   userId: booking.userId,
   rating,
   reviewText,
 });
-const reviews = await this.reviewRepository.find({ propertyId: booking.propertyId });
+const reviews = await this._reviewRepository.find({ propertyId: booking.propertyId });
 const totalReviews = reviews.length;
 const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
 const averageRating = totalRating / totalReviews;
 
-await this.propertyRepository.updateRatingAndReviewCount(
+await this._propertyRepository.updateRatingAndReviewCount(
   booking.propertyId.toString(), 
   averageRating,
   totalReviews
@@ -510,7 +508,7 @@ await this.propertyRepository.updateRatingAndReviewCount(
 }
 async getReviews(propertyId: string): Promise<{ reviews: IReviewResponse[]; status: number; message: string; }> {
   try {
-    const reviews = await this.reviewRepository.findReviews(propertyId);
+    const reviews = await this._reviewRepository.findReviews(propertyId);
       return {
       reviews,
       status: STATUS_CODES.OK,

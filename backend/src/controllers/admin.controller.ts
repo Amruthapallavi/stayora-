@@ -11,14 +11,14 @@ import { PaginationQueryDTO, RejectOwnerDTO, UpdateStatusDTO } from "../DTO/Pagi
 export class AdminController implements IAdminController {
   constructor(
     @inject(TYPES.AdminService)
-      private adminService: IAdminService
+      private _adminService: IAdminService
     
   ){}
 
     async login(req: Request, res: Response): Promise<void> {
         try {
           const { email, password } :LoginRequestDTO= req.body;
-          const result = await this.adminService.loginAdmin(email, password);
+          const result = await this._adminService.loginAdmin(email, password);
           res.cookie("auth-token", result.token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -42,7 +42,7 @@ async refreshToken(req: Request, res: Response): Promise<void> {
       res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: MESSAGES.ERROR.REFRESH_TOKEN_MISSING });
       return;
     }
-    const result = await this.adminService.refreshToken(refreshToken);
+    const result = await this._adminService.refreshToken(refreshToken);
 
     const accessTokenCookieOptions = {
       httpOnly: true,
@@ -70,7 +70,7 @@ async refreshToken(req: Request, res: Response): Promise<void> {
 async getDashboardData(req: Request, res: Response): Promise<void> {
   try {
   
-    const result = await this.adminService.getDashboardData();
+    const result = await this._adminService.getDashboardData();
     res.status(result.status).json({
       data: result.data,
       message: result.message,
@@ -90,7 +90,7 @@ async listAllUsers(req: Request, res: Response): Promise<void> {
   limit: parseInt(req.query.limit as string) || 10,
   search: typeof req.query.search === 'string' ? req.query.search : '',
 };
-    const result = await this.adminService.listAllUsers(page, limit,search);
+    const result = await this._adminService.listAllUsers(page, limit,search);
 
     res.status(result.status).json({
       users: result.users,
@@ -114,7 +114,7 @@ async listAllOwners(req:Request, res:Response):Promise<void>{
   limit: parseInt(req.query.limit as string) || 10,
   search: typeof req.query.search === 'string' ? req.query.search : '',
 };
-    const result = await this.adminService.listAllOwners(page, limit,search);
+    const result = await this._adminService.listAllOwners(page, limit,search);
 
     res.status(result.status).json({
       owners: result.owners,
@@ -132,9 +132,9 @@ async listAllOwners(req:Request, res:Response):Promise<void>{
 
 async updateUserStatus(req:Request,res:Response):Promise<void>{
   try {
-    const id = req.params.id;
+    const userId = req.params.id;
 const { status }: UpdateStatusDTO = req.body.status;
-  const result = await this.adminService.updateUserStatus(id,status)
+  const result = await this._adminService.updateUserStatus(userId,status)
 
   res.status(result.status).json({
     message: result.message,
@@ -149,9 +149,9 @@ const { status }: UpdateStatusDTO = req.body.status;
 
 async updateOwnerStatus(req:Request,res:Response):Promise<void>{
   try {
-    const id = req.params.id;
+    const ownerId = req.params.id;
 const { status }: UpdateStatusDTO = req.body.status;
-  const result = await this.adminService.updateOwnerStatus(id,status)
+  const result = await this._adminService.updateOwnerStatus(ownerId,status)
   
   res.status(result.status).json({
     message: result.message,
@@ -168,8 +168,8 @@ const { status }: UpdateStatusDTO = req.body.status;
 
 async deleteOwner(req:Request,res:Response): Promise<void>{
   try {
-    const id = req.params.id;
-    const result = await this.adminService.deleteOwner(id);
+    const ownerId = req.params.id;
+    const result = await this._adminService.deleteOwner(ownerId);
     res.status(result.status).json({
       message: result.message,
     }); 
@@ -181,8 +181,8 @@ async deleteOwner(req:Request,res:Response): Promise<void>{
 
 async approveOwner(req:Request,res:Response): Promise<void>{
   try {
-    const id = req.params.id;
-    const result = await this.adminService.approveOwner(id);
+    const ownerId = req.params.id;
+    const result = await this._adminService.approveOwner(ownerId);
     res.status(result.status).json({
       message: result.message,
     }); 
@@ -192,9 +192,9 @@ async approveOwner(req:Request,res:Response): Promise<void>{
 }
 async rejectOwner(req:Request,res:Response): Promise<void>{
   try {
-    const id = req.params.id;
+    const ownerId = req.params.id;
 const reason: string = req.body.reason;
-    const result = await this.adminService.rejectOwner(id,reason);
+    const result = await this._adminService.rejectOwner(ownerId,reason);
     res.status(result.status).json({
       message: result.message,
     }); 

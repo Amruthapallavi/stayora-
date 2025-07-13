@@ -12,14 +12,14 @@ import { LoginRequestDTO } from "../DTO/LoginReqDTO";
 export class UserController implements IUserController {
   constructor(
     @inject(TYPES.UserService)
-    private userService: IUserService
+    private _userService: IUserService
   ) {}
 
   async register(req: Request, res: Response): Promise<void> {
     try {
       const userData: SignupData = req.body;
 
-      const result = await this.userService.registerUser(userData);
+      const result = await this._userService.registerUser(userData);
       res.status(result.status).json({
         message: result.message,
       });
@@ -35,7 +35,7 @@ export class UserController implements IUserController {
     try {
       const { email, otp } = req.body;
       console.log(req.body, "email and otp");
-      const result = await this.userService.verifyOTP(email, otp);
+      const result = await this._userService.verifyOTP(email, otp);
       res.status(result.status).json({
         message: result.message,
       });
@@ -55,7 +55,7 @@ export class UserController implements IUserController {
         throw new Error("email is required");
       }
 
-      const result = await this.userService.resendOTP(email);
+      const result = await this._userService.resendOTP(email);
       res.status(result.status).json({
         message: result.message,
       });
@@ -69,7 +69,7 @@ export class UserController implements IUserController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password }: LoginRequestDTO = req.body;
-      const result = await this.userService.loginUser(email, password, res);
+      const result = await this._userService.loginUser(email, password, res);
       res.cookie("auth-token", result.token, {
         httpOnly: true,
         secure: Boolean(process.env.NODE_ENV === "production"),
@@ -103,7 +103,7 @@ export class UserController implements IUserController {
         );
       }
 
-      const result = await this.userService.processGoogleAuth(user);
+      const result = await this._userService.processGoogleAuth(user);
       if (!result.token) {
         console.warn("No token found, redirecting to signup/login.");
         return res.redirect(
@@ -146,7 +146,7 @@ export class UserController implements IUserController {
         return;
       }
 
-      const result = await this.userService.resendOTP(email);
+      const result = await this._userService.resendOTP(email);
       res.status(result.status).json({
         message: result.message,
       });
@@ -167,7 +167,7 @@ export class UserController implements IUserController {
         });
         return;
       }
-      const result = await this.userService.resetPassword(email, newPassword);
+      const result = await this._userService.resetPassword(email, newPassword);
       res.status(result.status).json({
         message: result.message,
       });
@@ -188,7 +188,7 @@ export class UserController implements IUserController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const result = await this.userService.getAllProperties(page, limit);
+      const result = await this._userService.getAllProperties(page, limit);
       res.status(result.status).json({
         properties: result.properties,
         currentPage: result.currentPage,
@@ -220,8 +220,8 @@ export class UserController implements IUserController {
 
   async getProfileData(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
-      const result = await this.userService.getProfileData(id);
+      const userId = req.params.id;
+      const result = await this._userService.getProfileData(userId);
       res.status(result.status).json({
         user: result.user,
       });
@@ -253,7 +253,7 @@ export class UserController implements IUserController {
       const moveInDateOnly = toLocalDateString(moveInDateObj);
       const endDateOnly = toLocalDateString(endDateObj);
 
-      await this.userService.saveBookingDates(
+      await this._userService.saveBookingDates(
         new Date(moveInDateOnly),
         rentalPeriod,
         new Date(endDateOnly),
@@ -274,8 +274,8 @@ export class UserController implements IUserController {
   }
   async getPropertyById(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
-      const result = await this.userService.getPropertyById(id);
+      const propertyId = req.params.id;
+      const result = await this._userService.getPropertyById(propertyId);
       res.status(result.status).json({
         Property: result.property,
         ownerData: result.ownerData,
@@ -293,7 +293,7 @@ export class UserController implements IUserController {
       const userId = (req as any).userId;
 
       const propertyId = req.params.id;
-      const result = await this.userService.getCartData(propertyId, userId);
+      const result = await this._userService.getCartData(propertyId, userId);
       res.status(result.status).json({
         cartData: result.cartData,
         property: result.property,
@@ -309,7 +309,7 @@ export class UserController implements IUserController {
 
   async listServices(req: Request, res: Response): Promise<void> {
     try {
-      const result = await this.userService.listServices();
+      const result = await this._userService.listServices();
       res.status(result.status).json({
         services: result.services,
       });
@@ -331,7 +331,7 @@ export class UserController implements IUserController {
         res.status(400).json({ message: "Missing required fields" });
       }
 
-      await this.userService.saveAddOnsForProperty(userId, propertyId, addOns);
+      await this._userService.saveAddOnsForProperty(userId, propertyId, addOns);
 
       res.status(200).json({ message: "Add-on services saved successfully" });
     } catch (error) {
@@ -345,7 +345,7 @@ export class UserController implements IUserController {
 
   async getUserStatus(req: Request, res: Response): Promise<void> {
     try {
-      const result = await this.userService.getUserStatus(req.params.id);
+      const result = await this._userService.getUserStatus(req.params.id);
 
       if (!result.user) {
         res.status(result.status).json({ message: result.message });
@@ -366,7 +366,7 @@ export class UserController implements IUserController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 5;
 
-      const result = await this.userService.getUserBookings(
+      const result = await this._userService.getUserBookings(
         userId,
         page,
         limit
@@ -391,15 +391,15 @@ export class UserController implements IUserController {
 
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
+      const userId = req.params.id;
       const formData = req.body;
-      if (!id || !formData) {
+      if (!userId || !formData) {
         res.status(STATUS_CODES.BAD_REQUEST).json({
           error: "user not found",
         });
         return;
       }
-      const result = await this.userService.updateProfile(id, formData);
+      const result = await this._userService.updateProfile(userId, formData);
       res.status(result.status).json({
         message: result.message,
       });
@@ -410,15 +410,15 @@ export class UserController implements IUserController {
   }
   async cancelBooking(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
+      const bookingId = req.params.id;
       const reason = req.body.reason;
-      if (!id) {
+      if (!bookingId) {
         res.status(STATUS_CODES.BAD_REQUEST).json({
           error: "booking not found",
         });
         return;
       }
-      const result = await this.userService.cancelBooking(id, reason);
+      const result = await this._userService.cancelBooking(bookingId, reason);
       res.status(result.status).json({
         message: result.message,
       });
@@ -429,14 +429,14 @@ export class UserController implements IUserController {
   }
   async fetchWalletData(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
-      if (!id) {
+      const userId = req.params.id;
+      if (!userId) {
         res.status(STATUS_CODES.BAD_REQUEST).json({
           error: "user not found",
         });
         return;
       }
-      const result = await this.userService.fetchWalletData(id);
+      const result = await this._userService.fetchWalletData(userId);
       res.status(result.status).json({
         message: result.message,
         data: result.data,
@@ -457,7 +457,7 @@ export class UserController implements IUserController {
         return;
       }
 
-      const result = await this.userService.changePassword(
+      const result = await this._userService.changePassword(
         userId,
         oldPassword,
         newPassword

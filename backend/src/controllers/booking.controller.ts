@@ -10,7 +10,7 @@ import { CreateBookingDTO, VerifyPaymentDTO } from "../DTO/booking/bookingContro
 export class BookingController implements IBookingController {
   constructor(
     @inject(TYPES.BookingService)
-      private bookingService: IBookingService
+      private _bookingService: IBookingService
     
   ){}
     
@@ -24,7 +24,7 @@ export class BookingController implements IBookingController {
            res.status(400).json({ message: "Invalid amount" });
         }
     
-        const order = await this.bookingService.createBookingOrder(amount,propertyId,userId);
+        const order = await this._bookingService.createBookingOrder(amount,propertyId,userId);
         res.status(200).json(order);
       } catch (error) {
         console.error("Error creating Razorpay order:", error);
@@ -47,7 +47,7 @@ const {
            res.status(400).json({ message: "Missing payment verification fields" });
         }
     
-        const result = await this.bookingService.verifyBookingPayment({
+        const result = await this._bookingService.verifyBookingPayment({
           razorpay_order_id,
           razorpay_payment_id,
           razorpay_signature,
@@ -74,7 +74,7 @@ const {
       try {
         const propertyId= req.params.id;
         const userId = (req as any).userId;
-        const result =await this.bookingService.bookingFromWallet(userId,propertyId);
+        const result =await this._bookingService.bookingFromWallet(userId,propertyId);
           if (!result.isValid) {
            res.status(400).json({ success: false, message: "booking from wallet failed...try another payment method..." });
         }
@@ -98,7 +98,7 @@ const {
 const page = parseInt(req.query.page as string) || 1;
 const limit = parseInt(req.query.limit as string) || 10;
 
-const result = await this.bookingService.listBookingsByOwner(ownerId, page, limit);
+const result = await this._bookingService.listBookingsByOwner(ownerId, page, limit);
 
 res.status(result.status).json({
   bookings: result.bookings,
@@ -117,7 +117,7 @@ res.status(result.status).json({
     async bookingDetails(req:Request,res:Response):Promise<void>{
       try {
         const bookingId=req.params.id;
-        const result = await this.bookingService.bookingDetails(bookingId);
+        const result = await this._bookingService.bookingDetails(bookingId);
         res.status(result.status).json({
           bookingData: result.bookingData,
           userData:result.userData,
@@ -140,7 +140,7 @@ res.status(result.status).json({
             });
             return;
           }
-          const result = await this.bookingService.cancelBooking(bookingId,reason);
+          const result = await this._bookingService.cancelBooking(bookingId,reason);
         res.status(result.status).json({
           message:result.message,
         })
@@ -152,7 +152,7 @@ res.status(result.status).json({
     async userBookingDetails(req:Request,res:Response):Promise<void>{
       try {
         const bookingId=req.params.id;
-        const result = await this.bookingService.userBookingDetails(bookingId);
+        const result = await this._bookingService.userBookingDetails(bookingId);
         res.status(result.status).json({
           bookingData: result.bookingData,
           ownerData:result.ownerData,
@@ -169,7 +169,7 @@ res.status(result.status).json({
       try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 6;
-        const result = await this.bookingService.listAllBookings(page,limit);
+        const result = await this._bookingService.listAllBookings(page,limit);
         
         res.status(result.status).json({
           bookings: result.bookings,
@@ -187,7 +187,7 @@ res.status(result.status).json({
       try {
         const bookingId=req.params.id;
         const userId = (req as any).userId;
-        const result = await this.bookingService.getUserReview(bookingId,userId);
+        const result = await this._bookingService.getUserReview(bookingId,userId);
          res.status(result.status).json({
               review: result.review,
             });
@@ -201,7 +201,7 @@ res.status(result.status).json({
      async AllbookingDetails(req:Request,res:Response):Promise<void>{
           try {
             const bookingId=req.params.id;
-            const result = await this.bookingService.AllbookingDetails(bookingId);
+            const result = await this._bookingService.AllbookingDetails(bookingId);
             res.status(result.status).json({
               bookingData: result.bookingData,
               userData:result.userData,

@@ -10,14 +10,14 @@ import { INotificationService } from "../services/interfaces/INotificationServic
 export class NotificationController implements INotificationController {
   constructor(
     @inject(TYPES.NotificationService)
-      private notificationService: INotificationService
+      private _notificationService: INotificationService
     
   ){}
 
   async getNotifications(req: Request, res: Response): Promise<void> {
     try {
       const recipient = (req as any).userId;
-      const result = await this.notificationService.getNotifications(recipient);
+      const result = await this._notificationService.getNotifications(recipient);
       res.status(result.status).json({
         message: result.message,
         data: result.data,
@@ -35,7 +35,7 @@ export class NotificationController implements INotificationController {
   async markNotificationAsRead(req: Request, res: Response): Promise<void> {
     try {
       const { notificationId } = req.params;
-      const result = await this.notificationService.markAsRead(notificationId);
+      const result = await this._notificationService.markAsRead(notificationId);
       res.status(result.status).json({
         message: result.message,
         data: result.data,
@@ -53,7 +53,7 @@ export class NotificationController implements INotificationController {
    async deleteNotification(req: Request, res: Response): Promise<void> {
     try {
       const notificationId  = req.params.id;
-      const result = await this.notificationService.deleteNotification(notificationId);
+      const result = await this._notificationService.deleteNotification(notificationId);
       res.status(result.status).json({
         message: result.message,
       });

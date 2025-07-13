@@ -10,7 +10,7 @@ import  TYPES  from "../config/DI/types";
 export class ChatController implements IChatController {
   constructor(
     @inject(TYPES.ChatService)
-      private chatService: IChatService
+      private _chatService: IChatService
     
   ){}
    
@@ -29,7 +29,7 @@ export class ChatController implements IChatController {
           } = req.body;
           const imagePath = req.file ? req.file.path : null;
 
-          const result = await this.chatService.sendMessage({
+          const result = await this._chatService.sendMessage({
             sender,
             senderModel,
             receiver,
@@ -72,7 +72,7 @@ export class ChatController implements IChatController {
           if (!sender || !receiver) {
             throw new Error("Sender and receiver are required");
           }
-          const result = await this.chatService.getConversation(
+          const result = await this._chatService.getConversation(
             String(sender),
             String(receiver)
           );
@@ -94,7 +94,7 @@ export class ChatController implements IChatController {
       async listConversations(req: Request, res: Response): Promise<void> {
         try {
           const userId = (req as any).userId;
-          const result = await this.chatService.listConversations(userId);
+          const result = await this._chatService.listConversations(userId);
           res.status(result.status).json({
             message: result.message,
             data: result.data,
@@ -119,7 +119,7 @@ async markMessagesAsRead  (req: Request, res: Response) :Promise<void>{
 
     }
 
-    const result = await this.chatService.markAsRead(convId, userId);
+    const result = await this._chatService.markAsRead(convId, userId);
     res.status(200).json({ success: true, updatedCount: result });
     return; 
 

@@ -11,13 +11,13 @@ import IFeatureService from "../services/interfaces/IFeatureService";
 export class FeatureController implements IFeatureController {
   constructor(
     @inject(TYPES.FeatureService)
-      private featureService: IFeatureService
+      private _featureService: IFeatureService
     
   ){}
     
 async listFeatures(req:Request, res:Response):Promise<void>{
     try {
-      const result = await this.featureService.listFeatures();
+      const result = await this._featureService.listFeatures();
       res.status(result.status).json({
         features: result.features,
       });
@@ -31,8 +31,8 @@ async listFeatures(req:Request, res:Response):Promise<void>{
   
   async removeFeature(req:Request,res:Response): Promise<void>{
     try {
-      const id = req.params.id;
-      const result = await this.featureService.removeFeature(id);
+      const featureId = req.params.id;
+      const result = await this._featureService.removeFeature(featureId);
       res.status(result.status).json({
         message: result.message,
       }); 
@@ -42,9 +42,9 @@ async listFeatures(req:Request, res:Response):Promise<void>{
   }
   async updateFeature(req:Request,res:Response):Promise<void>{
     try {
-      const id = req.params.id;
+      const featureId = req.params.id;
     const updatedData= req.body.data;
-    const result = await this.featureService.updateFeature(id,updatedData)
+    const result = await this._featureService.updateFeature(featureId,updatedData)
     
     res.status(result.status).json({
       message: result.message,
@@ -62,7 +62,7 @@ async listFeatures(req:Request, res:Response):Promise<void>{
   async addFeature(req:Request,res:Response): Promise<void>{
   try {
     const featureData = req.body;
-    const result = await this.featureService.addFeature(featureData);
+    const result = await this._featureService.addFeature(featureData);
     res.status(result.status).json({
       message: result.message,
     }); 

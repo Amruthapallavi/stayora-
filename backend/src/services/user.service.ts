@@ -40,17 +40,17 @@ import { generateTransactionId } from "../config/TransactionId";
 export class UserService implements IUserService {
   constructor(
     @inject(TYPES.UserRepository)
-    private userRepository: IUserRepository,
+    private _userRepository: IUserRepository,
     @inject(TYPES.PropertyRepository)
-    private propertyRepository: IPropertyRepository,
+    private _propertyRepository: IPropertyRepository,
     @inject(TYPES.OwnerRepository)
-    private ownerRepository: IOwnerRepository,
+    private _ownerRepository: IOwnerRepository,
     @inject(TYPES.BookingRepository)
-    private bookingRepository: IBookingRepository,
+    private _bookingRepository: IBookingRepository,
     @inject(TYPES.WalletRepository)
-    private walletRepository: IWalletRepository,
+    private _walletRepository: IWalletRepository,
     @inject(TYPES.NotificationService)
-    private notificationService: INotificationService
+    private _notificationService: INotificationService
   ) {}
 
   private sanitizeUser(user: IUser) {
@@ -74,7 +74,7 @@ export class UserService implements IUserService {
     if (password !== confirmPassword) {
       throw new Error(MESSAGES.ERROR.PASSWORD_MISMATCH);
     }
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this._userRepository.findByEmail(email);
     if (existingUser) {
       throw new Error(MESSAGES.ERROR.EMAIL_EXISTS);
     }
@@ -86,7 +86,7 @@ export class UserService implements IUserService {
     console.log(otp, "and email", email);
     const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-    await this.userRepository.create({
+    await this._userRepository.create({
       ...userData,
       password: hashedPassword,
       isVerified: false,
@@ -100,7 +100,7 @@ export class UserService implements IUserService {
     email: string,
     otp: string
   ): Promise<{ message: string; status: number }> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -116,7 +116,7 @@ export class UserService implements IUserService {
     // user.otp = undefined;
     // user.otpExpires = undefined;
 
-    await this.userRepository.update(user._id.toString(), {
+    await this._userRepository.update(user._id.toString(), {
       isVerified: true,
       otp: null,
       otpExpires: null,
@@ -126,7 +126,7 @@ export class UserService implements IUserService {
   }
 
   async resendOTP(email: string): Promise<{ message: string; status: number }> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
@@ -144,7 +144,7 @@ export class UserService implements IUserService {
 
     user.otp = newOtp;
     user.otpExpires = otpExpires;
-    await this.userRepository.update(user._id.toString(), user);
+    await this._userRepository.update(user._id.toString(), user);
 
     return { message: MESSAGES.SUCCESS.OTP_RESENT, status: STATUS_CODES.OK };
   }
@@ -160,7 +160,7 @@ export class UserService implements IUserService {
     refreshToken: string;
     status: number;
   }> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -214,7 +214,7 @@ user: mapUserToDTO(user),
     email: string,
     newPassword: string
   ): Promise<{ message: string; status: number }> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
       throw new Error(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
@@ -225,7 +225,7 @@ user: mapUserToDTO(user),
     user.otpExpires = null;
     user.isVerified = true;
 
-    await this.userRepository.update(user._id.toString(), user);
+    await this._userRepository.update(user._id.toString(), user);
     return {
       message: MESSAGES.SUCCESS.PASSWORD_RESET,
       status: STATUS_CODES.OK,
@@ -236,14 +236,14 @@ user: mapUserToDTO(user),
     profile: any
   ): Promise<{ user: UserResponseDTO; token: string; message: string; status: number }> {
     const email = profile.email;
-    let user = await this.userRepository.findByEmail(email);
+    let user = await this._userRepository.findByEmail(email);
     if (user) {
       if (!user.googleId) {
         user.googleId = profile.id;
-        await this.userRepository.update(user._id.toString(), user);
+        await this._userRepository.update(user._id.toString(), user);
       }
     } else {
-      user = await this.userRepository.create({
+      user = await this._userRepository.create({
         googleId: profile.id,
         name: profile.displayName,
         email,
@@ -284,7 +284,7 @@ user: mapUserToDTO(user),
     message: string;
   }> {
     try {
-      const {properties,totalPages,totalProperties} = await this.userRepository.findProperties(page,limit);
+      const {properties,totalPages,totalProperties} = await this._userRepository.findProperties(page,limit);
       return {
         properties:properties|| [],
         totalPages,
@@ -319,7 +319,7 @@ user: mapUserToDTO(user),
         };
       }
 
-      const existingCart = await this.userRepository.findCart(userId);
+      const existingCart = await this._userRepository.findCart(userId);
       if (!existingCart) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -377,7 +377,7 @@ user: mapUserToDTO(user),
     id: string
   ): Promise<{ user: UserResponseDTO |null; status: number; message: string }> {
     try {
-      const user = await this.userRepository.getUserById(id);
+      const user = await this._userRepository.getUserById(id);
       if (!user) {
         return {
           user: null,
@@ -414,7 +414,7 @@ user: mapUserToDTO(user),
     try {
       const propertyId = id.toString();
 
-      const property = await this.propertyRepository.findPropertyById(
+      const property = await this._propertyRepository.findPropertyById(
         propertyId
       );
       // if (!property || property.status !== "active") {
@@ -432,7 +432,7 @@ user: mapUserToDTO(user),
 
       const ownerId = property.ownerId.toString();
       
-      const owner = await this.ownerRepository.findById(ownerId);
+      const owner = await this._ownerRepository.findById(ownerId);
       const ownerData = owner
         ? mapOwnerToDTO(owner)
         : null;
@@ -459,7 +459,7 @@ user: mapUserToDTO(user),
     message: string;
   }> {
     try {
-      const user = await this.userRepository.findUserById(id);
+      const user = await this._userRepository.findUserById(id);
 
       if (!user) {
         return {
@@ -494,7 +494,7 @@ user: mapUserToDTO(user),
     message: string;
   }> {
     try {
-      const property = await this.propertyRepository.findPropertyById(
+      const property = await this._propertyRepository.findPropertyById(
         propertyId
       );
       if (!property) {
@@ -521,7 +521,7 @@ user: mapUserToDTO(user),
         totalCost: property.rentPerMonth,
       };
 
-      let cart = await this.userRepository.findCart(userId);
+      let cart = await this._userRepository.findCart(userId);
 
       if (!cart) {
         cart = new Cart({
@@ -572,8 +572,8 @@ user: mapUserToDTO(user),
       const skip = (page - 1) * limit;
 
       const [bookings, totalCount] = await Promise.all([
-        this.bookingRepository.findBookingsByUserId(userId, skip, limit),
-        this.bookingRepository.countUserBookings(userId),
+        this._bookingRepository.findBookingsByUserId(userId, skip, limit),
+        this._bookingRepository.countUserBookings(userId),
       ]);
 
       if (!bookings || bookings.length === 0) {
@@ -610,7 +610,7 @@ user: mapUserToDTO(user),
     message: string;
   }> {
     try {
-      const services = await this.userRepository.findActiveServices();
+      const services = await this._userRepository.findActiveServices();
       return {
         services: services,
         status: STATUS_CODES.OK,
@@ -639,7 +639,7 @@ user: mapUserToDTO(user),
         };
       }
 
-      const cart = await this.userRepository.findCart(userId);
+      const cart = await this._userRepository.findCart(userId);
       if (!cart) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -711,7 +711,7 @@ user: mapUserToDTO(user),
         };
       }
 
-      const user = await this.userRepository.findById(id);
+      const user = await this._userRepository.findById(id);
       if (!user) {
         return {
           message: "User not found",
@@ -752,7 +752,7 @@ user: mapUserToDTO(user),
         };
       }
 
-      const data = await this.walletRepository.fetchWalletData(id)
+      const data = await this._walletRepository.fetchWalletData(id)
        if (!data) {
               const emptyWallet: IWalletWithTotals = {
                 userId: new mongoose.Types.ObjectId(id),
@@ -805,7 +805,7 @@ user: mapUserToDTO(user),
     newPassword: string
   ): Promise<{ status: number; message: string }> {
     try {
-      const user = await this.userRepository.findUserById(userId);
+      const user = await this._userRepository.findUserById(userId);
       if (!user) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -821,7 +821,7 @@ user: mapUserToDTO(user),
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await this.userRepository.updateUserPassword(userId, hashedPassword);
+      await this._userRepository.updateUserPassword(userId, hashedPassword);
 
       return {
         status: STATUS_CODES.OK,
@@ -841,7 +841,7 @@ user: mapUserToDTO(user),
     reason: string
   ): Promise<{ status: number; message: string }> {
     try {
-      const booking = await this.bookingRepository.findById(id);
+      const booking = await this._bookingRepository.findById(id);
       if (!booking) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -878,20 +878,20 @@ user: mapUserToDTO(user),
         paymentStatus: PaymentStatus.Refunded,
       };
 
-      const response = await this.bookingRepository.updateBookingDetails(
+      const response = await this._bookingRepository.updateBookingDetails(
         id,
         updateData
       );
       const propertyId = new mongoose.Types.ObjectId(
         booking.propertyId.toString()
       );
-      const property = await this.propertyRepository.updatePropertyById(
+      const property = await this._propertyRepository.updatePropertyById(
         propertyId,
         { status: PropertyStatus.Active }
       );
         const transactionId = generateTransactionId();
         const message = `Refund Completed - Property Name ${property?.title} (Cancelled)`
-        await this.walletRepository.updateUserWalletTransaction(
+        await this._walletRepository.updateUserWalletTransaction(
           booking?.userId?.toString() ?? '',
           booking.bookingId,
           message,
@@ -899,7 +899,7 @@ user: mapUserToDTO(user),
           'credit',
           transactionId
         );
-        await this.walletRepository.updateUserWalletTransaction(
+        await this._walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? '',
           booking.bookingId,
           message,
@@ -922,7 +922,7 @@ user: mapUserToDTO(user),
 
   async updateBookingAndPropertyStatus(): Promise<void> {
     const today = new Date();
-    const bookings = await this.bookingRepository.findBookingsToComplete(today);
+    const bookings = await this._bookingRepository.findBookingsToComplete(today);
 
     if (Array.isArray(bookings) && bookings.length > 0) {
       for (const booking of bookings) {
@@ -931,23 +931,23 @@ user: mapUserToDTO(user),
           booking.propertyId.toString()
         );
 
-        await this.bookingRepository.updateBookingDetails(bookingId, {
+        await this._bookingRepository.updateBookingDetails(bookingId, {
           bookingStatus: BookingStatus.Completed,
         });
 
-        await this.propertyRepository.updatePropertyById(propertyId, {
+        await this._propertyRepository.updatePropertyById(propertyId, {
           status: PropertyStatus.Active,
         });
-        const user = await this.userRepository.getUserById(
+        const user = await this._userRepository.getUserById(
           booking.userId.toString()
         );
-        const owner = await this.ownerRepository.findById(
+        const owner = await this._ownerRepository.findById(
           booking.ownerId.toString()
         );
         const propertyName = booking.propertyName ?? "your property";
 
         if (user) {
-          await this.notificationService.createNotification(
+          await this._notificationService.createNotification(
             user._id.toString(),
             "User",
             "booking",
@@ -959,7 +959,7 @@ user: mapUserToDTO(user),
         }
 
         if (owner) {
-          await this.notificationService.createNotification(
+          await this._notificationService.createNotification(
             owner._id.toString(),
             "Owner",
             "booking",
@@ -970,11 +970,11 @@ user: mapUserToDTO(user),
           console.warn(`Owner not found for property in booking ${bookingId}`);
         }
         if (user) {
-          const otherUsers = await this.userRepository.getAllUsersExcept(
+          const otherUsers = await this._userRepository.getAllUsersExcept(
             user._id.toString()
           );
           for (const otherUser of otherUsers) {
-            await this.notificationService.createNotification(
+            await this._notificationService.createNotification(
               otherUser._id.toString(),
               "User",
               "property",

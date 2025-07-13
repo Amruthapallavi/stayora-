@@ -10,12 +10,12 @@ import { ServiceStatus } from "../models/status/status";
 export class ServiceService implements IServiceService {
   constructor(
     @inject(TYPES.ServiceRepository)
-      private serviceRepository: IServiceRepository
+      private _serviceRepository: IServiceRepository
     
   ){}
       async listServices(): Promise<{ services: IService[] |[]; status: number; message: string }> {
         try {
-          const services = await this.serviceRepository.findAllServices();
+          const services = await this._serviceRepository.findAllServices();
       
           return {
             services,
@@ -44,12 +44,12 @@ export class ServiceService implements IServiceService {
             return { message: "Enter a valid price.", status: STATUS_CODES.BAD_REQUEST };
           }
       
-          const existingService = await this.serviceRepository.findServiceWithName(name);
+          const existingService = await this._serviceRepository.findServiceWithName(name);
           if (existingService) {
             return { message: MESSAGES.ERROR.SERVICE_ALREADY_EXISTS, status: STATUS_CODES.CONFLICT };
           }
       
-          await this.serviceRepository.create({ name, description, price, contactMail, contactNumber, image });
+          await this._serviceRepository.create({ name, description, price, contactMail, contactNumber, image });
       
           return { message: "Service added successfully!", status: STATUS_CODES.CREATED };
         } catch (error) {
@@ -61,7 +61,7 @@ export class ServiceService implements IServiceService {
        
         async updateServiceStatus(id: string, status: string): Promise<{ message: string; status: number }> {
          try {
-           const service = await this.serviceRepository.findService(id);
+           const service = await this._serviceRepository.findService(id);
         
            if (!service) {
              return {

@@ -46,19 +46,19 @@ const razorpay = new Razorpay({
 export class BookingService implements IBookingService {
   constructor(
     @inject(TYPES.BookingRepository)
-    private bookingRepository: IBookingRepository,
+    private _bookingRepository: IBookingRepository,
     @inject(TYPES.UserRepository)
-    private userRepository: IUserRepository,
+    private _userRepository: IUserRepository,
     @inject(TYPES.OwnerRepository)
-    private ownerRepository: IOwnerRepository,
+    private _ownerRepository: IOwnerRepository,
     @inject(TYPES.WalletRepository)
-    private walletRepository: IWalletRepository,
+    private _walletRepository: IWalletRepository,
     @inject(TYPES.NotificationService)
-    private notificationService: INotificationService,
+    private _notificationService: INotificationService,
     @inject(TYPES.PropertyRepository)
-    private propertyRepository: IPropertyRepository,
+    private _propertyRepository: IPropertyRepository,
      @inject(TYPES.ReviewRepository)
-    private reviewRepository: IReviewRepository
+    private _reviewRepository: IReviewRepository
   ) {}
   async createBookingOrder(
     amount: number,
@@ -72,7 +72,7 @@ export class BookingService implements IBookingService {
         receipt: `receipt_order_${Date.now()}`,
       };
       const order = await razorpay.orders.create(options);
-      const cartProperty = await this.bookingRepository.getCartProperty(
+      const cartProperty = await this._bookingRepository.getCartProperty(
         userId,
         propertyId
       );
@@ -81,7 +81,7 @@ export class BookingService implements IBookingService {
         throw new Error("Property not found in cart");
       }
 
-      const property = (await this.bookingRepository.findPropertyById(
+      const property = (await this._bookingRepository.findPropertyById(
         cartProperty.propertyId.toString()
       )) as IProperty;
 
@@ -101,7 +101,7 @@ export class BookingService implements IBookingService {
           "razorpay",
           ownerId.toString()
         );
-        await this.bookingRepository.removeCartProperty(userId, propertyId);
+        await this._bookingRepository.removeCartProperty(userId, propertyId);
       } else {
         console.error("No matching cart property found.");
       }
@@ -146,15 +146,15 @@ export class BookingService implements IBookingService {
       let booking: IBooking | null = null;
 
       if (isValid) {
-        await this.bookingRepository.updateBookingDetails(bookingId, {
+        await this._bookingRepository.updateBookingDetails(bookingId, {
           paymentStatus: PaymentStatus.Completed,
           bookingStatus: BookingStatus.Confirmed,
           paymentId: razorpay_payment_id,
         });
 
-        booking = await this.bookingRepository.findBookingById(bookingId);
+        booking = await this._bookingRepository.findBookingById(bookingId);
         if (booking && booking.propertyId) {
-          await this.bookingRepository.updatePropertyStatus(
+          await this._bookingRepository.updatePropertyStatus(
             booking.propertyId.toString(),
             "booked"
           );
@@ -162,7 +162,7 @@ export class BookingService implements IBookingService {
           console.warn("Property ID not found for booking");
         }
         const user = booking?.userId
-          ? await this.userRepository.getUserById(booking.userId.toString())
+          ? await this._userRepository.getUserById(booking.userId.toString())
           : null;
 
         const userName = user?.name ?? "A user";
@@ -174,7 +174,7 @@ export class BookingService implements IBookingService {
           throw new Error("ownerId is missing in the booking");
         }
 
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           booking.ownerId.toString(),
           "Owner",
           "booking",
@@ -184,7 +184,7 @@ export class BookingService implements IBookingService {
 
         const userNotificationMessage = `Your booking for the property "${propertyName}" was successful.`;
 
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           booking.userId.toString(),
           "User",
           "booking",
@@ -196,7 +196,7 @@ export class BookingService implements IBookingService {
         const message = `Booking Completed - Property Name: ${propertyName}`;
 
         
-        await this.walletRepository.updateUserWalletTransaction(
+        await this._walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? "",
           booking.bookingId,
           message,
@@ -218,7 +218,7 @@ export class BookingService implements IBookingService {
  
   async bookingFromWallet(userId: string, propertyId: string): Promise<{isValid:boolean,booking:IBooking | null }> {
     try {
-       const cartProperty = await this.bookingRepository.getCartProperty(
+       const cartProperty = await this._bookingRepository.getCartProperty(
         userId,
         propertyId
       );
@@ -226,7 +226,7 @@ export class BookingService implements IBookingService {
       if (!cartProperty || !cartProperty.propertyId) {
         throw new Error("Property not found in cart");
       }
-            const walletData = await this.walletRepository.fetchWalletData(userId)
+            const walletData = await this._walletRepository.fetchWalletData(userId)
             if (walletData?.balance === undefined) {
   throw new Error("Wallet balance not available.");
 }
@@ -234,7 +234,7 @@ export class BookingService implements IBookingService {
       if(cartProperty.totalCost > walletData?.balance){
            throw new Error("Insufficient balance. Please choose another payment method to continue")
       }
-      const property = (await this.bookingRepository.findPropertyById(
+      const property = (await this._bookingRepository.findPropertyById(
         cartProperty.propertyId.toString()
       )) as IProperty;
 
@@ -254,17 +254,17 @@ export class BookingService implements IBookingService {
           "wallet",
           ownerId.toString()
         );
-        await this.bookingRepository.removeCartProperty(userId, propertyId);
+        await this._bookingRepository.removeCartProperty(userId, propertyId);
         const bookingId = booking._id as string;
         const paymentId=generateWalletPaymentId();
-       await this.bookingRepository.updateBookingDetails(bookingId, {
+       await this._bookingRepository.updateBookingDetails(bookingId, {
           paymentStatus: PaymentStatus.Completed,
           bookingStatus: BookingStatus.Confirmed,
           paymentId:paymentId ,
         });
 
         if (booking && booking.propertyId) {
-          await this.bookingRepository.updatePropertyStatus(
+          await this._bookingRepository.updatePropertyStatus(
             booking.propertyId.toString(),
             "booked"
           );
@@ -272,7 +272,7 @@ export class BookingService implements IBookingService {
           console.warn("Property ID not found for booking");
         }
         const user = booking?.userId
-          ? await this.userRepository.getUserById(booking.userId.toString())
+          ? await this._userRepository.getUserById(booking.userId.toString())
           : null;
 
         const userName = user?.name ?? "A user";
@@ -284,7 +284,7 @@ export class BookingService implements IBookingService {
           throw new Error("ownerId is missing in the booking");
         }
 
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           booking.ownerId.toString(),
           "Owner",
           "booking",
@@ -294,7 +294,7 @@ export class BookingService implements IBookingService {
 
         const userNotificationMessage = `Your booking for the property "${propertyName}" was successful.`;
 
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           booking.userId.toString(),
           "User",
           "booking",
@@ -305,7 +305,7 @@ export class BookingService implements IBookingService {
         const transactionId = generateTransactionId();
         const message = `Booking Completed - Property Name: ${propertyName}`;
 
-        await this.walletRepository.updateUserWalletTransaction(
+        await this._walletRepository.updateUserWalletTransaction(
           booking?.userId?.toString() ?? "",
           booking.bookingId,
           message,
@@ -313,7 +313,7 @@ export class BookingService implements IBookingService {
           "debit",
           transactionId
         );
-        await this.walletRepository.updateUserWalletTransaction(
+        await this._walletRepository.updateUserWalletTransaction(
           booking?.ownerId?.toString() ?? "",
           booking.bookingId,
           message,
@@ -336,7 +336,7 @@ export class BookingService implements IBookingService {
   }
   async cancelBooking(id: string, reason: string): Promise<IResponse> {
     try {
-      const booking = await this.bookingRepository.findById(id);
+      const booking = await this._bookingRepository.findById(id);
       if (!booking) {
         return {
           status: STATUS_CODES.NOT_FOUND,
@@ -373,15 +373,15 @@ export class BookingService implements IBookingService {
         paymentStatus: PaymentStatus.Refunded,
       };
 
-      const response = await this.bookingRepository.updateBookingDetails(
+      const response = await this._bookingRepository.updateBookingDetails(
         id,
         updateData
       );
 
-      const user = await this.userRepository.findById(
+      const user = await this._userRepository.findById(
         booking.userId.toString()
       );
-      const property = await this.propertyRepository.updatePropertyById(
+      const property = await this._propertyRepository.updatePropertyById(
         new mongoose.Types.ObjectId(booking.propertyId.toString()),
         { status: PropertyStatus.Active }
       );
@@ -390,7 +390,7 @@ export class BookingService implements IBookingService {
       const ownerName = "Owner";
 
       if (user) {
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           user._id.toString(),
           "User",
           "booking",
@@ -401,9 +401,9 @@ export class BookingService implements IBookingService {
         console.warn(`User not found for booking ${id}`);
       }
 
-      const allUsers = await this.userRepository.find({ status: "Active" });
+      const allUsers = await this._userRepository.find({ status: "Active" });
       for (const u of allUsers) {
-        await this.notificationService.createNotification(
+        await this._notificationService.createNotification(
           u._id.toString(),
           "User",
           "property",
@@ -438,7 +438,7 @@ export class BookingService implements IBookingService {
   }> {
     try {
       const { bookings, totalPages } =
-        await this.bookingRepository.findOwnerBookings(ownerId, page, limit);
+        await this._bookingRepository.findOwnerBookings(ownerId, page, limit);
 
       return {
         bookings,
@@ -463,7 +463,7 @@ export class BookingService implements IBookingService {
   userId: string
 ): Promise<{ review: IReviewUserResponse | null; status: number; message: string }> {
   try {
-    const review = await this.reviewRepository.findReviewByUser(bookingId,userId);
+    const review = await this._reviewRepository.findReviewByUser(bookingId,userId);
 
     if (!review) {
       return {
@@ -496,11 +496,11 @@ export class BookingService implements IBookingService {
     message: string;
   }> {
     try {
-      const bookingData = await this.bookingRepository.findBookingData(id);
+      const bookingData = await this._bookingRepository.findBookingData(id);
       let userData: UserResponseDTO | null = null;
 
       if (bookingData?.userId) {
-        const user = await this.userRepository.findById(
+        const user = await this._userRepository.findById(
           bookingData.userId.toString()
         );
         if (user) {
@@ -531,12 +531,12 @@ export class BookingService implements IBookingService {
     message: string;
   }> {
     try {
-      const bookingData = await this.bookingRepository.findUserBookingData(id);
+      const bookingData = await this._bookingRepository.findUserBookingData(id);
 
       let ownerData: OwnerResponseDTO | null = null;
 
       if (bookingData?.ownerId) {
-        const owner = await this.ownerRepository.findById(
+        const owner = await this._ownerRepository.findById(
           bookingData.ownerId.toString()
         );
         if (owner) {
@@ -571,11 +571,11 @@ export class BookingService implements IBookingService {
     try {
       const skip = (page - 1) * limit;
 
-      const bookings = await this.bookingRepository.findAllBookings(
+      const bookings = await this._bookingRepository.findAllBookings(
         skip,
         limit
       );
-      const totalBookings = await this.bookingRepository.countAllBookings();
+      const totalBookings = await this._bookingRepository.countAllBookings();
       const totalPages = Math.ceil(totalBookings / limit);
       return {
         bookings: bookings || [],
@@ -602,11 +602,11 @@ export class BookingService implements IBookingService {
     message: string;
   }> {
     try {
-      const bookingData = await this.bookingRepository.findBookingData(id);
+      const bookingData = await this._bookingRepository.findBookingData(id);
       let userData: UserResponseDTO | null = null;
       let ownerData: OwnerResponseDTO | null = null;
       if (bookingData?.userId) {
-        const user = await this.userRepository.findById(
+        const user = await this._userRepository.findById(
           bookingData.userId.toString()
         );
         if (user) {
@@ -614,7 +614,7 @@ export class BookingService implements IBookingService {
         }
       }
       if (bookingData?.ownerId) {
-        const owner = await this.ownerRepository.findById(
+        const owner = await this._ownerRepository.findById(
           bookingData.ownerId.toString()
         );
         if (owner) {
@@ -665,7 +665,7 @@ export class BookingService implements IBookingService {
       bookingId: generateBookingId(),
     };
 
-    return await this.bookingRepository.saveBooking(bookingData);
+    return await this._bookingRepository.saveBooking(bookingData);
   }
 }
 

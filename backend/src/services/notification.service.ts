@@ -11,7 +11,7 @@ import  TYPES  from "../config/DI/types";
 export class NotificationService implements INotificationService {
   constructor(
     @inject(TYPES.NotificationRepository)
-      private notificationRepository: INotificationRepository
+      private _notificationRepository: INotificationRepository
     
   ){}
 
@@ -32,7 +32,7 @@ export class NotificationService implements INotificationService {
       otherIdObjectId = new Types.ObjectId(otherId); 
     }
   
-    const notification = await this.notificationRepository.create({
+    const notification = await this._notificationRepository.create({
       recipient: recipientObjectId,
       recipientModel,
       type,
@@ -52,7 +52,7 @@ export class NotificationService implements INotificationService {
   async getNotifications(
     recipientId: string
   ): Promise<{ message: string; status: number; data: INotification[] }> {
-    const notifications = await this.notificationRepository.findByRecipient(
+    const notifications = await this._notificationRepository.findByRecipient(
       recipientId
     );
     return {
@@ -64,7 +64,7 @@ export class NotificationService implements INotificationService {
   async markAsRead(
     notificationId: string
   ): Promise<{ message: string; status: number; data: INotification | null }> {
-    const updatedNotification = await this.notificationRepository.update(
+    const updatedNotification = await this._notificationRepository.update(
       notificationId,
       { read: true }
     );
@@ -76,7 +76,7 @@ export class NotificationService implements INotificationService {
   } 
   async deleteNotification(notificationId: string): Promise<{ message: string; status: number; }> {
    try {
-       const notification = await this.notificationRepository.find(
+       const notification = await this._notificationRepository.find(
       {notificationId}
     );
     if(!notification){
@@ -85,7 +85,7 @@ export class NotificationService implements INotificationService {
         status:STATUS_CODES.NOT_FOUND
       }
     }
-    await this.notificationRepository.delete(
+    await this._notificationRepository.delete(
       notificationId,
     );
     return {

@@ -10,12 +10,12 @@ import { IFeatureRepository } from "../repositories/interfaces/IFeatureRepositor
 export class FeatureService implements IFeatureService {
   constructor(
     @inject(TYPES.FeatureRepository)
-      private featureRepository: IFeatureRepository
+      private _featureRepository: IFeatureRepository
     
   ){}    
       async listFeatures(): Promise<{ features: IFeature[]; status: number; message:string }> {
         try {
-          const features = await this.featureRepository.findFeatures();
+          const features = await this._featureRepository.findFeatures();
     
         return {
           features,
@@ -36,14 +36,14 @@ export class FeatureService implements IFeatureService {
       
       async removeFeature(id: string): Promise<{ message: string; status: number }> {
         try {
-          const feature = await this.featureRepository.findFeature(id);
+          const feature = await this._featureRepository.findFeature(id);
           if (!feature) {
             return {
               message: "bo feature found",
               status: STATUS_CODES.NOT_FOUND, 
             };
           }
-          const result=await this.featureRepository.deleteFeature( id);
+          const result=await this._featureRepository.deleteFeature( id);
           
           return {
             message: "Successfully deleted",
@@ -62,7 +62,7 @@ export class FeatureService implements IFeatureService {
           updatedData: Record<string, any>
         ): Promise<{ message: string; status: number }> {
           try {
-            const feature = await this.featureRepository.findFeature(id);
+            const feature = await this._featureRepository.findFeature(id);
             if (!feature) {
               return {
                 message: "Feature not found",
@@ -100,7 +100,7 @@ export class FeatureService implements IFeatureService {
         
               
         
-              const existingFeature = await this.featureRepository.findOne({ name });
+              const existingFeature = await this._featureRepository.findOne({ name });
               if (existingFeature) {
                 return { message: "Feature already exists.", status: STATUS_CODES.CONFLICT };
               }

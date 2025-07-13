@@ -10,7 +10,7 @@ import { PaginationQueryDTO } from "../DTO/PaginationDTO";
 export class PropertyController implements IPropertyController {
   constructor(
     @inject(TYPES.PropertyService)
-    private propertyService: IPropertyService
+    private _propertyService: IPropertyService
   ) {}
 
   async createProperty(req: Request, res: Response): Promise<void> {
@@ -23,7 +23,7 @@ export class PropertyController implements IPropertyController {
 
       const imageUrls = uploadedImages.map((file: any) => file.path);
 
-      const result = await this.propertyService.createProperty({
+      const result = await this._propertyService.createProperty({
         data,
         ownerId,
         images: imageUrls,
@@ -45,7 +45,7 @@ export class PropertyController implements IPropertyController {
       const limit = parseInt(req.query.limit as string) || 10;
       const searchTerm =
         typeof req.query.search === "string" ? req.query.search : "";
-      const result = await this.propertyService.getPropertyByOwner(
+      const result = await this._propertyService.getPropertyByOwner(
         ownerId,
         page,
         limit,
@@ -68,7 +68,7 @@ export class PropertyController implements IPropertyController {
   async deletePropertyById(req: Request, res: Response): Promise<void> {
     try {
       const propertyId = req.params.id;
-      await this.propertyService.deletePropertyById(propertyId);
+      await this._propertyService.deletePropertyById(propertyId);
       res.status(200).json({ message: "Property deleted successfully" });
     } catch (error) {
       console.error("Error deleting property:", error);
@@ -83,7 +83,7 @@ export class PropertyController implements IPropertyController {
         search: typeof req.query.search === "string" ? req.query.search : "",
       };
 
-      const result = await this.propertyService.getAllProperties(
+      const result = await this._propertyService.getAllProperties(
         page,
         limit,
         search
@@ -105,7 +105,7 @@ export class PropertyController implements IPropertyController {
   async getFilteredProperties(req: Request, res: Response): Promise<void> {
     try {
       const filters = req.query;
-      const properties = await this.propertyService.getFilteredProperties(
+      const properties = await this._propertyService.getFilteredProperties(
         filters
       );
       res.json(properties);
@@ -118,7 +118,7 @@ export class PropertyController implements IPropertyController {
   async approveProperty(req: Request, res: Response): Promise<void> {
     try {
       const propertyId = req.params.id;
-      await this.propertyService.approveProperty(propertyId);
+      await this._propertyService.approveProperty(propertyId);
       res.status(200).json({ message: "Property approved successfully" });
     } catch (error) {
       console.error("Error approving property:", error);
@@ -130,7 +130,7 @@ export class PropertyController implements IPropertyController {
     try {
       const propertyId = req.params.id;
       const { status } = req.body;
-      await this.propertyService.blockUnblockProperty(propertyId, status);
+      await this._propertyService.blockUnblockProperty(propertyId, status);
       res.status(200).json({ message: `Property status updated to ${status}` });
     } catch (error) {
       console.error("Error updating property status:", error);
@@ -141,7 +141,7 @@ export class PropertyController implements IPropertyController {
   async deleteProperty(req: Request, res: Response): Promise<void> {
     try {
       const propertyId = req.params.id;
-      await this.propertyService.deleteProperty(propertyId);
+      await this._propertyService.deleteProperty(propertyId);
       res.status(200).json({ message: "Property deleted successfully" });
     } catch (error) {
       console.error("Error deleting property:", error);
@@ -150,9 +150,9 @@ export class PropertyController implements IPropertyController {
   }
   async rejectProperty(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
+      const propertyId = req.params.id;
       const { reason } = req.body;
-      const result = await this.propertyService.rejectProperty(id, reason);
+      const result = await this._propertyService.rejectProperty(propertyId, reason);
       res.status(result.status).json({
         message: result.message,
       });
@@ -161,8 +161,8 @@ export class PropertyController implements IPropertyController {
 
   async getPropertyById(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.params.id;
-      const result = await this.propertyService.getPropertyById(id);
+      const propertyId = req.params.id;
+      const result = await this._propertyService.getPropertyById(propertyId);
       res.status(result.status).json({
         Property: result.property,
         booking: result.booking,
@@ -181,7 +181,7 @@ export class PropertyController implements IPropertyController {
     try {
       const { bookingId, rating, reviewText } = req.body;
 
-      const result = await this.propertyService.addReview(
+      const result = await this._propertyService.addReview(
         bookingId,
         rating,
         reviewText
@@ -200,7 +200,7 @@ export class PropertyController implements IPropertyController {
   async getReviews(req: Request, res: Response): Promise<void> {
     try {
       const propertyId = req.params.id;
-      const result = await this.propertyService.getReviews(propertyId);
+      const result = await this._propertyService.getReviews(propertyId);
       res.status(result.status).json({
         reviews: result.reviews,
         message: result.message,
