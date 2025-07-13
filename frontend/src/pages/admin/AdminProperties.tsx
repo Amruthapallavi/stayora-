@@ -133,7 +133,7 @@ const AdminProperties: React.FC = () => {
         await blockUnblockProperty(propertyId, newStatus);
         showSuccessAlert(`Property ${newStatus === "blocked" ? "blocked" : "unblocked"} successfully`);
       }
-      window.location.reload(); // Reload page after approval
+      window.location.reload(); 
 
     } catch (error) {
       console.error("Block/Unblock failed", error);

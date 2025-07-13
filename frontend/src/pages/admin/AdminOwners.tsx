@@ -15,10 +15,7 @@ import {
 } from "../../utils/notifications";
 import {
   motion,
-  //  AnimatePresence
 } from "framer-motion";
-// import moment from "moment";
-// import Swal from "sweetalert2";
 
 import {
   showConfirmAlert,

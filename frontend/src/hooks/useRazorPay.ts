@@ -41,4 +41,3 @@ export const useRazorpay = () => {
 
   return { openRazorpay };
 };
-

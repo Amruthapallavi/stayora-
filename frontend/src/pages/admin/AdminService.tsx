@@ -15,7 +15,6 @@ const AdminServices = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [services, setServices] = useState<Service[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [newService, setNewService] = useState<{
     name: string;
     description: string;

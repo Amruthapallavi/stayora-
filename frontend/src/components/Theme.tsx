@@ -24,7 +24,6 @@ export default function useDarkMode() {
     }
   }, [darkMode]);
 
-  // Function to toggle between dark and light mode
   const toggleDarkMode = () => setDarkMode(prev => !prev);
 
   return { darkMode, toggleDarkMode };

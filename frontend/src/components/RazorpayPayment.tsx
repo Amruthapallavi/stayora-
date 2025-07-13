@@ -1,6 +1,6 @@
 import { loadRazorpayScript } from "../utils/loadRazorpayScript";
 import { useAuthStore } from "../stores/authStore";
-import { RazorpayOptions } from "./hooks/useRazorPay";
+import { RazorpayOptions } from "../hooks/useRazorPay";
 import { RazorpayOrderResponse, RazorpayPaymentButtonProps, RazorpayResponse } from "../types/razorPay";
 
 

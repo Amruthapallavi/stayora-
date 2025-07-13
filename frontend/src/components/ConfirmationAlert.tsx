@@ -1,8 +1,6 @@
 import Swal from "sweetalert2";
 
-/**
- * Show a confirmation alert with customizable options
- */
+
 export const showConfirmAlert = async (
   title: string,
   message: string,
@@ -31,9 +29,7 @@ export const showConfirmAlert = async (
   });
 };
 
-/**
- * Show a success alert with auto-close
- */
+
 export const showSuccessAlert = (message: string) => {
   return Swal.fire({
     title: "Success!",
@@ -46,9 +42,6 @@ export const showSuccessAlert = (message: string) => {
   });
 };
 
-/**
- * Show an error alert
- */
 export const showErrorAlert = (message: string) => {
   return Swal.fire({
     title: "Error!",

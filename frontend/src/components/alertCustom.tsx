@@ -1,4 +1,3 @@
-// alert-dialog-custom.tsx
 import * as React from "react"
 import { AlertTriangle, CheckCircle, XCircle, Info } from "lucide-react"
 import {
