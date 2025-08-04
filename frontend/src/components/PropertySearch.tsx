@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import {
   Select,

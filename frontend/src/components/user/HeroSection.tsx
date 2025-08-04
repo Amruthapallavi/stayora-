@@ -17,14 +17,7 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ searchFilters, handleFilterChange, handleSearch,resetFilters ,locationSuggestions}: HeroSectionProps) => {
-  const handleClearFilters = () => {
-  handleFilterChange('location', '');
-  handleFilterChange('type', '');
-  handleFilterChange('bedrooms', '');
-  handleFilterChange('priceRange', [0, 100000]);
-  handleFilterChange('features', []);
 
-};
 
 
   return (

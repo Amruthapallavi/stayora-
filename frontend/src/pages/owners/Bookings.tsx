@@ -23,8 +23,8 @@ const OwnerBookings = () => {
   const { ownerPropertyBookings, user,cancelBooking } = useAuthStore();
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [filter, setFilter] = useState("all");
-    const [showCancelReason, setShowCancelReason] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
+  //   const [showCancelReason, setShowCancelReason] = useState(false);
+  // const [cancelReason, setCancelReason] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
