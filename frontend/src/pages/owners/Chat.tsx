@@ -130,8 +130,7 @@ const showMore = () => setVisibleCount(prev => prev + 4);
       const selected = conversations.find(
         (c) => c._id === selectedConversation
       );
-      console.log(selected,"selected conversation");
-      console.log(user.id,"user id");
+ 
       if (selected?.lastMessage.propertyId) {
         try {
           const res = await getPropertyById(selected.lastMessage.propertyId);
@@ -145,7 +144,6 @@ const showMore = () => setVisibleCount(prev => prev + 4);
             chatPartnerId
           );
           setMessages(result.data);
-          console.log(result,"for chekcing")
           setPartner(result.chatPartner);
           await markMessagesAsRead(selectedConversation, user.id);
           await reloadData();

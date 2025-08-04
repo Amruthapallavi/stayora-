@@ -1,4 +1,3 @@
-// inversify.config.ts
 import "reflect-metadata";
 import { Container } from "inversify";
 import TYPES from "./types";
@@ -68,7 +67,6 @@ import { IWalletRepository } from "../../repositories/interfaces/IWalletReposito
 import walletRepository from "../../repositories/wallet.repository";
 import { IReviewRepository } from "../../repositories/interfaces/IReviewRepository";
 import ReviewRepository from "../../repositories/reviewRepository";
-// import userService from "../../services/user.service";
 
 const container = new Container();
 

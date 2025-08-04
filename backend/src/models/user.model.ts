@@ -20,6 +20,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   role: Role;
   googleId?: string;
+  hasPassword:boolean;
   otp?: string | null;
   otpExpires: Date | null;
   address?: Address; 
@@ -55,6 +56,7 @@ const UserSchema: Schema = new Schema(
         return !this.googleId;
       },
     },
+    hasPassword:{type:Boolean,default:false},
     phone: { type: String, trim: true, default: null },
     status: { type: String, enum: Object.values(UserStatus), default:UserStatus.Active },
     role: { type: String, enum: Object.values(Role), default: Role.User },

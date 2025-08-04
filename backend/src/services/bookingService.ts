@@ -88,9 +88,16 @@ export class BookingService implements IBookingService {
       if (!property) {
         throw new Error("Property not found");
       }
-    if(property.status === PropertyStatus.Booked){
-      throw new Error("Property already Booked...Please choose another one.")
-    }
+const conflictingBooking = await this._bookingRepository.findConflictingBooking(
+  propertyId,
+  cartProperty.startDate,
+  cartProperty.endDate
+);
+
+if (conflictingBooking) {
+  throw new Error("Property is already booked for the selected dates. Please choose a different date.");
+}
+
       const ownerId = property.ownerId;
       let booking: IBooking | null = null;
 
@@ -155,8 +162,7 @@ export class BookingService implements IBookingService {
         booking = await this._bookingRepository.findBookingById(bookingId);
         if (booking && booking.propertyId) {
           await this._bookingRepository.updatePropertyStatus(
-            booking.propertyId.toString(),
-            "booked"
+            booking.propertyId.toString(), true
           );
         } else {
           console.warn("Property ID not found for booking");
@@ -241,9 +247,7 @@ export class BookingService implements IBookingService {
       if (!property) {
         throw new Error("Property not found");
       }
-   if(property.status === PropertyStatus.Booked){
-      throw new Error("Property already Booked...Please choose another one.")
-    }
+   
       const ownerId = property.ownerId;
       let booking: IBooking | null = null;
 
@@ -254,6 +258,16 @@ export class BookingService implements IBookingService {
           "wallet",
           ownerId.toString()
         );
+        const conflictingBooking = await this._bookingRepository.findConflictingBooking(
+  propertyId,
+  cartProperty.startDate,
+  cartProperty.endDate
+);
+
+if (conflictingBooking) {
+  throw new Error("Property is already booked for the selected dates. Please choose a different date.");
+}
+
         await this._bookingRepository.removeCartProperty(userId, propertyId);
         const bookingId = booking._id as string;
         const paymentId=generateWalletPaymentId();
@@ -263,10 +277,11 @@ export class BookingService implements IBookingService {
           paymentId:paymentId ,
         });
 
+
         if (booking && booking.propertyId) {
           await this._bookingRepository.updatePropertyStatus(
             booking.propertyId.toString(),
-            "booked"
+            true
           );
         } else {
           console.warn("Property ID not found for booking");

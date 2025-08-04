@@ -21,7 +21,6 @@ async findAllPropertiesWithOwnerData(
 ): Promise<{ properties: IProperty[]; totalPages: number }> {
   const skip = (page - 1) * limit;
 
-  // Create a case-insensitive regex filter
   const searchFilter = searchTerm
     ? {
         $or: [

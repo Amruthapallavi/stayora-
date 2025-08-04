@@ -170,28 +170,37 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthState> = (set, 
       throw error;
     }
   },
-    setUserFromToken: (token, authType) => {
-        try {
-          const base64Url = token.split(".")[1];
+ setUserFromToken: (token, authType) => {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) throw new Error("Invalid token format");
 
-           if (!base64Url) {
-           throw new Error("Invalid token format");
-         }
-          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          const decodedPayload = JSON.parse(
-            decodeURIComponent(escape(window.atob(base64)))
-          );
-          set({
-            user: decodedPayload,
-            authType,
-            isAuthenticated: true,
-          });
-          sessionStorage.setItem("auth-type", authType);
-        } catch (error) {
-          console.error("Failed to decode token", error);
-          throw error;
-        }
-      },
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedPayload = JSON.parse(
+      decodeURIComponent(escape(window.atob(base64)))
+    );
+
+    set({
+      user: decodedPayload,
+      authType,
+      isAuthenticated: true,
+    });
+ console.log("setUserFromToken called. State updated:", {
+      user: decodedPayload,
+      authType,
+      isAuthenticated: true,
+    });
+
+    sessionStorage.setItem("auth-type", authType);
+    sessionStorage.setItem("token", token);
+
+    return decodedPayload; 
+  } catch (error) {
+    console.error("Failed to decode token", error);
+    throw error;
+  }
+},
+
       subscribe: async (planName:string,price:number, allowedProperties:number) => {
     try {
             const { authType } = get();

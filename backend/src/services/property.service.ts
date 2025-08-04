@@ -6,7 +6,6 @@ import { IPropertyRepository } from "../repositories/interfaces/IPropertyReposit
 import { inject, injectable } from "inversify";
 import TYPES from "../config/DI/types";
 import { IFeatureRepository } from "../repositories/interfaces/IFeatureRepository";
-import { IUserRepository } from "../repositories/interfaces/IUserRepository";
 import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 import { IBookingRepository } from "../repositories/interfaces/IBookingRepository";
 import { PropertyStatus } from "../models/status/status";

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import container from "../config/DI/inversify";
 import TYPES from "../config/DI/types";
-import passport from "../config/passport";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import  UserController  from "../controllers/user.controller";
 import ChatController from "../controllers/chat.controller";
@@ -25,19 +24,6 @@ userRoutes.post("/verify-otp",  userCtr .verifyOTP.bind(userCtr));
 userRoutes.post("/resend-otp",  userCtr .resendOTP.bind(userCtr));
 userRoutes.post("/forgot-pass",  userCtr .forgotPassword.bind(userCtr));
 userRoutes.post("/reset-password",  userCtr .resetPassword.bind(userCtr));
-userRoutes.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-userRoutes.get(
-  "/auth/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/user/login`
-  }),
-   userCtr .googleCallback
-);
-
 
 userRoutes.get(
   "/home",

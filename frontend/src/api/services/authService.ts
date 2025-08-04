@@ -50,7 +50,7 @@ export const authService = {
     return response.data;
   },
   userForgotPassword:async(email:string)=>{
-    const response = await userApi.post("/forgot-pass",email);
+    const response = await userApi.post("/forgot-pass",{email});
     return response.data;
   },
   userResetPassword :async (data:{email:string,newPassword:string})=>{
@@ -68,7 +68,7 @@ export const authService = {
     return response.data;
   },
   getGoogleAuthUrl: () => {
-    return `${API_URL}/api/user/auth/google`;
+    return `${API_URL}/api/auth/google`;
   },
  
 

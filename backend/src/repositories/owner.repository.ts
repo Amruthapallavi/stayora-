@@ -5,7 +5,6 @@ import Feature, { IFeature } from "../models/features.model";
 import Property, { IProperty } from "../models/property.model";
 import Booking, { IBooking } from "../models/booking.model";
 import mongoose from "mongoose";
-import { title } from "process";
 class OwnerRepository
   extends BaseRepository<IOwner>
   implements IOwnerRepository

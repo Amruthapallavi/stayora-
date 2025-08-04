@@ -75,8 +75,6 @@ adminRoutes.patch(
   authMiddleware(["admin"]),
   adminCtr.updateOwnerStatus.bind(adminCtr)
 );
-// adminRoutes.post("/owners/status/",authMiddleware(["admin"]),adminController.addFeature);
-// adminRoutes.post("/add-feature",authMiddleware(["admin"]),adminController.addFeature);
 adminRoutes.patch(
   "/owners/approve/:id",
   authMiddleware(["admin"]),

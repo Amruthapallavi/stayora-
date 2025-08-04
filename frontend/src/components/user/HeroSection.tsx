@@ -11,9 +11,22 @@ interface HeroSectionProps {
   };
   handleFilterChange: (key: string, value: any) => void;
   handleSearch: () => void;
+  locationSuggestions:string[],
+
+  resetFilters:()=>void;
 }
 
-const HeroSection = ({ searchFilters, handleFilterChange, handleSearch }: HeroSectionProps) => {
+const HeroSection = ({ searchFilters, handleFilterChange, handleSearch,resetFilters ,locationSuggestions}: HeroSectionProps) => {
+  const handleClearFilters = () => {
+  handleFilterChange('location', '');
+  handleFilterChange('type', '');
+  handleFilterChange('bedrooms', '');
+  handleFilterChange('priceRange', [0, 100000]);
+  handleFilterChange('features', []);
+
+};
+
+
   return (
     <section className="relative py-24 lg:py-36 overflow-hidden">
   <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80')] bg-cover bg-center"></div>
@@ -39,11 +52,15 @@ const HeroSection = ({ searchFilters, handleFilterChange, handleSearch }: HeroSe
             Discover premium rental properties tailored to your lifestyle and preferences
           </motion.p>
           
-          <PropertySearch 
-            searchFilters={searchFilters}
-            handleFilterChange={handleFilterChange}
-            handleSearch={handleSearch}
-          />
+      
+<PropertySearch
+  searchFilters={searchFilters}
+  handleFilterChange={handleFilterChange}
+  handleSearch={handleSearch}
+  resetFilters={resetFilters}
+suggestions={locationSuggestions} 
+
+/>
         </div>
         
         <motion.div

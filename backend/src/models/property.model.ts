@@ -27,6 +27,7 @@ export interface IProperty extends Document {
     pincode: number;
   
   bedrooms: number;
+  availableFrom:Date;
   bathrooms: number;
   furnishing: "Fully-Furnished" | "Semi-Furnished" | "Not Furnished";
   rentPerMonth: number;

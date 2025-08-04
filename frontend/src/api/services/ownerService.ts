@@ -1,4 +1,3 @@
-// import axios from "axios";
 
 import {  CancelBookingResponse, IBookingDetailsResponse } from "../../types/booking";
 import { IChatThread, IConversationResponse, IUpdateReadResponse } from "../../types/chat";

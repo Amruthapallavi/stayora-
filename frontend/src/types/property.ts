@@ -34,6 +34,7 @@ import { IOwner } from "./owner";
     images: string[];
     minLeasePeriod: number;
     maxLeasePeriod: number;
+    availableFrom:Date;
     rules: string;
     status: "pending" | "active" | "blocked" |"booked" |"rejected";
     cancellationPolicy: string;
@@ -68,6 +69,7 @@ export interface PropertyFilter {
 export interface IPropertyDetails{
   Property:IProperty;
   booking:IBooking[]|[];
+  bookingData:any;
   ownerData?:IOwner
 }
 

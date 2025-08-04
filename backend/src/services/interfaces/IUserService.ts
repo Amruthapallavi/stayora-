@@ -1,13 +1,10 @@
 import { Response } from "express";
 import { IUser } from "../../models/user.model";
-import { IWallet } from "../../models/wallet.model";
 import mongoose from "mongoose";
 import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { IProperty } from "../../models/property.model";
-import { IOwner } from "../../models/owner.model";
 import { IBooking } from "../../models/booking.model";
 import { IService } from "../../models/service.model";
-import { PropertyResponseDTO } from "../../DTO/PropertyDTO";
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 export interface IUserService {
   registerUser(userData: SignupData): Promise<{ message: string; status: number }>;
@@ -27,12 +24,12 @@ export interface IUserService {
   getProfileData(id: string): Promise<{ user: UserResponseDTO | null; status: number; message: string }>;
   getPropertyById(
     id: string
-  ): Promise<{ property: IProperty; ownerData: OwnerResponseDTO |null; status: number; message: string }>;
+  ): Promise<{ property: IProperty; ownerData: OwnerResponseDTO |null;bookingData:Partial<IBooking>|null; status: number; message: string }>;
   getUserStatus(id: string): Promise<{ user: UserResponseDTO | null; status: number; message: string }>;
   getCartData(
     propertyId: string,
     userId: string
-  ): Promise<{ cartData: any; property: IProperty; status: number; message: string }>;
+  ): Promise<{ cartData: any; property: IProperty; bookingData:Partial<IBooking>|null; status: number; message: string }>;
   getUserBookings(
     userId: string,
     page: number,

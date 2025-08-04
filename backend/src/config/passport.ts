@@ -2,7 +2,7 @@ import { Strategy as GoogleStrategy, Profile } from "passport-google-oauth20";
 import passport from "passport";
 import dotenv from "dotenv";
 import User, { IUser } from "../models/user.model";
-import { CallbackError } from "mongoose";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -12,33 +12,30 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       callbackURL: process.env.GOOGLE_CALLBACK_URL ?? "",
-      scope: ["profile", "email"],
     },
-    async (
-      accessToken: string,
-      refreshToken: string,
-      profile: Profile,
-      done: (error: any, user?: IUser | false) => void
-    ) => {
+    async (_accessToken, _refreshToken, profile, done) => {
       try {
         const email = profile.emails?.[0]?.value;
-        if (!email) {
-          return done(new Error("Email not provided by Google"), false);
-        }
+        if (!email) return done(new Error("Email not provided"), false);
 
         let user = await User.findOne({ email });
 
-        if (user) {
-          if (!user.googleId) {
-            user.googleId = profile.id;
-            await user.save();
-          }
-          return done(null, user);
+        if (!user) {
+          user = new User({
+            name: profile.displayName,
+            email,
+            googleId: profile.id,
+            isVerified: true,
+          });
+          await user.save();
+        } else if (!user.googleId) {
+          user.googleId = profile.id;
+          await user.save();
         }
 
-        return done(null, false);
+        done(null, user);
       } catch (error) {
-        return done(error);
+        done(error, false);
       }
     }
   )
@@ -53,7 +50,7 @@ passport.deserializeUser(async (id: string, done) => {
     const user = await User.findById(id);
     done(null, user as IUser);
   } catch (error) {
-    done(error as CallbackError);
+    done(error);
   }
 });
 

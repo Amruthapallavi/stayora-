@@ -16,11 +16,7 @@ const Welcome: React.FC = () => {
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
-  // const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
-  //   if (ref.current) {
-  //     ref.current.scrollIntoView({ behavior: 'smooth' });
-  //   }
-  // };
+
   const handleProfileClick = () => {
     if (authType === "admin") {
       navigate("/admin/dashboard");
@@ -120,7 +116,7 @@ const Welcome: React.FC = () => {
       {/* About StayOra Section */}
       <section ref={aboutRef} className="py-16 px-4 max-w-7xl mx-auto scroll-mt-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Welcome to StayOra</h2>
+          <h2 className="text-3xl text-yellow-600 font-bold mb-4">Welcome to StayOra</h2>
           <p className="text-gray-600 text-lg max-w-3xl mx-auto">
             StayOra connects property owners with people searching for their ideal homes. 
             Whether you're looking for a cozy apartment, a spacious house, or a vacation rental, 

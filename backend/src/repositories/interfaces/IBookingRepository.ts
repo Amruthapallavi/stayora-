@@ -15,9 +15,9 @@ export interface IBookingRepository extends IBaseRepository<IBooking>{
   updateBookingStatus(id: string, status: string): Promise<IBooking | null>;
 
   findPropertyById(id: string): Promise<Document | null>;
-
+  latestBooking(propertyId:string):Promise<IBooking |null>;
   getCartProperty(userId: string, productId: string): Promise<any>;
-
+ findConflictingBooking(propertyId: string, start: Date, end: Date): Promise<IBooking | null> ;
   updateBookingDetails(
     bookingId: string,
     updateData: Partial<IBooking>
@@ -25,7 +25,7 @@ export interface IBookingRepository extends IBaseRepository<IBooking>{
 
   updatePropertyStatus(
     propertyId: string,
-    status: string
+    isBooked: boolean
   ): Promise<Document | null>;
 
   findBookingById(bookingId: string): Promise<IBooking | null>;

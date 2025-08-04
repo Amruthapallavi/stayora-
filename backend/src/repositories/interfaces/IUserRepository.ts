@@ -20,7 +20,7 @@ findProperties(
   findActiveServices(): Promise<IService[]>;
   getUserById(id: string): Promise<IUser | null>;
   findUserById(id: string): Promise<IUser | null>;
-  updateUserPassword(id: string, newHashedPassword: string): Promise<void>;
+  updateUserPassword(id: string, newHashedPassword: string,hasPassword:boolean): Promise<void>;
   getAllUsersExcept(userId: string): Promise<IUser[] |[]>;
 
 }

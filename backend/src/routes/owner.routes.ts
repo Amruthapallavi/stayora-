@@ -2,21 +2,13 @@ import { Router } from "express";
 import container from "../config/DI/inversify";
 import TYPES from "../config/DI/types";
 import  OwnerController from "../controllers/owner.controller";
-import passport from "../config/passport";
 import { uploadGovtId, uploadMessageImages, uploadPropertyImage, uploadServiceImage } from "../middlewares/multer";
-// import { verifyToken } from "../middlewares/authmid";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import BookingController from "../controllers/booking.controller";
 import ChatController from "../controllers/chat.controller";
 import PropertyController from "../controllers/property.controller";
 import NotificationController from "../controllers/notification.controller";
 import FeatureController from "../controllers/feature.controller";
-// import propertyController from "../controllers/property.controller";
-// import bookingController from "../controllers/booking.controller";
-// import featureController from "../controllers/feature.controller";
-// import adminController from "../controllers/admin.controller";
-// import chatController from "../controllers/chat.controller";
-// import notificationController from "../controllers/notification.controller";
 
 const ownerRoutes = Router();
 
@@ -96,18 +88,3 @@ export default ownerRoutes;
 
 
 
-// userRoutes.post("/resend-otp", userController.resendOTP);
-
-// userRoutes.get(
-//   "/auth/google",
-//   passport.authenticate("google", { scope: ["profile", "email"] })
-// );
-// userRoutes.get(
-//   "/auth/google/callback",
-//   passport.authenticate("google", {
-//     session: false,
-//     failureRedirect: "/login",
-//   }),
-//   userController.googleCallback
-// );
-// userRoutes.post("/logout", userController.logout);

@@ -1,8 +1,6 @@
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { IMessage } from "../../models/message.model";
-import { IOwner } from "../../models/owner.model";
-import { IUser } from "../../models/user.model";
 
 
 

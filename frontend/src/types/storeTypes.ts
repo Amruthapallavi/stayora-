@@ -42,7 +42,7 @@ export interface AuthState {
     newPass: string;
   }) => Promise<IResponse>;
 
-  setUserFromToken: (token: string, authType: AuthType) => void;
+  setUserFromToken: (token: string, authType: AuthType) =>Promise<void>;
   subscribe:(planName:string,price:number,allowedProperties:number)=>Promise<RazorpayOrderResponse>;
   verifySubscription:(paymentData: any) => Promise<any>;
   logout: () => void;

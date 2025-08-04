@@ -1,4 +1,3 @@
-// mappers/booking.mapper.ts
 
 import { IBooking } from "../models/booking.model";
 import { BookingDTO } from "../DTO/BookingResponseDTO";

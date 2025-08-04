@@ -13,6 +13,7 @@ createdAt: string | Date;
       pincode?: string;
     };
 status: string;
+hasPassword?:boolean;
     
     isVerified:boolean;
   }

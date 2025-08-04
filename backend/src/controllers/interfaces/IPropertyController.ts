@@ -12,6 +12,5 @@ export interface IPropertyController {
   rejectProperty(req: Request, res: Response): Promise<void>;
   addReview(req:Request,res:Response):Promise<void>;
   getReviews(req:Request,res:Response):Promise<void>;
-  // locationProperties(req:Request,res:Response):Promise<void>;
   getPropertyById(req: Request, res: Response): Promise<void>;
 }

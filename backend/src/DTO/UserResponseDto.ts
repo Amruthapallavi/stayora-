@@ -17,6 +17,7 @@ export interface UserResponseDTO {
   status: string;
   isVerified: boolean;
   role: string;
+  hasPassword:boolean;
   address?: AddressDTO;
   createdAt: Date;
   updatedAt: Date;

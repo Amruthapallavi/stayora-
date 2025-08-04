@@ -1,7 +1,4 @@
 import { IUser } from "../../models/user.model";
-import { IService } from "../../models/service.model";
-import { IOwner } from "../../models/owner.model";
-import { DashboardData } from "../../type/admin";
 import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 import { DashboardResponseDTO } from "../../DTO/DashboardDataDTO";

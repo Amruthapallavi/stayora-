@@ -6,7 +6,7 @@ export interface INotification extends Document {
   type: string;
   message: string;
   read: boolean;
-  otherId?: Types.ObjectId | null;  // Allow ObjectId or null
+  otherId?: Types.ObjectId | null;  
   createdAt: Date;
 
 }
@@ -22,7 +22,7 @@ const notificationSchema: Schema = new Schema(
     type: { type: String, required: true },
     message: { type: String, required: true },
     read: { type: Boolean, default: false },
-    otherId: { type: Types.ObjectId, required: false, default: null },  // Allow null
+    otherId: { type: Types.ObjectId, required: false, default: null }, 
 
   },
   { timestamps: { createdAt: true, updatedAt: false } }

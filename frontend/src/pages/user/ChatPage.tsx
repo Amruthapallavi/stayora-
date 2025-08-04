@@ -313,7 +313,6 @@ const [emojiPickerPosition, setEmojiPickerPosition] = useState({ top: 0, left: 0
       try {
         const senderId = user.userId || user.id;
         const result = await getConversation(senderId, ownerId);
-console.log(result,"checking partner");
         if (result && result.data) {
           setMessages(result.data || []);
 

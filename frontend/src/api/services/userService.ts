@@ -29,7 +29,6 @@ export const userService = {
         return response.data;
     },
 filteredProperties: async (data: PropertyFilter): Promise<IProperty[]> => {
-  console.log(data,"filered fdta")
   const response = await userApi.get(`/property/filtered`, {
     params: data,
     paramsSerializer: (params) =>

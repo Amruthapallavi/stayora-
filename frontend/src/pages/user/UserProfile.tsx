@@ -45,15 +45,19 @@ const Profile = () => {
   const [userData, setUserData] = useState<IUser | null>(null);
   const [showAddressFields, setShowAddressFields] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user && user.id) {
-        const data = await getUserData(user.id, "user");
-        setUserData(data?.user);
-      }
-    };
-    fetchUserData();
-  }, [user]);
+useEffect(() => {
+
+  const fetchUserData = async () => {
+    const userId = user?.id || user?.userId; 
+    if (userId) {
+      const data = await getUserData(userId, "user");
+      setUserData(data?.user);
+    }
+  };
+
+  fetchUserData();
+}, [user?.id, user?.userId]);
+
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -157,49 +161,53 @@ const Profile = () => {
     }));
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const hasPassword = userData?.hasPassword; 
+const handlePasswordSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+  const { currentPassword, newPassword, confirmPassword } = passwordForm;
 
-    if (
-      !currentPassword.trim() ||
-      !newPassword.trim() ||
-      !confirmPassword.trim()
-    ) {
-      notifyError("Fields cannot contain only spaces!");
-      return;
-    }
+  // If user has password, currentPassword is required
+  if (hasPassword && !currentPassword.trim()) {
+    notifyError("Current password is required!");
+    return;
+  }
 
-    if (newPassword !== confirmPassword) {
-      notifyError("Passwords do not match!");
-      return;
-    }
+  if (!newPassword.trim() || !confirmPassword.trim()) {
+    notifyError("Fields cannot contain only spaces!");
+    return;
+  }
 
-    if (newPassword.length < 4) {
-      toast.error("Password must be at least 8 characters long!");
-      return;
-    }
-    try {
-      await changePassword({
-        userId: user.id,
-        oldPass: currentPassword,
-        newPass: newPassword,
-      });
+  if (newPassword !== confirmPassword) {
+    notifyError("Passwords do not match!");
+    return;
+  }
 
-      notifySuccess("password successfully updated");
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (err: any) {
-      console.log(err.response.data, "error");
-      notifyError(err.response.data.message);
-      // toast.error(err.response?.data?.message || "Failed to update password");
-    }
-  };
+  if (newPassword.length < 5) {
+    notifyError("Password must be at least 5 characters long!");
+    return;
+  }
 
+  try {
+        const userId = user?.id || user?.userId; 
+
+    await changePassword({
+      userId,
+      oldPass: hasPassword ? currentPassword : '',
+      newPass: newPassword,
+    });
+
+    notifySuccess("Password successfully updated");
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  } catch (err: any) {
+    console.log(err.response?.data, "error");
+    notifyError(err.response?.data?.message || "Failed to update password");
+  }
+};
   return (
     <UserLayout>
       <div className="min-h-screen bg-gray-50 py-10 px-4 md:px-8">
@@ -470,18 +478,7 @@ const Profile = () => {
                             )}
                           </div>
                         </div>
-                        {/*                       
-                      <div className="space-y-2">
-                        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">Bio</label>
-                        <Textarea 
-                          id="bio"
-                          name="bio"
-                          value={userData?.bio}
-                          onChange={handleProfileChange}
-                          placeholder="Tell us about yourself"
-                          rows={4}
-                        />
-                      </div> */}
+                    
                       </CardContent>
 
                       <CardFooter className="flex justify-end">
@@ -504,79 +501,82 @@ const Profile = () => {
                         Update your password to keep your account secure
                       </CardDescription>
                     </CardHeader>
-                    <form onSubmit={handlePasswordSubmit}>
-                      <CardContent className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="currentPassword"
-                              className="block text-sm font-medium text-gray-700"
-                            >
-                              Current Password
-                            </label>
-                            <Input
-                              id="currentPassword"
-                              name="currentPassword"
-                              type="password"
-                              value={passwordForm.currentPassword}
-                              onChange={handlePasswordChange}
-                              placeholder="Enter your current password"
-                            />
-                          </div>
+                   <form onSubmit={handlePasswordSubmit}>
+  <CardContent className="space-y-6">
+    <div className="space-y-4">
+      {hasPassword && (
+        <div className="space-y-2">
+          <label
+            htmlFor="currentPassword"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Current Password
+          </label>
+          <Input
+            id="currentPassword"
+            name="currentPassword"
+            type="password"
+            value={passwordForm.currentPassword}
+            onChange={handlePasswordChange}
+            placeholder="Enter your current password"
+          />
+        </div>
+      )}
 
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="newPassword"
-                              className="block text-sm font-medium text-gray-700"
-                            >
-                              New Password
-                            </label>
-                            <Input
-                              id="newPassword"
-                              name="newPassword"
-                              type="password"
-                              value={passwordForm.newPassword}
-                              onChange={handlePasswordChange}
-                              placeholder="Enter your new password"
-                            />
-                            <p className="text-xs text-gray-500">
-                              Password must be at least 8 characters long
-                            </p>
-                          </div>
+      <div className="space-y-2">
+        <label
+          htmlFor="newPassword"
+          className="block text-sm font-medium text-gray-700"
+        >
+          New Password
+        </label>
+        <Input
+          id="newPassword"
+          name="newPassword"
+          type="password"
+          value={passwordForm.newPassword}
+          onChange={handlePasswordChange}
+          placeholder="Enter your new password"
+        />
+        <p className="text-xs text-gray-500">
+          Password must be at least 8 characters long
+        </p>
+      </div>
 
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="confirmPassword"
-                              className="block text-sm font-medium text-gray-700"
-                            >
-                              Confirm Password
-                            </label>
-                            <Input
-                              id="confirmPassword"
-                              name="confirmPassword"
-                              type="password"
-                              value={passwordForm.confirmPassword}
-                              onChange={handlePasswordChange}
-                              placeholder="Confirm your new password"
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
+      <div className="space-y-2">
+        <label
+          htmlFor="confirmPassword"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Confirm Password
+        </label>
+        <Input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          value={passwordForm.confirmPassword}
+          onChange={handlePasswordChange}
+          placeholder="Confirm your new password"
+        />
+      </div>
+    </div>
+  </CardContent>
 
-                      <CardFooter className="flex justify-end">
-                        <Button
-                          type="submit"
-                          className="bg-[#b38e5d] hover:bg-[#8b6b3b]"
-                          disabled={
-                            !passwordForm.currentPassword.trim() ||
-                            !passwordForm.newPassword.trim() ||
-                            !passwordForm.confirmPassword.trim()
-                          }
-                        >
-                          Update Password
-                        </Button>
-                      </CardFooter>
-                    </form>
+  <CardFooter className="flex justify-end">
+    <Button
+      type="submit"
+      className="bg-[#b38e5d] hover:bg-[#8b6b3b]"
+      disabled={
+        (hasPassword && !passwordForm.currentPassword.trim()) ||
+        !passwordForm.newPassword.trim() ||
+        !passwordForm.confirmPassword.trim()
+      }
+    >
+      Update Password
+    </Button>
+  </CardFooter>
+</form>
+
                   </Card>
                 </TabsContent>
               </Tabs>

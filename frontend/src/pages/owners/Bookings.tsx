@@ -17,11 +17,15 @@ import { IBooking } from "../../types/booking";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import Pagination from "../../components/user/UserPagination";
+import { notifyError, notifySuccess } from "../../utils/notifications";
 
 const OwnerBookings = () => {
-  const { ownerPropertyBookings, user } = useAuthStore();
+  const { ownerPropertyBookings, user,cancelBooking } = useAuthStore();
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [filter, setFilter] = useState("all");
+    const [showCancelReason, setShowCancelReason] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -76,25 +80,53 @@ const OwnerBookings = () => {
     }
   };
 
-  const handleCancel = async (bookingId: string) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You want to cancel this booking.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, cancel it!",
-    });
- if(!bookingId){
-    console.error("booking Id not found");
-   }
-    if (result.isConfirmed) {
-      try {
-        Swal.fire("Cancelled!", "Booking has been cancelled.", "success");
-      } catch (error) {
-        Swal.fire("Error", "Something went wrong.", "error");
+
+const handleCancelBooking = async (id:string) => {
+  const { value: cancelReason } = await Swal.fire({
+    title: "Cancel Booking",
+    input: "textarea",
+    inputLabel: "Reason for cancellation",
+    inputPlaceholder: "Type your reason here...",
+    inputAttributes: {
+      "aria-label": "Type your reason here",
+    },
+    showCancelButton: true,
+    confirmButtonText: "Continue",
+    cancelButtonText: "Back",
+    inputValidator: (value) => {
+      if (!value.trim()) {
+        return "Please provide a reason for cancellation.";
       }
+    },
+  });
+
+  if (!cancelReason) return; 
+
+  const confirm = await Swal.fire({
+    title: "Are you sure?",
+    text: "Do you really want to cancel this booking?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, cancel it!",
+  });
+
+  if (confirm.isConfirmed) {
+    try {
+      const response = await cancelBooking(id || "", cancelReason); // pass reason here
+      notifySuccess(response?.message);
+      navigate("/user/bookings");
+    } catch (err) {
+      console.error("Cancel Booking Error:", err);
+      notifyError(
+        (err as any)?.response?.data?.message ||
+          "Failed to cancel booking"
+      );
     }
-  };
+  }
+};
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -271,7 +303,7 @@ const OwnerBookings = () => {
                               <CheckCircle className="h-4 w-4 mr-1" /> Confirm
                             </button>
                             <button
-                              onClick={() => handleCancel(booking._id)}
+                        onClick={()=>handleCancelBooking(booking._id)}
                               className="text-[#dc2626] hover:text-[#b91c1c] text-sm font-medium flex items-center"
                             >
                               <XCircle className="h-4 w-4 mr-1" /> Cancel

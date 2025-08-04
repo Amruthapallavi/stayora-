@@ -3,8 +3,6 @@ import { IReviewUserResponse } from "../../DTO/BookingResponseDTO";
 import { OwnerResponseDTO } from "../../DTO/OwnerResponseDTO";
 import { UserResponseDTO } from "../../DTO/UserResponseDto";
 import { IBooking } from "../../models/booking.model";
-import { IOwner } from "../../models/owner.model";
-import { IUser } from "../../models/user.model";
 
 
 

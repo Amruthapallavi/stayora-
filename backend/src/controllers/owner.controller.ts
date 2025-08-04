@@ -6,11 +6,6 @@ import { inject, injectable } from "inversify";
 import  TYPES  from "../config/DI/types";
 import IOwnerService from "../services/interfaces/IOwnerService";
 import { IPropertyService } from "../services/interfaces/IPropertyService";
-// import { VerifyPaymentDTO } from "../DTO/booking/bookingControllerDTO";
-
-// interface MulterRequest extends Request {
-//   file?: Express.Multer.File;
-// }
 
 @injectable()
 export class OwnerController implements IOwnerController {
@@ -71,7 +66,7 @@ export class OwnerController implements IOwnerController {
           httpOnly: true,
           secure: Boolean(process.env.NODE_ENV === "production"),
           sameSite: "strict",
-          maxAge: 3600000, // 1 hour
+          maxAge: 3600000,
           path: "/",
         });
 

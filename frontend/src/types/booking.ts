@@ -320,6 +320,7 @@ interface IPropertyDetails {
   images: string[];
   createdAt: string;
   updatedAt: string;
+  availableFrom:Date;
 }
 
 interface IUserData {

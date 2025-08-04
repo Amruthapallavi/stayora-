@@ -122,6 +122,14 @@ const App = () => {
                 </Suspense>
               } 
             />
+             <Route
+          path="/auth/google/callback"
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <GoogleAuthCallback />
+            </Suspense>
+          }
+        />
             <Route 
               path="/owner/login" 
               element={
@@ -488,14 +496,7 @@ const App = () => {
           </Route>
         </Route>
 
-        <Route
-          path="/auth/google/callback"
-          element={
-            <Suspense fallback={<LoadingSpinner />}>
-              <GoogleAuthCallback />
-            </Suspense>
-          }
-        />
+       
         
         <Route path="*" element={<NotFound />} />
         </Routes>

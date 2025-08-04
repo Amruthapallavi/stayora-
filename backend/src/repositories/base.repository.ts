@@ -1,4 +1,4 @@
-import { Model, Document, ObjectId, FilterQuery, DeleteResult } from "mongoose";
+import { Model, Document, FilterQuery, DeleteResult } from "mongoose";
 import { IBaseRepository } from "./interfaces/IBaseRepository";
 
 class BaseRepository<T extends Document> implements IBaseRepository<T> {

@@ -99,6 +99,7 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
   const [rentalPeriod, setRentalPeriod] = useState<number>(min);
   const [rentalPeriodError, setRentalPeriodError] = useState<string>("");
   const [bookingData, setBookingData] = useState<IBooking | null>(null);
+  const [bookingDate, setBookingDate] = useState<any>(null);
 
   useEffect(() => {
     if (moveInDate && rentalPeriod) {
@@ -112,7 +113,9 @@ const CheckoutPage: React.FC<CheckoutProps> = () => {
       if (!propertyId) return;
       const cartData = await getCartDetails(propertyId);
       if (cartData) {
+        
         setBookingDetails(cartData);
+        setBookingDate(cartData.bookingData)
         if (cartData.moveInDate) {
           setMoveInDate(new Date(cartData.moveInDate));
         }
@@ -170,7 +173,16 @@ useEffect(() => {
   localStorage.removeItem("bookingCompleted");
   setCurrentStep(1);
 }, [propertyId]);
-
+ const formattedAvailableDate = bookingDate?.endDate
+    ? new Date(bookingDate.endDate)
+    : null;
+  const availableFrom = formattedAvailableDate
+    ? new Date(
+        new Date(formattedAvailableDate).setDate(
+          formattedAvailableDate.getDate() + 1
+        )
+      )
+    : null;
   const handleStepChange = async (step: number) => {
     if (currentStep === 4) return;
 
@@ -368,16 +380,21 @@ useEffect(() => {
                         </PopoverTrigger>
 
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={moveInDate}
-                            onSelect={(date) => setMoveInDate(date)}
-                            disabled={(date) =>
-                              date < new Date() || currentStep === 4 || currentStep ===3 || currentStep === 5 || currentStep===6
-                            } 
-                            initialFocus
-                            className="p-3 pointer-events-auto"
-                          />
+           <Calendar
+  mode="single"
+  selected={moveInDate}
+  onSelect={(date) => setMoveInDate(date)}
+  disabled={(date) =>
+    availableFrom ? date < new Date(availableFrom) : false ||
+    currentStep === 3 || currentStep === 4 ||
+    currentStep === 5 || currentStep === 6
+  }
+  defaultMonth={availableFrom ? new Date(availableFrom) : new Date()} // 👈 shows correct month
+  initialFocus
+  className="p-3 pointer-events-auto"
+/>
+
+
                         </PopoverContent>
                       </Popover>
                     </div>

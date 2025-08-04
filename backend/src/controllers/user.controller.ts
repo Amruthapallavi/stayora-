@@ -124,6 +124,7 @@ export class UserController implements IUserController {
       res.redirect(
         `${process.env.FRONTEND_URL}/auth/google/callback?token=${result.token}`
       );
+
     } catch (error) {
       console.error("Google auth error:", error);
       res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
@@ -222,6 +223,7 @@ export class UserController implements IUserController {
     try {
       const userId = req.params.id;
       const result = await this._userService.getProfileData(userId);
+      console.log(result)
       res.status(result.status).json({
         user: result.user,
       });
@@ -243,7 +245,7 @@ export class UserController implements IUserController {
       }
       const userId = (req as any).userId;
       const toLocalDateString = (date: Date) => {
-        const offset = date.getTimezoneOffset() * 60000; // in ms
+        const offset = date.getTimezoneOffset() * 60000; 
         return new Date(date.getTime() - offset).toISOString().split("T")[0];
       };
 
@@ -279,6 +281,7 @@ export class UserController implements IUserController {
       res.status(result.status).json({
         Property: result.property,
         ownerData: result.ownerData,
+        bookingData:result.bookingData,
       });
     } catch (error) {
       console.error(error);
@@ -297,7 +300,7 @@ export class UserController implements IUserController {
       res.status(result.status).json({
         cartData: result.cartData,
         property: result.property,
-        // ownerData:result.ownerData,
+        bookingData:result.bookingData,
       });
     } catch (error) {
       console.error(error);
@@ -450,10 +453,10 @@ export class UserController implements IUserController {
     try {
       const userId = req.params.id;
       const { oldPassword, newPassword } = req.body;
-      if (!oldPassword || !newPassword) {
+      if (!newPassword) {
         res
           .status(STATUS_CODES.BAD_REQUEST)
-          .json({ message: "Both old and new passwords are required." });
+          .json({ message: "New password is required." });
         return;
       }
 

@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import Users from "../models/user.model";
-import Owners from "../models/owner.model";
 import Message, { IMessage } from "../models/message.model";
 import BaseRepository from "./base.repository";
 import { IMessageReposiotry } from "./interfaces/IMessageRepository";

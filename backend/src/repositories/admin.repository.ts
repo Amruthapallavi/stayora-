@@ -1,12 +1,9 @@
 import { IAdminRepository } from "./interfaces/IAdminRepository";
 import BaseRepository from "./base.repository";
 import Admin, { IUser } from "../models/user.model";
-import Service, { IService } from "../models/service.model";
-import Feature, { IFeature } from "../models/features.model";
 import User from "../models/user.model";
 import  Owners, { IOwner } from "../models/owner.model";
-import Property, { IProperty } from "../models/property.model";
-import Booking, { IBooking } from "../models/booking.model";
+import Booking from "../models/booking.model";
 import { Types } from "mongoose";
 class AdminRepository
   extends BaseRepository<IUser>

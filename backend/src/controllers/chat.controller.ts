@@ -44,15 +44,7 @@ export class ChatController implements IChatController {
           } else {
             io.emit("receiveMessage", { ...result.data.toObject(), room: "all" });
           }
-    
-          // const notification = await notificationService.createNotification(
-          //   receiver,
-          //   receiverModel,
-          //   "chat",
-          //   "You have a new message"
-          // );
-          // io.to(receiver).emit("newNotification", notification);
-    
+
           res.status(result.status).json({
             message: result.message,
             data: result.data,

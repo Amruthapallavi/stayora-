@@ -27,8 +27,6 @@ import { IOwnerRepository } from "../repositories/interfaces/IOwnerRepository";
 import { BookingStatus, PaymentStatus, PropertyStatus } from "../models/status/status";
 import { UserResponseDTO } from "../DTO/UserResponseDto";
 import { mapUserToDTO } from "../mappers/userMapper";
-import { PropertyResponseDTO } from "../DTO/PropertyDTO";
-import { mapPropertyToDTO, mapPropertyToDTOs } from "../mappers/propertyMapper";
 import { IResponse } from "../DTO/BookingResponseDTO";
 import { IProperty } from "../models/property.model";
 import { OwnerResponseDTO } from "../DTO/OwnerResponseDTO";
@@ -92,6 +90,7 @@ export class UserService implements IUserService {
       isVerified: false,
       otp,
       otpExpires,
+      hasPassword:true,
     });
     return { message: MESSAGES.SUCCESS.SIGNUP, status: STATUS_CODES.CREATED };
   }
@@ -112,9 +111,7 @@ export class UserService implements IUserService {
     if (user.otp !== otp || (user.otpExpires?.getTime() ?? 0) < Date.now()) {
       throw new Error(MESSAGES.ERROR.OTP_INVALID);
     }
-    // user.isVerified = true;
-    // user.otp = undefined;
-    // user.otpExpires = undefined;
+   
 
     await this._userRepository.update(user._id.toString(), {
       isVerified: true,
@@ -131,10 +128,7 @@ export class UserService implements IUserService {
       throw new Error(MESSAGES.ERROR.USER_NOT_FOUND);
     }
 
-    // if (user.isVerified) {
-    //   throw new Error(MESSAGES.ERROR.ALREADY_VERIFIED);
-    // }
-
+  
     const newOtp = OTPService.generateOTP();
 
     await OTPService.sendOTP(email, newOtp);
@@ -192,7 +186,6 @@ export class UserService implements IUserService {
       refreshTokenSecret,
       { expiresIn: "7d" }
     );
-    console.log(token, "jwt token");
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -267,7 +260,6 @@ user: mapUserToDTO(user),
       jwtSecret,
       { expiresIn: "1h" }
     );
-
     return {
       user: mapUserToDTO(user),
       token,
@@ -285,6 +277,7 @@ user: mapUserToDTO(user),
   }> {
     try {
       const {properties,totalPages,totalProperties} = await this._userRepository.findProperties(page,limit);
+
       return {
         properties:properties|| [],
         totalPages,
@@ -377,22 +370,25 @@ user: mapUserToDTO(user),
     id: string
   ): Promise<{ user: UserResponseDTO |null; status: number; message: string }> {
     try {
-      const user = await this._userRepository.getUserById(id);
-      if (!user) {
-        return {
-          user: null,
-          status: STATUS_CODES.NOT_FOUND,
-          message: "User not found",
-        };
-      }
-         const userData=mapUserToDTO(user);
+const user = await this._userRepository.getUserById(id);
+if (!user) {
+  return {
+    user: null,
+    status: STATUS_CODES.NOT_FOUND,
+    message: "User not found",
+  };
+}
 
+const userData = mapUserToDTO(user);
+const hasPassword = user.hasPassword; 
+console.log(hasPassword,"check")
 
-      return {
-        user:userData,
-        status: STATUS_CODES.OK,
-        message: "Successfully fetched",
-      };
+return {
+  user:userData,
+  status: STATUS_CODES.OK,
+  message: "Successfully fetched",
+};
+
     } catch (error) {
       console.error("Error in getProfileData:", error);
       return {
@@ -408,6 +404,7 @@ user: mapUserToDTO(user),
   ): Promise<{
     property: any;
     ownerData: OwnerResponseDTO |null;
+    bookingData:Partial<IBooking> |null;
     status: number;
     message: string;
   }> {
@@ -417,14 +414,13 @@ user: mapUserToDTO(user),
       const property = await this._propertyRepository.findPropertyById(
         propertyId
       );
-      // if (!property || property.status !== "active") {
-      //   throw new Error("Property not available");
-      // }
+    
 
       if (!property) {
         return {
           property: null,
           ownerData: null,
+          bookingData:null,
           status: STATUS_CODES.NOT_FOUND,
           message: "Property not found",
         };
@@ -433,12 +429,14 @@ user: mapUserToDTO(user),
       const ownerId = property.ownerId.toString();
       
       const owner = await this._ownerRepository.findById(ownerId);
+      const latestBooking= await this._bookingRepository.latestBooking(propertyId);
       const ownerData = owner
         ? mapOwnerToDTO(owner)
         : null;
       return {
         property,
         ownerData,
+        bookingData:latestBooking,
         status: STATUS_CODES.OK,
         message: "Property fetched successfully",
       };
@@ -447,6 +445,7 @@ user: mapUserToDTO(user),
       return {
         property: null,
         ownerData: null,
+        bookingData:null,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
         message: MESSAGES.ERROR.SERVER_ERROR,
       };
@@ -490,6 +489,7 @@ user: mapUserToDTO(user),
   ): Promise<{
     cartData: any;
     property: any;
+    bookingData:any;
     status: number;
     message: string;
   }> {
@@ -501,6 +501,7 @@ user: mapUserToDTO(user),
         return {
           cartData: null,
           property: null,
+          bookingData:null,
           status: STATUS_CODES.NOT_FOUND,
           message: "Property not found",
         };
@@ -538,12 +539,14 @@ user: mapUserToDTO(user),
           cart.totalCost += property.rentPerMonth;
         }
       }
+       const latestBooking= await this._bookingRepository.latestBooking(propertyId);
 
       await cart.save();
 
       return {
         cartData: cart,
         property: property,
+        bookingData:latestBooking,
         status: STATUS_CODES.OK,
         message: "Property added to cart",
       };
@@ -552,6 +555,7 @@ user: mapUserToDTO(user),
       return {
         cartData: null,
         property: null,
+        bookingData:null,
         status: STATUS_CODES.INTERNAL_SERVER_ERROR,
         message: MESSAGES.ERROR.SERVER_ERROR,
       };
@@ -799,42 +803,57 @@ user: mapUserToDTO(user),
       };
     }
   }
-  async changePassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string
-  ): Promise<{ status: number; message: string }> {
-    try {
-      const user = await this._userRepository.findUserById(userId);
-      if (!user) {
-        return {
-          status: STATUS_CODES.NOT_FOUND,
-          message: MESSAGES.ERROR.USER_NOT_FOUND,
-        };
-      }
-      const isMatch = await bcrypt.compare(oldPassword, user.password || "");
-      if (!isMatch) {
-        return {
-          status: STATUS_CODES.BAD_REQUEST,
-          message: MESSAGES.ERROR.INCORRECT_PASSWORD,
-        };
-      }
+ async changePassword(
+  userId: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<{ status: number; message: string }> {
+  try {
+    const user = await this._userRepository.findUserById(userId);
+    if (!user) {
+      return {
+        status: STATUS_CODES.NOT_FOUND,
+        message: MESSAGES.ERROR.USER_NOT_FOUND,
+      };
+    }
 
+    if (!user.hasPassword) {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await this._userRepository.updateUserPassword(userId, hashedPassword);
+      await this._userRepository.updateUserPassword(
+        userId,
+        hashedPassword,
+        true, 
+      );
 
       return {
         status: STATUS_CODES.OK,
-        message: "Password updated successfully",
-      };
-    } catch (error) {
-      console.error("Error in changePasswordService:", error);
-      return {
-        status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-        message: MESSAGES.ERROR.SERVER_ERROR,
+        message: "Password set successfully.",
       };
     }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password || "");
+    if (!isMatch) {
+      return {
+        status: STATUS_CODES.BAD_REQUEST,
+        message: MESSAGES.ERROR.INCORRECT_PASSWORD,
+      };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this._userRepository.updateUserPassword(userId, hashedPassword,true);
+
+    return {
+      status: STATUS_CODES.OK,
+      message: "Password updated successfully.",
+    };
+  } catch (error) {
+    console.error("Error in changePasswordService:", error);
+    return {
+      status: STATUS_CODES.INTERNAL_SERVER_ERROR,
+      message: MESSAGES.ERROR.SERVER_ERROR,
+    };
   }
+}
 
   async cancelBooking(
     id: string,
@@ -850,10 +869,10 @@ user: mapUserToDTO(user),
       }
 
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset the time to midnight
+      today.setHours(0, 0, 0, 0); 
 
       const moveInDate = new Date(booking.moveInDate);
-      moveInDate.setHours(0, 0, 0, 0); // Reset the time to midnight
+      moveInDate.setHours(0, 0, 0, 0); 
 
       const fiveDaysBeforeMoveIn = new Date(moveInDate);
       fiveDaysBeforeMoveIn.setDate(fiveDaysBeforeMoveIn.getDate() - 5);
@@ -936,7 +955,7 @@ user: mapUserToDTO(user),
         });
 
         await this._propertyRepository.updatePropertyById(propertyId, {
-          status: PropertyStatus.Active,
+          isBooked: false,
         });
         const user = await this._userRepository.getUserById(
           booking.userId.toString()

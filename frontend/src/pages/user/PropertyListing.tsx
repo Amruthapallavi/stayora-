@@ -63,7 +63,6 @@ const [searchFilters, setSearchFilters] = useState({
         setLoading(false);
       }
     }
-
     fetchProperties(currentPage, limit);
   }, [currentPage, getAllProperties]);
 const handleFilterChange = (key: string, value: any) => {
@@ -74,16 +73,19 @@ const handleFilterChange = (key: string, value: any) => {
 };
 
 
-  
+
 
  const handleSearch = useCallback(async () => {
   try {
     const result = await filteredProperties(searchFilters);
     setProperties(result);
     setCurrentPage(1);
+    const calculatedTotalPages = Math.ceil(result.length / limit) || 1;
+    setTotalPages(calculatedTotalPages);
     navigate("/user/properties", { state: { filters: searchFilters } });
   } catch (error) {
     console.error("Error filtering properties:", error);
+    
   } finally {
     setLoading(false);
   }
@@ -106,14 +108,36 @@ const debouncedSearch = useCallback(
     setProperties(allProperties);
     setCurrentPage(1);
   };
-  useEffect(() => {
-  if (searchFilters.location || searchFilters.type || searchFilters.bedrooms || 
-      searchFilters.priceRange[0] > 0 || searchFilters.priceRange[1] < 30000) {
-    debouncedSearch();
+  
+useEffect(() => {
+  const noFilters =
+    !searchFilters.location &&
+    !searchFilters.type &&
+    !searchFilters.bedrooms &&
+    searchFilters.priceRange[0] === 0 &&
+    searchFilters.priceRange[1] === 100000 &&
+    searchFilters.features.length === 0;
+
+  if (noFilters) {
+    handleSearch(); // Run directly, not debounced
+  } else {
+    debouncedSearch(); // Run debounced when filters exist
   }
-}, [searchFilters, debouncedSearch]);
+}, [searchFilters, debouncedSearch, handleSearch]);
+
   const handleLocationSelect = (_location: string) => {
   };
+ const allLocations = properties.flatMap((p) => [
+  p.district,
+  p.city,
+  p.state,
+]);
+
+
+const uniqueLocations = Array.from(
+  new Set(allLocations.filter(Boolean))
+);
+
   if (loading) {
     return (
       <UserLayout>
@@ -130,11 +154,15 @@ const debouncedSearch = useCallback(
   return (
     <UserLayout>
       <div className="min-h-screen bg-gray-50">
-        <HeroSection
-          searchFilters={searchFilters}
-          handleFilterChange={handleFilterChange}
-  handleSearch={debouncedSearch} 
-        />
+  <HeroSection
+  searchFilters={searchFilters}
+  handleFilterChange={handleFilterChange}
+  handleSearch={debouncedSearch}
+  resetFilters={resetFilters}
+  locationSuggestions={uniqueLocations} 
+
+/>
+
 
         <div className="container mx-auto px-4 py-16">
           {properties.length > 0 && (
@@ -186,6 +214,40 @@ const debouncedSearch = useCallback(
                     <div className="absolute top-0 right-0 bg-[#b68451] text-white px-3 py-1 m-2 rounded-md text-sm font-semibold">
                       ₹{property.rentPerMonth}/mo
                     </div>
+<div className="absolute bottom-3 left-3 px-4 py-1 rounded-full text-xs font-semibold text-white shadow-lg backdrop-blur-sm bg-white/10 flex items-center gap-2 select-none">
+  <span className="relative flex h-3 w-3">
+    <span
+      className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+        property.availableFrom &&
+        new Date(property.availableFrom).toDateString() !== new Date().toDateString()
+          ? 'bg-yellow-400'
+          : 'bg-green-400'
+      } opacity-75`}
+    ></span>
+    <span
+      className={`relative inline-flex rounded-full h-3 w-3 ${
+        property.availableFrom &&
+        new Date(property.availableFrom).toDateString() !== new Date().toDateString()
+          ? 'bg-yellow-400'
+          : 'bg-green-400'
+      }`}
+    ></span>
+  </span>
+  <span>
+    {property.availableFrom &&
+    new Date(property.availableFrom).toDateString() !== new Date().toDateString()
+      ? `Available from ${new Date(property.availableFrom).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}`
+      : 'Available Now'}
+  </span>
+</div>
+
+
+
+
                   </div>
                   <div className="p-5">
                     <h3 className="text-xl font-bold text-gray-800 mb-2">

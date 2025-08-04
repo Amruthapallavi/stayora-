@@ -11,7 +11,6 @@ interface IAddOn {
 }
 
 export interface IBooking extends Document {
-  // _id:mongoose.Types.ObjectId;
   bookingId: string;
   userId: ObjectId;
   ownerId:ObjectId;
@@ -32,6 +31,7 @@ export interface IBooking extends Document {
   isCancelled:boolean,
   cancellationReason?:string,
   refundAmount:number,
+  availableFrom:Date,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +77,7 @@ const bookingSchema = new Schema<IBooking>(
   enum: Object.values(PaymentStatus),
   default: PaymentStatus.Pending,
 },
+availableFrom:{type:Date},
 bookingStatus: {
   type: String,
   enum: Object.values(BookingStatus),

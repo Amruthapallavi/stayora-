@@ -5,6 +5,7 @@ import Property from "../models/property.model";
 import BaseRepository from "./base.repository";
 import { IBookingRepository } from "./interfaces/IBookingRepository";
 import { IBookingData } from "../DTO/BookingResponseDTO";
+import {  PaymentStatus } from "../models/status/status";
 
 class BookingRepository extends BaseRepository<IBooking> implements IBookingRepository {
   constructor() {
@@ -48,6 +49,25 @@ async findOwnerBookings(ownerId: string, page: number, limit: number): Promise<{
   async updateBookingStatus(id: string, status: string) {
     return await Booking.findByIdAndUpdate(id, { status }, { new: true });
   }
+async findConflictingBooking(propertyId: string, start: Date, end: Date): Promise<IBooking | null> {
+  return await Booking.findOne({
+    propertyId,
+    isCancelled: false, 
+    $or: [
+      { start: { $lte: end }, end: { $gte: start } }
+    ]
+  });
+}
+async latestBooking(propertyId: string): Promise<IBooking | null> {
+  return await Booking.findOne({
+    propertyId,
+    isCancelled: false,
+    paymentStatus:PaymentStatus.Completed,
+    endDate: { $gte: new Date() }
+  })
+  .sort({ endDate: -1 }) 
+  .select('endDate');
+}
 
   async findPropertyById(id: string) {
     return await Property.findById(id);
@@ -74,8 +94,8 @@ async findOwnerBookings(ownerId: string, page: number, limit: number): Promise<{
     });
   }
 
-  async updatePropertyStatus(propertyId: string, status: string) {
-    return await Property.findByIdAndUpdate(propertyId, { status }, { new: true });
+  async updatePropertyStatus(propertyId: string, isBooked: boolean) {
+    return await Property.findByIdAndUpdate(propertyId, { isBooked }, { new: true });
   }
 
   async findBookingById(bookingId: string) {

@@ -4,7 +4,9 @@ import { cn } from "../../lib/utils";
 
 import "react-day-picker/dist/style.css";
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>;
+export type CalendarProps = React.ComponentProps<typeof DayPicker> & {
+  availableFrom?: Date;
+};
 
 // const CustomNavigation = (props: React.ComponentProps<"div"> & {
 //   nextMonth?: Date;
@@ -35,44 +37,62 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 function Calendar({
   className,
   classNames,
+  availableFrom,
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); 
+  today.setHours(0, 0, 0, 0);
+
+  const formattedDate =
+    availableFrom &&
+    availableFrom.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      disabled={{ before: today }}
-      className={cn("p-3 bg-white rounded-lg", className)}
-      classNames={{
-        months: "flex flex-col",
-        month: "space-y-4",
-        caption: "flex justify-between items-center px-4",
-        caption_label: "text-lg font-semibold text-[#0f172a]",
-        nav: "flex items-center space-x-2",
-        nav_button: "h-8 w-8 rounded-md text-[#0f172a] hover:bg-[#f3f4f6] transition",
-        table: "w-full border-collapse",
-        head_row: "flex",
-        head_cell:
-          "text-[#9ca3af] w-9 h-9 font-medium text-xs text-center",
-        row: "flex w-full",
-        cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-        day: "h-9 w-9 p-0 text-sm text-[#0f172a] rounded-full hover:bg-[#e5e7eb] transition",
-        day_selected:
-          "bg-[#0f172a] text-white hover:bg-[#1e293b] focus:bg-[#0f172a] focus:text-white rounded-full",
-        day_today: "bg-[#f3f4f6] text-[#0f172a] rounded-full",
-        day_outside: "text-[#d1d5db] opacity-50",
-        day_disabled: "text-[#9ca3af] opacity-50 cursor-not-allowed line-through",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      components={{
-        // Navigation: CustomNavigation,
-      }}
-      {...props}
-    />
+    <div className="relative bg-white rounded-lg shadow-md p-3">
+      {availableFrom && (
+        <div className="text-sm font-medium text-green-700 bg-green-100 px-3 py-2 rounded mb-3">
+          ✅ Available from: <span className="font-semibold">{formattedDate}</span>
+        </div>
+      )}
+
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        disabled={{ before: availableFrom || today }}
+        className={cn("bg-white rounded-lg", className)}
+        classNames={{
+          months: "flex flex-col",
+          month: "space-y-4",
+          caption: "flex justify-between items-center px-4",
+          caption_label: "text-lg font-semibold text-[#0f172a]",
+          nav: "flex items-center space-x-2",
+          nav_button:
+            "h-8 w-8 rounded-md text-[#0f172a] hover:bg-[#f3f4f6] transition",
+          table: "w-full border-collapse",
+          head_row: "flex",
+          head_cell:
+            "text-[#9ca3af] w-9 h-9 font-medium text-xs text-center",
+          row: "flex w-full",
+          cell:
+            "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+          day:
+            "h-9 w-9 p-0 text-sm text-[#0f172a] rounded-full hover:bg-[#e5e7eb] transition",
+          day_selected:
+            "bg-[#0f172a] text-white hover:bg-[#1e293b] focus:bg-[#0f172a] focus:text-white rounded-full",
+          day_today: "bg-[#f3f4f6] text-[#0f172a] rounded-full",
+          day_outside: "text-[#d1d5db] opacity-50",
+          day_disabled:
+            "text-[#9ca3af] opacity-50 cursor-not-allowed line-through",
+          day_hidden: "invisible",
+          ...classNames,
+        }}
+        {...props}
+      />
+    </div>
   );
 }
 

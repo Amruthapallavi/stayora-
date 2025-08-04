@@ -21,6 +21,7 @@ export const mapUserToDTO = (user: IUser): UserResponseDTO => ({
       }
     : undefined,
   createdAt: user.createdAt,
+  hasPassword:user.hasPassword,  
   updatedAt: user.updatedAt,
 });
 

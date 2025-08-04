@@ -13,6 +13,7 @@ export interface ICart {
   rentalPeriod?: number;
   endDate?: string | Date;
   selectedAddOns?: string[];
+  bookingData:string;
 }
 
 interface CartData {

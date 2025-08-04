@@ -12,6 +12,7 @@ import {
 } from '../components/ui/select';
 import { Slider } from '../components/ui/slider';
 import { useAuthStore } from '../stores/authStore';
+import LocalLocationAutocomplete from './PlaceAutoComplete';
 
 interface PropertySearchProps {
   searchFilters: {
@@ -23,12 +24,18 @@ interface PropertySearchProps {
   };
   handleFilterChange: (key: string, value: any) => void;
   handleSearch: () => void;
+    suggestions:string[],
+
+    resetFilters: () => void;
+
 }
 
 const PropertySearch = ({
   searchFilters,
   handleFilterChange,
   handleSearch,
+  resetFilters,
+  suggestions
 }: PropertySearchProps) => {
   const { listAllFeatures } = useAuthStore();
   const [showFilters, setShowFilters] = useState(false);
@@ -57,16 +64,16 @@ const PropertySearch = ({
       <div className="p-8">
         {/* Search + buttons */}
         <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="relative flex-grow">
-            <Input
-              type="text"
-              placeholder="Search by city, neighborhood or address"
-              className="pl-14 py-3 text-sm bg-gray-100 border border-gray-200 rounded-xl focus:ring-0 focus:border-[#c9a46c]"
-              value={searchFilters.location}
-              onChange={(e) => handleFilterChange('location', e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-            />
+       <div className="relative flex-grow">
+  <LocalLocationAutocomplete
+    value={searchFilters.location}
+    onChange={(value) => handleFilterChange("location", value)}
+    suggestions={suggestions}
+  />
+
+  
+
+
             <Search
               size={22}
               className="text-gray-400 absolute left-5 top-1/2 transform -translate-y-1/2"
@@ -238,6 +245,16 @@ const PropertySearch = ({
                   )}
                 </AnimatePresence>
               </div>
+{/* Clear Filters Button */}
+<div className="flex justify-start mt-6">
+  <Button
+    variant="outline"
+    className="text-[#a17d3a] border-[#c9a46c] hover:bg-[#f9f2de] hover:text-[#7d6425] rounded-full px-6 py-2 text-sm font-semibold shadow-sm"
+    onClick={resetFilters}
+  >
+    Clear Filters
+  </Button>
+</div>
 
               {/* Close button */}
               <div className="flex justify-end mt-8">

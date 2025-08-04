@@ -10,6 +10,18 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+  const getStatusLabel = (property:any) => {
+  if (property.isBooked) return { label: 'Booked', className: 'bg-gray-100 text-gray-600' };
+  if (property.status === 'rejected') return { label: 'Rejected', className: 'bg-red-100 text-red-700' };
+  if (property.status === 'pending') return { label: 'Pending', className: 'bg-yellow-100 text-yellow-700' };
+  if (property.status === 'active') return { label: 'Active', className: 'bg-green-100 text-green-700' };
+    if (property.status === 'blocked') return { label: 'Blocked', className: 'bg-red-100 text-red-700' };
+
+  return { label: 'Unknown', className: 'bg-gray-100 text-gray-500' };
+};
+
+const { label, className } = getStatusLabel(property);
+
   return (
     <motion.div 
       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow"
@@ -32,14 +44,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
       <div className="p-5">
       <div className="flex justify-between items-center mb-2">
   <h3 className="text-lg font-bold text-gray-800 truncate">{property.title}</h3>
-  <div className={`
-    text-xs font-semibold px-2 py-1 rounded 
-    ${property.status === 'active' ? 'bg-green-100 text-green-700' : ''}
-    ${property.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : ''}
-    ${property.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}
-  `}>
-    {property.status}
-  </div>
+ <div className={`text-xs font-semibold px-2 py-1 rounded ${className}`}>
+  {label}
+</div>
+
 </div>
         <div className="flex items-center text-gray-600 mb-3">
           
@@ -67,7 +75,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 >
   View Details
 </Link>
-{property.status !== 'rejected' && property.status !== 'booked'  && (
+{property.status !== 'rejected' && property.isBooked !==false  && (
   <Link 
     to={`/owner/edit-property/${property._id}`}
     className="flex-1 text-center border border-[#b68451] text-[#b68451] px-3 py-2 rounded font-medium hover:bg-[#e7d2aa] transition text-sm"
